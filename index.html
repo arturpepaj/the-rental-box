@@ -253,12 +253,32 @@ header {
   padding: 12px 18px; font-size: 14.5px; color: var(--ink); outline: none; font-family: inherit;
   resize: none; max-height: 160px; line-height: 1.45;
 }
-.chat-input::placeholder { color: var(--subtle); }
+.chat-input::placeholder { color: var(--subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-input:focus { border-color: var(--line-strong); }
 .icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
 .icon-btn:hover { background: var(--surface-2); }
-.icon-btn.mail-btn[aria-pressed="true"] { background: var(--surface-2); border-color: var(--ask); color: var(--ask); }
-.icon-btn.mail-btn[aria-pressed="false"] { color: var(--subtle); }
+.oracle-btn {
+  --o1: #e8c39e; --o2: #d9849b; --o3: #9c8bd9;
+  position: relative; flex-shrink: 0; height: 44px; padding: 0 16px 0 13px; border-radius: 22px;
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  color: #fff7ee; border: 1.5px solid transparent;
+  background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(120deg, var(--o1), var(--o2), var(--o3), var(--o1)) border-box;
+  background-size: 100% 100%, 300% 300%;
+  box-shadow: 0 0 14px rgba(217,132,155,0.35), 0 0 28px rgba(156,139,217,0.18);
+  animation: oracle-flow 6s linear infinite;
+}
+.oracle-btn svg { color: var(--o1); filter: drop-shadow(0 0 4px rgba(232,195,158,0.8)); animation: oracle-twinkle 2.4s ease-in-out infinite; }
+.oracle-label { background: linear-gradient(90deg, var(--o1), var(--o2), var(--o3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.oracle-btn:hover { box-shadow: 0 0 18px rgba(217,132,155,0.55), 0 0 36px rgba(156,139,217,0.3); }
+.oracle-btn[aria-pressed="false"] { animation: none; box-shadow: none; background: var(--surface); border-color: var(--line); }
+.oracle-btn[aria-pressed="false"] svg { color: var(--subtle); filter: none; animation: none; }
+.oracle-btn[aria-pressed="false"] .oracle-label { background: none; color: var(--subtle); }
+.oracle-btn.working svg { animation: oracle-spin 1.6s linear infinite; }
+@keyframes oracle-flow { to { background-position: 0 0, 300% 0; } }
+@keyframes oracle-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.75; transform: scale(0.9); } }
+@keyframes oracle-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .oracle-btn, .oracle-btn svg { animation: none !important; } }
+@media (max-width: 640px) { .oracle-btn { padding: 0; width: 44px; justify-content: center; } .oracle-label { display: none; } }
 .icon-btn.send { background: var(--ask); border-color: var(--ask); color: var(--on-ask); }
 .icon-btn.send:hover { background: var(--ask-hover); }
 .icon-btn.send:disabled { opacity: 0.45; cursor: default; }
@@ -475,8 +495,9 @@ header {
           <button class="icon-btn" id="attachBtn" title="Attach a file to this section" aria-label="Attach a file">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.4 11.1l-9.2 9.2a6 6 0 01-8.5-8.5l9.2-9.2a4 4 0 015.7 5.7l-9.2 9.2a2 2 0 01-2.8-2.8l8.5-8.5"/></svg>
           </button>
-          <button class="icon-btn mail-btn" id="mailBtn" hidden title="Search my Outlook: on" aria-label="Search Outlook, Teams and SharePoint" aria-pressed="true">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6 8.5-6"/></svg>
+          <button class="oracle-btn" id="mailBtn" hidden title="Oracle: searches Outlook, Teams, SharePoint and Slack" aria-label="Oracle search across Outlook, Teams, SharePoint and Slack" aria-pressed="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M19 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".85"/><path d="M5 15.5l.6 1.6 1.6.6-1.6.6L5 20l-.6-1.7-1.6-.6 1.6-.6z" opacity=".7"/></svg>
+            <span class="oracle-label">Oracle</span>
           </button>
           <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about the manager’s desk documents…" aria-label="Your question"></textarea>
           <button class="icon-btn send" id="sendBtn" title="Send" aria-label="Send">
@@ -902,7 +923,7 @@ How to answer:
 - Leases, payables (invoices, vendor payments) and receivables (rent charges, tenant payments, arrears) will be pulled from Yardi Virtuoso. Never ask the user to upload them. If you need them and they are not in the documents, say this data will come from Yardi Virtuoso. Exception: you may ask the user to upload an invoice to check it for duplicates.
 - Duplicate invoice check: compare the uploaded invoice with every other invoice and payment in the documents. Flag the same invoice number (also with small changes like extra zeros, dashes or letters), the same vendor with the same or very close amount (within about 1%), and close dates. List each possible duplicate with vendor, invoice number, amount and date, and say how sure you are.
 - Never invent numbers, dates, names or document contents.${withEmail ? `
-- You can search the user's Outlook with search_email, Teams messages with search_teams and SharePoint files with search_sharepoint, and open any of them with read_email. When the documents here do not have what you need (budgets, reports, contracts, board packages), look in SharePoint. Use them when the question says email, or when the answer may be in email (a unit, tenant, vendor, attorney, board, complaint or date). Only read email. Never say you sent, moved or changed any email.
+- You can search the user's Outlook with search_email, Teams messages with search_teams and SharePoint files with search_sharepoint, and Slack with search_slack and read_slack_thread when they are offered. Open emails, Teams messages and SharePoint files with read_email. When the documents here do not have what you need (budgets, reports, contracts, board packages), look in SharePoint. Use them when the question says email, or when the answer may be in email (a unit, tenant, vendor, attorney, board, complaint or date). Only read email. Never say you sent, moved or changed any email.
 - For "when did ... first contact me": search several ways (for unit 1005 try "1005", "Apt 1005", "#1005", "unit 1005", each with and without the topic word). Results are not in date order. When nextOffset is given, get more pages. Compare all dates yourself and give the EARLIEST matching email: date, sender and subject. Read it with read_email to confirm it is about the topic.
 - Open attachments with read_email when they matter, and say if one could only be partly read.
 - Cite emails like [Email: subject, Mar 3, 2026]. If more results may exist, say so.` : ''}
@@ -1043,6 +1064,36 @@ function emailTools(bot) {
       } }
   ];
 }
+let slackTools = null;   // null = not checked yet; [] = not available
+async function getSlackTools() {
+  if (slackTools) return slackTools;
+  const wanted = [['slack_search_public_and_private', 'search_slack'], ['slack_read_thread', 'read_slack_thread']];
+  const out = [];
+  const describe = async t => { try { return await mcp.describeTool('Slack', t); } catch (e) { return e; } };
+  let first = await describe(wanted[0][0]);
+  if (first && first.code === 'not_in_manifest') {
+    try { const perms = await window.claude.use('permissions'); if (perms) await perms.request(['mcp:Slack']); } catch (e) {}
+    first = await describe(wanted[0][0]);
+  }
+  if (!first || first.code || !first.inputSchema) { slackTools = []; return slackTools; }
+  const descs = [first, await describe(wanted[1][0])];
+  wanted.forEach(([tool, name], i) => {
+    const d = descs[i];
+    if (!d || d.code || !d.inputSchema || typeof d.inputSchema !== 'object') return;
+    out.push({ tool, name, description: String(d.description || tool).slice(0, 900), inputSchema: d.inputSchema });
+  });
+  slackTools = out;
+  return slackTools;
+}
+function slackSampleTools(bot) {
+  return (slackTools || []).map(t => ({
+    name: t.name, description: t.description, inputSchema: t.inputSchema,
+    async execute(input, ctx) {
+      bot.status = t.name === 'search_slack' ? 'Searching Slack…' : 'Reading a Slack thread…'; renderLast();
+      try { return textOf(await mcp.callTool('Slack', t.tool, input, { signal: ctx.signal, cache: false })).slice(0, 28000); }
+      catch (e) { const c = e && e.code; throw new Error(c === 'server_not_connected' || c === 'server_not_found' ? 'Slack is not connected yet.' : c === 'needs_reauth' ? 'Slack needs to be signed in again.' : (e && e.message) || 'Slack search failed.'); }
+    } }));
+}
 function emailReady() { return !!(mcp && emailOn && limits && limits.tools && limits.tools.maxCount >= 4); }
 
 async function send(textOverride, extraTask) {
@@ -1077,7 +1128,13 @@ async function send(textOverride, extraTask) {
   try {
     const opts = { signal: controller.signal, cache: false, modelTier: 'default', onText: ({ text }) => { bot.content = text; bot.pending = false; renderLast(); } };
     if (images.length && limits && limits.images) opts.images = images.slice(0, limits.images.maxCount);
-    if (useEmail) opts.tools = emailTools(bot);
+    if (useEmail) {
+      $('mailBtn').classList.add('working');
+      await getSlackTools();
+      const tools = emailTools(bot).concat(slackSampleTools(bot));
+      opts.tools = tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length);
+      if (!slackTools.length) messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', '\n- Slack is not connected yet, so it cannot be searched.\n\nQuestion: ');
+    }
     const r = await sample(messages, opts);
     bot.content = r.text; bot.pending = false;
     if (r.truncated) bot.note = 'The answer was cut short. Ask for less at a time.';
@@ -1086,6 +1143,7 @@ async function send(textOverride, extraTask) {
     if (e && e.code === 'cancelled') { bot.note = 'Stopped.'; if (!bot.content) bot.content = e.text || ''; }
     else { bot.error = copyFor(e && e.code); if (e && e.text) bot.content = e.text; }
   } finally {
+    $('mailBtn').classList.remove('working');
     bot.streaming = false; busy = false; controller = null; setSendState(); render();
   }
 }
@@ -1185,7 +1243,7 @@ function setMode(key) {
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
-  if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; if (!emailReady()) showFootWarn('Turn on the envelope button so Claude can search Outlook, Teams and SharePoint.'); send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit)); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
+  if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; if (!emailReady()) showFootWarn('Turn on Oracle so Claude can search Outlook, Teams, SharePoint and Slack.'); send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit)); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
 $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 
 /* ---------- Composer ---------- */
@@ -1193,12 +1251,12 @@ function setMailBtn() {
   const b = $('mailBtn');
   b.hidden = !(mcp && limits && limits.tools);
   b.setAttribute('aria-pressed', emailOn ? 'true' : 'false');
-  b.title = emailOn ? 'Search Outlook, Teams and SharePoint: on' : 'Search Outlook, Teams and SharePoint: off';
+  b.title = emailOn ? 'Oracle is on: searches Outlook, Teams, SharePoint and Slack' : 'Oracle is off: answers from the Library only';
 }
 $('mailBtn').addEventListener('click', () => {
   emailOn = !emailOn; setMailBtn();
   try { localStorage.setItem('rb-email', emailOn ? 'on' : 'off'); } catch (e) {}
-  showFootWarn(emailOn ? 'Outlook, Teams and SharePoint search is on.' : 'Outlook, Teams and SharePoint search is off.');
+  showFootWarn(emailOn ? 'Oracle is on. Claude searches Outlook, Teams, SharePoint and Slack.' : 'Oracle is off. Claude answers from the Library only.');
 });
 function setSendState() {
   const b = $('sendBtn');
