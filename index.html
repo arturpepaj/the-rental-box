@@ -1129,7 +1129,10 @@ async function send(textOverride, extraTask) {
     const opts = { signal: controller.signal, cache: false, modelTier: 'default', onText: ({ text }) => { bot.content = text; bot.pending = false; renderLast(); } };
     if (images.length && limits && limits.images) opts.images = images.slice(0, limits.images.maxCount);
     if (useEmail) {
+      roarStopped = false;
       $('mailBtn').classList.add('working');
+      $('mailBtn').querySelector('.oracle-label').textContent = 'Stop';
+      $('mailBtn').title = 'Click to stop searching';
       await getSlackTools();
       const tools = emailTools(bot).concat(slackSampleTools(bot));
       opts.tools = tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length);
@@ -1140,10 +1143,12 @@ async function send(textOverride, extraTask) {
     if (r.truncated) bot.note = 'The answer was cut short. Ask for less at a time.';
   } catch (e) {
     bot.pending = false;
-    if (e && e.code === 'cancelled') { bot.note = 'Stopped.'; if (!bot.content) bot.content = e.text || ''; }
+    if (e && e.code === 'cancelled') { bot.note = roarStopped ? 'Search stopped.' : 'Stopped.'; if (!bot.content) bot.content = e.text || ''; }
     else { bot.error = copyFor(e && e.code); if (e && e.text) bot.content = e.text; }
   } finally {
     $('mailBtn').classList.remove('working');
+    $('mailBtn').querySelector('.oracle-label').textContent = 'Roar';
+    setMailBtn();
     bot.streaming = false; busy = false; controller = null; setSendState(); render();
   }
 }
@@ -1255,7 +1260,13 @@ function setMailBtn() {
   const f = $('footNote'); if (!f.classList.contains('warn')) f.textContent = footDefault();
   b.title = emailOn ? 'Roar is on: searches Outlook, Teams, SharePoint and Slack. Answers take longer, often 1 to 2 minutes.' : 'Roar is off: answers from the Library only';
 }
+let roarStopped = false;
 $('mailBtn').addEventListener('click', () => {
+  if (busy && controller && $('mailBtn').classList.contains('working')) {
+    roarStopped = true; controller.abort();
+    showFootWarn('Search stopped.');
+    return;
+  }
   emailOn = !emailOn; setMailBtn();
   try { localStorage.setItem('rb-email', emailOn ? 'on' : 'off'); } catch (e) {}
   showFootWarn(emailOn ? 'Roar is on. Answers take longer, often 1 to 2 minutes.' : 'Roar is off. Claude answers from the Library only.');
