@@ -464,7 +464,7 @@ header {
         </div>
         <input type="file" id="tabInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
         <div class="samples" id="samples"></div>
-        <div class="foot-note" id="footNote">Enter to send · Shift+Enter for a new line · Answers can be wrong, check the source document</div>
+        <div class="foot-note" id="footNote">Answers can be wrong. Check the source document.</div>
       </div>
     </div>
   </div>
@@ -934,7 +934,7 @@ function copyFor(code) {
     queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
   })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
 }
-function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = 'Enter to send · Shift+Enter for a new line · Answers can be wrong, check the source document'; f.classList.remove('warn'); }, 5000); }
+function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = 'Answers can be wrong. Check the source document.'; f.classList.remove('warn'); }, 5000); }
 
 /* ---------- Rendering answers ---------- */
 function inline(s) {
