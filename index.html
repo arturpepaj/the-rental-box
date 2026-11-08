@@ -422,7 +422,7 @@ header {
           </button>
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
-        <div id="messages" class="thread-inner" style="max-width:none"></div>
+        <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
       </div>
     </div>
 
@@ -788,7 +788,7 @@ async function send(textOverride) {
   const key = mode;
   const thread = threads[key] = threads[key] || [];
   thread.push({ role: 'user', content: q });
-  const bot = { role: 'assistant', content: '', pending: true };
+  const bot = { role: 'assistant', content: '', pending: true, streaming: true };
   thread.push(bot);
   render();
 
@@ -814,7 +814,7 @@ async function send(textOverride) {
     if (e && e.code === 'cancelled') { bot.note = 'Stopped.'; if (!bot.content) bot.content = e.text || ''; }
     else { bot.error = copyFor(e && e.code); if (e && e.text) bot.content = e.text; }
   } finally {
-    busy = false; controller = null; setSendState(); render();
+    bot.streaming = false; busy = false; controller = null; setSendState(); render();
   }
 }
 function copyFor(code) {
@@ -864,7 +864,7 @@ function msgHtml(m, idx) {
   let foot = '';
   if (m.error) foot += `<div class="err-line">${esc(m.error)}</div>`;
   if (m.note) foot += `<div class="used">${esc(m.note)}</div>`;
-  if (!m.pending && m.content) {
+  if (!m.pending && !m.streaming && m.content) {
     foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
     if (m.used && m.used.length) foot += `<div class="used">Documents checked: ${esc(m.used.slice(0, 8).join(', '))}${m.used.length > 8 ? ` and ${m.used.length - 8} more` : ''}</div>`;
   }
