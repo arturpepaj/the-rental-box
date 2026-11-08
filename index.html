@@ -414,7 +414,7 @@ header {
         <button class="lib-close" id="libClose" aria-label="Close library">✕</button>
       </div>
       <div class="packet-title">Building Documents</div>
-      <p class="packet-desc">Leases, budgets, compliance records, contracts and more. Claude reads these for every question, in every section. Saved privately to your account.</p>
+      <p class="packet-desc">Budgets, compliance records, contracts, plans, reports and more. Leases and tenant records come from Yardi Virtuoso. Claude reads these for every question, in every section. Saved privately to your account.</p>
     </div>
     <button class="drop" id="libDrop" type="button">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6.5 9.5L12 4l5.5 5.5M4 16v2.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V16"/></svg>
@@ -641,7 +641,7 @@ function setLibStatus(t, warn) { const el = $('libStatus'); el.textContent = t; 
 function renderLibrary() {
   const ok = library.filter(d => d.status === 'ok');
   const total = ok.reduce((n, d) => n + d.text.length, 0);
-  if (!library.length) setLibStatus(libCol ? 'No documents yet. Add leases, budgets, contracts and reports.' : 'No documents yet. Documents you add stay for this visit only. Sign in to claude.ai to save them.', !libCol);
+  if (!library.length) setLibStatus(libCol ? 'No documents yet. Add budgets, contracts, plans and reports.' : 'No documents yet. Documents you add stay for this visit only. Sign in to claude.ai to save them.', !libCol);
   else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · ${total < 1000 ? 'under 1k' : 'about ' + Math.round(total / 1000) + 'k'} characters` + (libCol ? ' · saved' : ' · this visit only'));
   $('libSearch').hidden = library.length < 6;
   const f = libFilter.toLowerCase();
@@ -778,7 +778,7 @@ Building: ${bld || 'not given'}. Today: ${new Date().toLocaleDateString('en-US',
 Current section: ${sec.title}. ${sec.desc}
 
 How to answer:
-- Use the documents below first. After each fact taken from a document, name it in brackets, like [Lease - 4B.pdf].
+- Use the documents below first. After each fact taken from a document, name it in brackets, like [Elevator contract.pdf].
 - If the documents do not answer the question, say so in one short line, then give general guidance and label it "General guidance".
 - Write plain, simple English. Short sentences. No jargon. The reader's first language is not English.
 - When asked what to do, give numbered steps. Put deadlines, amounts and phone numbers in bold.
@@ -786,6 +786,7 @@ How to answer:
 - Legal, fair housing and Housing Court questions: give practical guidance, and say when to call counsel. You are not a lawyer.
 - Life-safety emergencies (fire, gas smell, flood with electrical risk, medical): first line is "Call 911 now."
 - Rental applications: only check if an application is complete against the listed requirements. Never recommend approving or rejecting an applicant, and never judge applicants by protected traits.
+- Leases, tenant ledgers, rent rolls and other tenant records come from Yardi Virtuoso. Never ask the user to upload them. If you need them and they are not in the documents, say to check Yardi Virtuoso.
 - Never invent numbers, dates, names or document contents.
 ${context.text ? `\nDocuments${context.partial ? ' (only the most relevant parts were included because there is a lot of text)' : ''}:\n${context.text}` : '\nNo documents have been uploaded yet. Answer with general guidance and suggest which documents to upload.'}`;
 }
