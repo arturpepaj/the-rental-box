@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artur’s Box</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0e0d0b;
+  --ink: #f3eee6;
+  --surface: #161411;
+  --surface-2: #1a1714;
+  --line: #3d342c;
+  --line-strong: #5c4c3e;
+  --ask: #c4a07e;
+  --packet: #c4a07e;
+  --pine: #c4a07e;
+  --pine-hover: #e0c4a8;
+  --budgets: #d07a58;
+  --redflag: #c45a3a;
+  --danger: #c45a3a;
+  --warn: #e0b45a;
+  --minutes: #e0b45a;
+  --muted: #cfc6ba;
+  --subtle: #8d867c;
+  --rephrase: #e0c4a8;
+  --cloudbox: #8ea37a;
+  --dim: #8d867c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Outfit', system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.side-menu.open {
+  transform: translateX(0);
+}
+
+.side-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.close-menu {
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.side-menu-links {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.menu-section {
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ask);
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.menu-section::after { content: '▸'; font-size: 10px; }
+.menu-section.open::after { content: '▾'; }
+.menu-sub {
+  display: none;
+  background: var(--surface-2);
+}
+.menu-sub.open { display: block; }
+.menu-sub a {
+  display: block;
+  padding: 10px 20px 10px 32px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.menu-sub-section {
+  padding: 10px 20px 10px 32px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.menu-sub-section::after { content: ' ▸'; font-size: 9px; }
+.menu-sub-section.open::after { content: ' ▾'; }
+.menu-sub-sub {
+  display: none;
+  background: #111;
+}
+.menu-sub-sub.open { display: block; }
+.menu-sub-sub a {
+  padding-left: 48px !important;
+  font-size: 11px;
+}
+  display: block;
+  padding: 12px 20px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+}
+
+.side-menu-links a:hover {
+  background: var(--surface-2);
+  color: var(--ask);
+}
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.menu-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.accent-bar {
+  height: 3px;
+  background: var(--ask);
+}
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  gap: 12px;
+}
+
+.menu-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.menu-btn:hover { background: var(--surface-2); }
+
+.header-center {
+  flex: 1;
+  min-width: 0;
+}
+
+.property-select {
+  font-size: 11px;
+  color: var(--subtle);
+  margin-bottom: 2px;
+}
+
+.property-name {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-time {
+  text-align: center;
+  padding: 0 8px;
+  min-width: 80px;
+}
+
+.header-time .label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.header-time .dash {
+  font-size: 13px;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.header-time .clock {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trial { color: var(--budgets); }
+.signin { color: var(--ask); cursor: pointer; }
+.copyright { color: var(--budgets); font-size: 11px; }
+
+/* Main layout */
+.main {
+  display: flex;
+  height: calc(100dvh - 67px - 258px - 70px);
+  overflow: hidden;
+}
+
+/* Left library panel */
+.library {
+  width: 320px;
+  border-right: 1px solid var(--line);
+  padding: 24px 20px;
+  overflow-y: auto;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.library-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--subtle);
+  text-transform: uppercase;
+}
+
+.packet-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.packet-note {
+  font-size: 11px;
+  color: var(--subtle);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.upload-zone {
+  margin-top: auto;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-zone.dragover, .tab-upload.dragover {
+  border-color: var(--ask);
+  background: rgba(196, 160, 126, 0.1);
+}
+  border-color: var(--line-strong);
+  background: rgba(255,255,255,0.02);
+}
+
+.upload-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.upload-sub {
+  font-size: 12px;
+  color: var(--subtle);
+  margin-bottom: 16px;
+}
+
+.file-status {
+  font-size: 12px;
+  color: var(--dim);
+}
+.last-updated {
+  font-size: 10px;
+  color: var(--subtle);
+  margin-top: 6px;
+}
+
+.file-list {
+  margin-top: 12px;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.file-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Center */
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.ask-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 45px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.desk-panel {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 24px;
+  display: none;
+}
+.desk-panel.active { display: block; }
+.desk-search input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+}
+.desk-search input:focus { border-color: var(--line-strong); }
+.search-results {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+}
+.desk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.desk-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: left;
+}
+.desk-card h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 10px;
+}
+.contact {
+  font-size: 13px;
+  margin: 6px 0;
+  color: var(--ink);
+}
+.contact a { color: var(--ask); text-decoration: none; }
+.todo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 6px 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+.recent-list { font-size: 13px; color: var(--muted); }
+.recent-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.recent-item:hover { color: var(--ink); }
+.desk-actions { display: flex; gap: 10px; margin-top: 12px; }
+.desk-btn {
+  background: var(--ask);
+  color: #1a1714;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.desk-btn:hover { background: var(--pine-hover); }
+
+.tab-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto;
+  padding: 12px 20px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 320px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.tab-upload-note {
+  font-size: 11px;
+  color: var(--subtle);
+  margin-top: 6px;
+  max-width: 320px;
+}
+  border-color: var(--line-strong);
+  background: rgba(255,255,255,0.02);
+  color: var(--ink);
+}
+  font-size: 12px;
+  color: var(--subtle);
+  max-width: 480px;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+
+.disclaimer {
+  font-size: 11.5px;
+  color: var(--subtle);
+  max-width: 520px;
+  line-height: 1.55;
+  margin-top: 12px;
+}
+
+.disclaimer a { color: var(--ask); text-decoration: none; }
+
+/* Input bar */
+.input-bar {
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  padding: 16px 20px 12px;
+}
+
+.input-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  font-family: inherit;
+}
+
+.chat-input::placeholder { color: var(--subtle); }
+.chat-input:focus { border-color: var(--line-strong); }
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.icon-btn.close-btn {
+  background: #e8a090;
+  border-color: #e8a090;
+  color: #1a1714;
+}
+.icon-btn.close-btn:hover {
+  background: #f0b0a0;
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sample-q {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sample-q:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+/* Bottom nav */
+.bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  height: 258px;
+  background: var(--line);
+  border-top: 1px solid var(--line);
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 2px;
+  border: none;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  transition: background 0.15s;
+  height: 85px;
+}
+
+.nav-btn:hover { background: var(--surface-2); }
+.nav-btn.active {
+  color: #1a1714;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.25);
+}
+.nav-btn[data-mode="emergency"].active { background: #e8d5c0; }
+.nav-btn[data-mode="legal"].active { background: #d4c4b0; }
+.nav-btn[data-mode="budgeting"].active { background: #c4b5a0; }
+.nav-btn[data-mode="plumbing"].active { background: #b8a898; }
+.nav-btn[data-mode="electric"].active { background: #c8b8a8; }
+.nav-btn[data-mode="mechanical"].active { background: #d0c0b0; }
+.nav-btn[data-mode="staff"].active { background: #c0b0a0; }
+.nav-btn[data-mode="lease"].active { background: #b8a890; }
+.nav-btn[data-mode="applications"].active { background: #c8b8a8; }
+.nav-btn[data-mode="arrears"].active { background: #d07a58; }
+.nav-btn[data-mode="contracts"].active { background: #c8b8a0; }
+.nav-btn[data-mode="it"].active { background: #a8b8c8; }
+.nav-btn[data-mode="desk"].active { background: #d4c4b8; }
+.nav-btn[data-mode="records"].active { background: #a89078; }
+.nav-btn[data-mode="vendors"].active { background: #b8a898; }
+
+.nav-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .library { display: none; }
+  .bottom-nav { grid-template-columns: repeat(5, 1fr); height: 258px; }
+  .ask-title { font-size: 36px; }
+}
+
+@media (max-width: 640px) {
+  .header-time { display: none; }
+  .bottom-nav { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<div class="side-menu" id="sideMenu">
+  <div class="side-menu-header">
+    <span>Portals</span>
+    <button class="close-menu" onclick="toggleMenu()">✕</button>
+  </div>
+  <div class="side-menu-links">
+    <div class="menu-section" onclick="toggleSection(this)">Company Logins</div>
+    <div class="menu-sub">
+      <a href="https://www.yardi.com" target="_blank" rel="noopener">Yardi Voyager</a>
+      <a href="https://www.rentcafe.com" target="_blank" rel="noopener">RentCafe</a>
+      <a href="https://www.yardi.com" target="_blank" rel="noopener">Yardi Virtuoso</a>
+      <a href="https://www.eliseai.com" target="_blank" rel="noopener">EliseAI</a>
+      <a href="https://www.onsite.com" target="_blank" rel="noopener">OnSite</a>
+      <a href="https://www.buildinglink.com" target="_blank" rel="noopener">BuildingLink</a>
+      <a href="https://www.clickpay.com" target="_blank" rel="noopener">ClickPay</a>
+      <a href="https://www.gozego.com" target="_blank" rel="noopener">Zego</a>
+    </div>
+    <div class="menu-section" onclick="toggleSection(this)">New York State</div>
+    <div class="menu-sub">
+      <div class="menu-sub-section" onclick="event.stopPropagation(); toggleSection(this)">NEW YORK CITY</div>
+      <div class="menu-sub-sub">
+        <a href="https://housingconnect.nyc.gov" target="_blank" rel="noopener">NYC Housing Connect</a>
+        <a href="https://hpdonline.nyc.gov" target="_blank" rel="noopener">HPD Online</a>
+        <a href="https://www.nyc.gov/hpd" target="_blank" rel="noopener">HPD Property Registration</a>
+        <a href="https://dob-now.nyc.gov" target="_blank" rel="noopener">DOB NOW</a>
+        <a href="https://a810-bisweb.nyc.gov" target="_blank" rel="noopener">DOB BIS</a>
+        <a href="https://www.nyc.gov/oath" target="_blank" rel="noopener">OATH / ECB</a>
+        <a href="https://fires.fdny.nyc.gov" target="_blank" rel="noopener">FDNY Business</a>
+        <a href="https://www.nyc.gov/dsny" target="_blank" rel="noopener">DSNY Sanitation</a>
+        <a href="https://portal.311.nyc.gov" target="_blank" rel="noopener">NYC 311</a>
+        <a href="https://www.nyc.gov/finance" target="_blank" rel="noopener">NYC Department of Finance</a>
+        <a href="https://a836-acris.nyc.gov" target="_blank" rel="noopener">ACRIS</a>
+        <a href="https://www.nyc.gov/dep" target="_blank" rel="noopener">DEP Water & Sewer</a>
+        <a href="https://www.nyc.gov/cchr" target="_blank" rel="noopener">NYC Commission on Human Rights</a>
+        <a href="https://www.coned.com" target="_blank" rel="noopener">Con Edison</a>
+      </div>
+      <div class="menu-sub-section" onclick="event.stopPropagation(); toggleSection(this)">WESTCHESTER</div>
+      <div class="menu-sub-sub">
+        <a href="https://www.westchestergov.com" target="_blank" rel="noopener">Westchester County</a>
+        <a href="https://humanrights.westchestergov.com" target="_blank" rel="noopener">Westchester Human Rights Commission</a>
+        <a href="https://www.westchesterclerk.com" target="_blank" rel="noopener">Westchester County Clerk, Land Records</a>
+        <a href="https://www.yonkersny.gov" target="_blank" rel="noopener">City of Yonkers</a>
+        <a href="https://www.cityofwhiteplains.com" target="_blank" rel="noopener">City of White Plains</a>
+        <a href="https://www.newrochelleny.com" target="_blank" rel="noopener">City of New Rochelle</a>
+        <a href="https://www.coned.com" target="_blank" rel="noopener">Con Edison</a>
+        <a href="https://www.nyseg.com" target="_blank" rel="noopener">NYSEG</a>
+      </div>
+      <a href="https://hcr.ny.gov" target="_blank" rel="noopener">NYS Homes & Community Renewal / DHCR</a>
+      <a href="https://rentconnect.hcr.ny.gov" target="_blank" rel="noopener">DHCR Rent Connect</a>
+      <a href="https://dhr.ny.gov" target="_blank" rel="noopener">NYS Division of Human Rights</a>
+      <a href="https://ag.ny.gov" target="_blank" rel="noopener">NYS Attorney General, Tenants’ Rights</a>
+      <a href="https://dos.ny.gov" target="_blank" rel="noopener">NYS Department of State, Building Codes</a>
+      <a href="https://iapps.courts.state.ny.us/webcivil" target="_blank" rel="noopener">NY eCourts</a>
+      <a href="https://iapps.courts.state.ny.us/nyscef" target="_blank" rel="noopener">NYSCEF</a>
+      <a href="https://www.nyserda.ny.gov" target="_blank" rel="noopener">NYSERDA</a>
+    </div>
+    <div class="menu-section" onclick="toggleSection(this)">New Jersey</div>
+    <div class="menu-sub">
+      <a href="https://www.nj.gov/dca" target="_blank" rel="noopener">NJ Dept. of Community Affairs</a>
+      <a href="https://www.njcivilrights.gov" target="_blank" rel="noopener">NJ Division on Civil Rights</a>
+      <a href="https://www.njcourts.gov" target="_blank" rel="noopener">NJ Courts, Landlord/Tenant</a>
+      <a href="https://www.nj.gov/treasury/taxation" target="_blank" rel="noopener">NJ Division of Taxation</a>
+      <a href="https://www.nj.gov/dep" target="_blank" rel="noopener">NJ Dept. of Environmental Protection</a>
+      <a href="https://www.jerseycitynj.gov" target="_blank" rel="noopener">Jersey City</a>
+      <a href="https://www.pseg.com" target="_blank" rel="noopener">PSE&G</a>
+    </div>
+    <div class="menu-section" onclick="toggleSection(this)">Connecticut</div>
+    <div class="menu-sub">
+      <a href="https://www.jud.ct.gov" target="_blank" rel="noopener">CT Judicial Branch, Housing Court</a>
+      <a href="https://portal.ct.gov/chro" target="_blank" rel="noopener">CT Commission on Human Rights and Opportunities</a>
+      <a href="https://portal.ct.gov/doh" target="_blank" rel="noopener">CT Department of Housing</a>
+      <a href="https://business.ct.gov" target="_blank" rel="noopener">CT Business Portal</a>
+      <a href="https://portal.ct.gov/deep" target="_blank" rel="noopener">CT Dept. of Energy & Environmental Protection</a>
+      <a href="https://www.eversource.com" target="_blank" rel="noopener">Eversource</a>
+      <a href="https://www.uinet.com" target="_blank" rel="noopener">United Illuminating</a>
+    </div>
+    <div class="menu-section" onclick="toggleSection(this)">Pennsylvania (Philadelphia)</div>
+    <div class="menu-sub">
+      <a href="https://www.phila.gov/li" target="_blank" rel="noopener">Philadelphia Licenses & Inspections</a>
+      <a href="https://eclipse.phila.gov" target="_blank" rel="noopener">Philadelphia eCLIPSE</a>
+      <a href="https://property.phila.gov" target="_blank" rel="noopener">Philadelphia Property Search</a>
+      <a href="https://water.phila.gov" target="_blank" rel="noopener">Philadelphia Water Department</a>
+      <a href="https://www.courts.phila.gov" target="_blank" rel="noopener">Philadelphia Courts, Landlord/Tenant</a>
+      <a href="https://www.phrc.pa.gov" target="_blank" rel="noopener">PA Human Relations Commission</a>
+      <a href="https://www.dep.pa.gov" target="_blank" rel="noopener">PA Dept. of Environmental Protection</a>
+      <a href="https://www.peco.com" target="_blank" rel="noopener">PECO</a>
+      <a href="https://www.pgworks.com" target="_blank" rel="noopener">PGW Gas</a>
+    </div>
+  </div>
+</div>
+<div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+
+<header>
+  <button class="menu-btn" onclick="toggleMenu()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+  <div class="header-center">
+    <div class="property-select">THE RENTAL BOX</div>
+    <div class="property-name">Address, New York, NY</div>
+  </div>
+  <div class="header-time">
+    <div class="label">New York, NY</div>
+    <div class="dash">—</div>
+    <div class="clock" id="clock">5:16 PM</div>
+  </div>
+  <div class="header-right">
+    <div class="copyright">© The Rental Box</div>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="library" id="library">
+    <div class="library-label">LIBRARY</div>
+    <div>
+      <div class="packet-title">Building Documents</div>
+      <p class="packet-desc">Permanent database of all building documents — leases, budgets, compliance records, contracts, and more.</p>
+    </div>
+    <div class="upload-zone" id="libraryDrop" onclick="uploadToLibrary()" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleLibraryDrop(event)">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px; color:var(--subtle);">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+      <div class="upload-title">Add to Library</div>
+      <div class="upload-sub">Drop files here or click to upload</div>
+      <div class="file-status" id="libraryStatus">No documents yet</div>
+    </div>
+  </aside>
+
+  <div class="center">
+    <div id="deskPanel" class="desk-panel">
+      <div class="desk-search">
+        <input type="text" id="globalSearch" placeholder="Search all packets…" oninput="globalSearch(this.value)">
+        <div id="searchResults" class="search-results"></div>
+      </div>
+      <div class="desk-grid">
+        <div class="desk-card">
+          <h3>Open Items</h3>
+          <label class="todo"><input type="checkbox"> Leak in 4B — plumber scheduled</label>
+          <label class="todo"><input type="checkbox"> HPD violation — deadline Friday</label>
+          <label class="todo"><input type="checkbox"> Lease renewal due — Unit 7A</label>
+          <label class="todo"><input type="checkbox"> Elevator inspection next week</label>
+        </div>
+      </div>
+    </div>
+    <h1 class="ask-title" id="askTitle">Manager’s Desk</h1>
+    <p class="ask-sub" id="askSub">Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.</p>
+    <div class="tab-upload" id="tabDrop" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleTabDrop(event)" onclick="uploadForTab()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+      <span id="tabUploadLabel">Drop a file or click to upload</span>
+    </div>
+    <p class="tab-upload-note" id="tabUploadNote">Upload a document here to ask questions about it. This is separate from the Library.</p>
+    <p class="disclaimer">
+      ⌘ Enter to send.
+    </p>
+  </div>
+</div>
+
+<div class="input-bar">
+  <div class="input-wrap">
+    <input class="chat-input" id="chatInput" placeholder="Ask about the manager’s desk documents..." onkeydown="if(event.key==='Enter')send()">
+    <button class="icon-btn" onclick="send()" title="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+    </button>
+    <button class="icon-btn close-btn" onclick="document.getElementById('chatInput').value=''" title="Clear">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+  <div class="samples" id="samples"></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-mode="desk" onclick="setMode(this, 'Manager’s Desk', 'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.')">
+    <svg viewBox="0 0 24 24"><path d="M3 9h18v10H3zM3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M8 13h8"/></svg>
+    Manager’s Desk
+  </button>
+  <button class="nav-btn" data-mode="lease" onclick="setMode(this, 'Lease & Rules', 'Lease agreements, house rules, and occupancy guidelines.')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+    Lease & Rules
+  </button>
+  <button class="nav-btn" data-mode="applications" onclick="setMode(this, 'Rental Applications', 'Application forms, screening criteria, approval process, and required documents.')">
+    <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    Rental Applications
+  </button>
+  <button class="nav-btn" data-mode="arrears" onclick="setMode(this, 'Rent Collection & Arrears', 'Rent collection status, arrears tracking, payment plans, and collection notices.')">
+    <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Rent Collection & Arrears
+  </button>
+  <button class="nav-btn" data-mode="legal" onclick="setMode(this, 'Legal Check', 'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.')">
+    <svg viewBox="0 0 24 24"><path d="M12 3v18M3 9h18M7 21h10"/></svg>
+    Legal Check
+  </button>
+  <button class="nav-btn" data-mode="budgeting" onclick="setMode(this, 'Budget & Rent Roll', 'Operating budgets, rent roll, reserve funds, capital projects, and financial reports. Capital projects.')">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 9h6v6H9z"/></svg>
+    Budget & Rent Roll
+  </button>
+  <button class="nav-btn" data-mode="it" onclick="setMode(this, 'Virtual IT Help', 'Take a screenshot of the problem and ask for help with software, portals, or building systems.')">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01"/><path d="M9 11l3 3 3-3"/></svg>
+    Virtual IT Help
+  </button>
+  <button class="nav-btn" data-mode="contracts" onclick="setMode(this, 'Misc Contracts', 'Vendor agreements, service contracts, and miscellaneous legal documents.')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+    Misc Contracts
+  </button>
+  <button class="nav-btn" data-mode="staff" onclick="setMode(this, 'Staff Schedule', 'Staffing schedules, responsibilities, and contact information.')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Staff Schedule
+  </button>
+  <button class="nav-btn" data-mode="vendors" onclick="setMode(this, 'Vendors & Invoices', 'Vendor list, invoices, payment status, and service agreements.')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+    Vendors & Invoices
+  </button>
+  <button class="nav-btn" data-mode="plumbing" onclick="setMode(this, 'Plumbing', 'Water systems, maintenance history, vendor contracts, and incident reports.')">
+    <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M8 8l8 8M16 8l-8 8"/></svg>
+    Plumbing
+  </button>
+  <button class="nav-btn" data-mode="electric" onclick="setMode(this, 'Electric', 'Electrical systems, panels, generators, and related maintenance records.')">
+    <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Electric
+  </button>
+  <button class="nav-btn" data-mode="mechanical" onclick="setMode(this, 'Mechanical & Elevators', 'HVAC, boilers, elevators machinery, inspection dates, and mechanical room docs. Preventive maintenance schedule based on maintenance contracts.')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.9 4.9l2.8 2.8m8.6 8.6l2.8 2.8M4.9 19.1l2.8-2.8m8.6-8.6l2.8-2.8"/></svg>
+    Mechanical & Elevators
+  </button>
+  <button class="nav-btn" data-mode="records" onclick="setMode(this, 'Building Records & Compliance', 'Certificates of occupancy, permits, inspection reports, violations, and official building documents. Annual Compliance Calendar: NYC deadlines.')">
+    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    Building Records & Compliance
+  </button>
+  <button class="nav-btn" data-mode="emergency" onclick="setMode(this, 'Emergency Prep', 'Ask what to do in a fire, flood, medical emergency, power outage, or other building incidents.')">
+    <svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Emergency Prep
+  </button>
+</nav>
+
+<script>
+let uploadedFiles = {};
+let currentMode = 'Manager’s Desk';
+
+let libraryFiles = [];
+let tabFiles = {};
+
+function handleLibraryDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const file = files[0].name;
+    if (!libraryFiles.includes(file)) libraryFiles.push(file);
+    const status = document.getElementById('libraryStatus');
+    status.innerHTML = libraryFiles.map(f => `<div class="file-item"><span>${f}</span><span style="color:var(--subtle)">library</span></div>`).join('');
+  }
+}
+
+function handleTabDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const file = files[0].name;
+    if (!tabFiles[currentMode]) tabFiles[currentMode] = [];
+    if (!tabFiles[currentMode].includes(file)) tabFiles[currentMode].push(file);
+    document.getElementById('tabUploadLabel').textContent = `Uploaded: ${file}`;
+    document.getElementById('tabUploadNote').textContent = `Ask questions about this ${file}. Separate from Library.`;
+  }
+}
+
+function uploadToLibrary() {
+  const samples = ['Lease.pdf', 'Budget.xlsx', 'Compliance.pdf', 'Contract.docx'];
+  const file = samples[Math.floor(Math.random() * samples.length)];
+  if (!libraryFiles.includes(file)) libraryFiles.push(file);
+  const status = document.getElementById('libraryStatus');
+  status.innerHTML = libraryFiles.map(f => `<div class="file-item"><span>${f}</span><span style="color:var(--subtle)">library</span></div>`).join('');
+}
+
+function uploadForTab() {
+  const samples = ['Inquiry.pdf', 'Form.pdf', 'Notice.docx', 'Screenshot.png'];
+  const file = samples[Math.floor(Math.random() * samples.length)];
+  if (!tabFiles[currentMode]) tabFiles[currentMode] = [];
+  if (!tabFiles[currentMode].includes(file)) tabFiles[currentMode].push(file);
+  document.getElementById('tabUploadLabel').textContent = `Uploaded: ${file}`;
+  document.getElementById('tabUploadNote').textContent = `Ask questions about this ${file}. Separate from Library.`;
+}
+
+const samples = {
+  'Emergency Prep': [
+    'What to do in a fire?',
+    'Who to call for a flood?',
+    'Power outage procedure?'
+  ],
+  'Legal Check': [
+    'Are we compliant with Local Law 97?',
+    'What does the bylaws say about sublets?',
+    'Any open legal disputes?'
+  ],
+  'Budget & Rent Roll': [
+    'Capital projects',
+    'What’s the reserve fund balance?',
+    'Compare last year vs this year'
+  ],
+  'Plumbing': [
+    'Recent leak history?',
+    'When was the riser replaced?',
+    'Vendor contract status?'
+  ],
+  'Electric': [
+    'Generator last tested?',
+    'Any open electrical violations?',
+    'Panel upgrade status?'
+  ],
+  'Mechanical & Elevators': [
+    'Preventive maintenance schedule based on maintenance contracts',
+    'Elevator inspection due date?',
+    'HVAC filter schedule?'
+  ],
+  'Building Records & Compliance': [
+    'Annual Compliance Calendar: NYC deadlines',
+    'Certificate of occupancy on file?',
+    'Open permits or violations?'
+  ],
+  'Staff Schedule': [
+    'Who is on duty tonight?',
+    'Weekend coverage?',
+    'Manager contact info?'
+  ],
+  'Vendors & Invoices': [
+    'Open invoices?',
+    'Vendor payment status?',
+    'Service agreement terms?'
+  ],
+  'Lease & Rules': [
+    'Pet policy?',
+    'Alteration rules?',
+    'Noise complaint process?'
+  ],
+  'Rental Applications': [
+    'What documents are required?',
+    'Application fee and process?',
+    'Typical approval timeline?'
+  ],
+  'Rent Collection & Arrears': [
+    'Who is behind on rent?',
+    'Payment plan options?',
+    'Collection notice template?'
+  ],
+  'Misc Contracts': [
+    'Expiring vendor contracts?',
+    'Cleaning contract terms?',
+    'Insurance renewal date?'
+  ],
+  'Virtual IT Help': [
+    'How do I fix this error?',
+    'Portal won’t load — screenshot attached',
+    'Help with Yardi login issue'
+  ],
+  'Manager’s Desk': [
+    'Open work orders?',
+    'Pending board items?',
+    'Today’s priorities?'
+  ]
+};
+
+const libraryText = {
+  'Manager’s Desk': 'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.',
+  'Lease & Rules': 'Lease agreements, house rules, occupancy guidelines, and resident policies.',
+  'Rental Applications': 'Application forms, screening criteria, approval process, and required documents.',
+  'Rent Collection & Arrears': 'Rent collection status, arrears tracking, payment plans, and collection notices.',
+  'Legal Check': 'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.',
+  'Budget & Rent Roll': 'Operating budgets, rent roll, reserve funds, capital projects, and financial reports. Capital projects.',
+  'Staff Schedule': 'Staffing schedules, responsibilities, contact lists, and coverage plans.',
+  'Vendors & Invoices': 'Vendor list, invoices, payment status, and service agreements.',
+  'Plumbing': 'Water systems, leak history, riser work, vendor contracts, and incident reports.',
+  'Electric': 'Electrical systems, panels, generators, violations, and maintenance records.',
+  'Mechanical & Elevators': 'HVAC, boilers, elevators machinery, inspection dates, and mechanical room docs. Preventive maintenance schedule based on maintenance contracts.',
+  'Building Records & Compliance': 'Certificates of occupancy, permits, inspection reports, violations, and official building documents. Annual Compliance Calendar: NYC deadlines.',
+  'Emergency Prep': 'Fire safety plans, flood procedures, medical emergency contacts, power outage steps, and incident protocols.',
+  'Misc Contracts': 'Vendor agreements, service contracts, insurance, and miscellaneous legal documents.',
+  'Virtual IT Help': 'Take a screenshot of the problem and ask for help with software, portals, or building systems.'
+};
+
+let recentQuestions = [];
+
+function globalSearch(q) {
+  const results = document.getElementById('searchResults');
+  if (!q.trim()) { results.innerHTML = ''; return; }
+  const matches = [];
+  Object.keys(samples).forEach(tab => {
+    samples[tab].forEach(s => {
+      if (s.toLowerCase().includes(q.toLowerCase())) {
+        matches.push(`<div class="recent-item" onclick="openSample('${tab}', '${s.replace(/'/g, "\\'")}')">${tab}: ${s}</div>`);
+      }
+    });
+  });
+  results.innerHTML = matches.length ? matches.slice(0, 5).join('') : '<div>No matches</div>';
+}
+
+function openSample(tab, text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+  document.getElementById('searchResults').innerHTML = '';
+  document.getElementById('globalSearch').value = '';
+}
+
+function addRecent(q) {
+  if (!q) return;
+  recentQuestions.unshift(q);
+  if (recentQuestions.length > 5) recentQuestions.pop();
+  renderRecent();
+}
+
+function renderRecent() {
+  const el = document.getElementById('recentQuestions');
+  if (!el) return;
+  el.innerHTML = recentQuestions.length 
+    ? recentQuestions.map(q => `<div class="recent-item" onclick="document.getElementById('chatInput').value='${q.replace(/'/g, "\\'")}';document.getElementById('chatInput').focus();">${q}</div>`).join('')
+    : '<div style="color:var(--dim)">No recent questions</div>';
+}
+
+function exportAnswer() {
+  const text = document.getElementById('chatInput').value || 'No question entered';
+  const blob = new Blob([`The Rental Box — Manager’s Desk\n\nQuestion: ${text}\n\nAnswer: (demo — connect your documents for real answers)`], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rental-box-answer.txt';
+  a.click();
+}
+
+function emailAnswer() {
+  const text = document.getElementById('chatInput').value || '';
+  window.location.href = `mailto:?subject=Rental Box Question&body=${encodeURIComponent(text)}`;
+}
+
+function setMode(btn, mode, desc) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = mode;
+  document.getElementById('askTitle').textContent = mode;
+  document.getElementById('askSub').textContent = libraryText[mode] || desc;
+  document.getElementById('chatInput').placeholder = `Ask about the ${mode.toLowerCase()} documents...`;
+  const deskPanel = document.getElementById('deskPanel');
+  if (deskPanel) deskPanel.classList.toggle('active', mode === 'Manager’s Desk');
+  const tabUploadLabel = document.getElementById('tabUploadLabel');
+  const tabUploadNote = document.getElementById('tabUploadNote');
+  if (tabUploadLabel) tabUploadLabel.textContent = 'Drop a file or click to upload';
+  if (tabUploadNote) tabUploadNote.textContent = 'Upload a document here to ask questions about it. This is separate from the Library.';
+  renderSamples(mode);
+}
+
+function renderSamples(mode) {
+  const container = document.getElementById('samples');
+  const qs = samples[mode] || [];
+  container.innerHTML = qs.map(q => 
+    `<span class="sample-q" onclick="askSample(this)">${q}</span>`
+  ).join('');
+}
+
+function askSample(el) {
+  document.getElementById('chatInput').value = el.textContent;
+  document.getElementById('chatInput').focus();
+}
+
+// Paste screenshot hint for Virtual IT Help
+document.addEventListener('paste', (e) => {
+  if (currentMode === 'Virtual IT Help') {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          document.getElementById('tabUploadLabel').textContent = 'Screenshot pasted — ready to ask';
+          break;
+        }
+      }
+    }
+  }
+});
+
+// Initialize samples and library text on load
+renderSamples('Manager’s Desk');
+document.getElementById('askTitle').textContent = 'Manager’s Desk';
+document.getElementById('askSub').textContent = libraryText['Manager’s Desk'];
+document.getElementById('deskPanel').classList.add('active');
+document.getElementById('tabUploadLabel').textContent = 'Drop a file or click to upload';
+currentMode = 'Manager’s Desk';
+renderRecent();
+
+function send() {
+  const input = document.getElementById('chatInput');
+  if (!input.value.trim()) return;
+  addRecent(input.value.trim());
+  alert('Demo only — documents stay local.\n\nQuestion: ' + input.value);
+  input.value = '';
+}
+
+function toggleSection(el) {
+  el.classList.toggle('open');
+  const sub = el.nextElementSibling;
+  if (sub && (sub.classList.contains('menu-sub') || sub.classList.contains('menu-sub-sub'))) {
+    sub.classList.toggle('open');
+  }
+}
+
+function toggleMenu() {
+  document.getElementById('sideMenu').classList.toggle('open');
+  document.getElementById('menuOverlay').classList.toggle('open');
+}
+
+function toggleLibrary() {
+  const lib = document.getElementById('library');
+  lib.style.display = lib.style.display === 'none' ? 'flex' : 'none';
+}
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('clock').textContent = `${h}:${m} ${ampm}`;
+}
+setInterval(updateClock, 30000);
+updateClock();
+
+// Cmd/Ctrl + Enter
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') send();
+});
+</script>
+
+</body>
+</html>
