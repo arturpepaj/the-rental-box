@@ -56,11 +56,18 @@ header {
 .sq-btn:hover { background: var(--surface-2); }
 .header-center { flex: 1; min-width: 0; }
 .brand { font-size: 11px; letter-spacing: 1px; font-weight: 700; color: var(--subtle); }
-.property-name {
-  font-size: 14px; font-weight: 600; background: none; border: none; color: var(--ink);
-  padding: 2px 0; width: 100%; max-width: 360px; outline: none; border-bottom: 1px dashed transparent;
+.property-field {
+  display: flex; align-items: center; gap: 6px; max-width: 360px; margin-top: 3px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px;
+  color: var(--subtle); cursor: text;
 }
-.property-name:hover, .property-name:focus { border-bottom-color: var(--line-strong); }
+.property-field:hover { border-color: var(--line-strong); }
+.property-field:focus-within { border-color: var(--ask); color: var(--ask); }
+.property-name {
+  flex: 1; min-width: 0; font-size: 14px; font-weight: 600; background: none; border: none; color: var(--ink);
+  padding: 0; outline: none; font-family: inherit;
+}
+.property-name::placeholder { color: var(--subtle); font-weight: 500; }
 .header-time { text-align: right; font-variant-numeric: tabular-nums; }
 .header-time .label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--subtle); }
 .header-time .clock { font-size: 13px; font-weight: 700; }
@@ -241,7 +248,7 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -270,6 +277,7 @@ header {
 }
 @media (max-width: 640px) {
   .header-time { display: none; }
+  .bottom-nav { grid-template-columns: repeat(4, 1fr); }
   .nav-btn { min-height: 52px; padding: 6px 2px; font-size: 9.5px; font-weight: 700; gap: 3px; overflow-wrap: anywhere; hyphens: auto; }
   .nav-btn svg { width: 16px; height: 16px; }
 }
@@ -278,17 +286,17 @@ header {
 }
 </style>
 
-<div class="side-menu" id="sideMenu" aria-label="Portals">
+<div class="side-menu" id="sideMenu" aria-label="Quick Links">
   <div class="side-menu-header">
-    <span>Portals</span>
+    <span>Quick Links</span>
     <button class="close-menu" id="closeMenu" aria-label="Close menu">✕</button>
   </div>
   <div class="side-menu-links">
-    <button class="menu-section">Company Logins</button>
+    <button class="menu-section">Your Systems</button>
     <div class="menu-sub">
       <a href="https://www.yardi.com" target="_blank" rel="noopener">Yardi Voyager</a>
       <a href="https://www.rentcafe.com" target="_blank" rel="noopener">RentCafe</a>
-      <a href="https://www.yardi.com" target="_blank" rel="noopener">Yardi Virtuoso</a>
+      <a href="https://www.yardi.com/?p=366450" target="_blank" rel="noopener">Yardi Virtuoso</a>
       <a href="https://www.eliseai.com" target="_blank" rel="noopener">EliseAI</a>
       <a href="https://www.onsite.com" target="_blank" rel="noopener">OnSite</a>
       <a href="https://www.buildinglink.com" target="_blank" rel="noopener">BuildingLink</a>
@@ -371,12 +379,15 @@ header {
 <div class="overlay" id="overlay"></div>
 
 <header>
-  <button class="sq-btn" id="menuBtn" aria-label="Open portals menu">
+  <button class="sq-btn" id="menuBtn" aria-label="Open quick links">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
   <div class="header-center">
     <div class="brand">THE RENTAL BOX</div>
-    <input class="property-name" id="propertyName" value="Address, New York, NY" aria-label="Building address" maxlength="120">
+    <label class="property-field" for="propertyName">
+      <input class="property-name" id="propertyName" value="" placeholder="Type your building address" aria-label="Building address" maxlength="120" autocomplete="off">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    </label>
   </div>
   <div class="header-time">
     <div class="label">New York, NY</div>
@@ -460,27 +471,23 @@ const ICONS = {
   contracts: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M8.5 12h7"/><path d="M8 17.5c1.2-2 2.2-2 2.8-.2.5 1.6 1.5 1.2 2.4 0 .5-.7 1.1-.6 1.8.2"/>',
   staff: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14a6.5 6.5 0 013.5 6"/>',
   vendors: '<path d="M13.5 16.5V6H2.5v10.5H4M13.5 9.5h4l4 4v3H19M8 16.5h7"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
-  plumbing: '<path d="M12 3c3.5 4.5 6 7.8 6 11a6 6 0 01-12 0c0-3.2 2.5-6.5 6-11z"/><path d="M9 14.5a3 3 0 003 3"/>',
-  electric: '<path d="M13 2.5L4.5 13.5h7l-1 8 8.5-11h-7z"/>',
+  systems: '<path d="M8 3c2.3 3 4 5.2 4 7.3a4 4 0 01-8 0C4 8.2 5.7 6 8 3z"/><path d="M17 9l-3.5 6h4l-1.5 6 4.5-7.5h-4L18 9z"/>',
   mechanical: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 10l3-3 3 3M9 14l3 3 3-3"/>',
   records: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>'
 };
 const SECTIONS = [
-  { key:'desk', title:'Manager’s Desk', desc:'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.', samples:['What are today’s priorities?','Summarize the documents in the library','Fill this blank form for me'] },
+  { key:'desk', title:'Manager’s Desk', desc:'Ask what to do. Get step-by-step help from your building’s documents, including staff schedules and contacts. Upload a blank form and the Box will fill it.', samples:['What are today’s priorities?','Who is on duty tonight?','Summarize the documents in the library','Fill this blank form for me'] },
   { key:'lease', title:'Lease & Rules', desc:'Lease agreements, house rules, occupancy guidelines and resident policies.', samples:['What is the pet policy?','What are the alteration rules?','How do we handle a noise complaint?','How do we handle a reasonable accommodation request?'] },
-  { key:'applications', title:'Rental Applications', desc:'Application forms, screening criteria, approval process and required documents.', samples:['What documents are required?','What is the application fee and process?','Typical approval timeline?'] },
+  { key:'applications', title:'Rental Applications', desc:'Application forms, required documents and the application process. The Box checks if an application is complete. It does not approve or reject applicants.', samples:['Is this application complete?','What documents are required?','What is the application fee and process?'] },
   { key:'arrears', title:'Rent Collection & Arrears', desc:'Rent collection status, arrears tracking, payment plans and collection notices.', samples:['Who is behind on rent?','What payment plan options do we have?','Draft a rent reminder letter'] },
-  { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['Are we compliant with Local Law 97?','What do the bylaws say about sublets?','Any open legal disputes?'] },
-  { key:'budgeting', title:'Budget & Rent Roll', desc:'Operating budgets, rent roll, reserve funds, capital projects and financial reports.', samples:['List the capital projects','What is the reserve fund balance?','Compare last year vs this year'] },
-  { key:'it', title:'Virtual IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
-  { key:'contracts', title:'Misc Contracts', desc:'Vendor agreements, service contracts, insurance and other legal documents.', samples:['Which vendor contracts expire soon?','What are the cleaning contract terms?','When does insurance renew?'] },
-  { key:'staff', title:'Staff Schedule', desc:'Staffing schedules, responsibilities, contact lists and coverage plans.', samples:['Who is on duty tonight?','Who covers the weekend?','Manager contact info?'] },
-  { key:'vendors', title:'Vendors & Invoices', desc:'Vendor list, invoices, payment status and service agreements.', samples:['Which invoices are open?','Check this invoice against the contract','Check for duplicate invoices or payments','Vendor payment status?'] },
-  { key:'plumbing', title:'Plumbing', desc:'Water systems, leak history, riser work, vendor contracts and incident reports.', samples:['Recent leak history?','When was the riser replaced?','Plumbing contract status?'] },
-  { key:'electric', title:'Electric', desc:'Electrical systems, panels, generators, violations and maintenance records.', samples:['When was the generator last tested?','Any open electrical violations?','Panel upgrade status?'] },
+  { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['Is this notice to the tenant legal?','How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?'] },
+  { key:'budgeting', title:'Budget & Rent Roll', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports.', samples:['List the capital projects','What is the rent roll vacancy loss?','Compare last year vs this year'] },
+  { key:'vendors', title:'Vendors & Invoices', desc:'Vendor list, invoices, payment status, service contracts, insurance and other agreements.', samples:['Which invoices are open?','Check this invoice against the contract','Check for duplicate invoices or payments','Which vendor contracts expire soon?'] },
+  { key:'systems', title:'Building Systems', desc:'Plumbing and electric: water systems, leaks, risers, panels, generators, violations and maintenance records.', samples:['Recent leak history?','When was the generator last tested?','Any open plumbing or electrical violations?'] },
   { key:'mechanical', title:'Mechanical & Elevators', desc:'HVAC, boilers, elevator machinery, inspection dates and mechanical room documents. Preventive maintenance from your service contracts.', samples:['Build a preventive maintenance schedule from our contracts','When is the elevator inspection due?','HVAC filter schedule?'] },
-  { key:'records', title:'Building Records & Compliance', desc:'Certificates of occupancy, permits, inspection reports, violations and official building documents. Annual NYC compliance calendar.', samples:['Make an annual NYC compliance calendar','Is the certificate of occupancy on file?','Open permits or violations?'] },
+  { key:'records', title:'Compliance & Violations', desc:'Certificates of occupancy, permits, inspection reports, violations and official building documents. Annual NYC compliance calendar.', samples:['Make an annual NYC compliance calendar','Are we compliant with Local Law 97?','Open permits or violations?'] },
+  { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
   { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident.', samples:['What do we do in a fire?','Who do we call for a flood?','Power outage procedure?'] }
 ];
 const byKey = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
@@ -770,6 +777,7 @@ How to answer:
 - To fill a blank form: list each field with the value to enter. Mark anything not found as [needed].
 - Legal, fair housing and Housing Court questions: give practical guidance, and say when to call counsel. You are not a lawyer.
 - Life-safety emergencies (fire, gas smell, flood with electrical risk, medical): first line is "Call 911 now."
+- Rental applications: only check if an application is complete against the listed requirements. Never recommend approving or rejecting an applicant, and never judge applicants by protected traits.
 - Never invent numbers, dates, names or document contents.
 ${context.text ? `\nDocuments${context.partial ? ' (only the most relevant parts were included because there is a lot of text)' : ''}:\n${context.text}` : '\nNo documents have been uploaded yet. Answer with general guidance and suggest which documents to upload.'}`;
 }
