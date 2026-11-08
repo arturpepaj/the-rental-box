@@ -136,6 +136,10 @@ header {
 .drop:hover, .drop.dragover { background: var(--ask-hover); border-color: rgba(26,23,20,0.55); }
 .drop-title { font-size: 15px; font-weight: 700; }
 .drop-sub { font-size: 12px; color: var(--on-ask); opacity: 0.75; }
+.library.drag-on, .center.drag-on { box-shadow: inset 0 0 0 2px var(--ask); background: rgba(196,160,126,0.07); }
+.library.drag-on .drop { background: var(--ask-hover); transform: scale(1.02); }
+.center.drag-on .tab-drop { border-color: var(--ask); color: var(--ink); background: rgba(196,160,126,0.12); }
+.drop { transition: background 0.15s, transform 0.15s; }
 .lib-toggle { background: var(--ask); border-color: var(--ask); color: var(--on-ask); }
 .lib-toggle:hover { background: var(--ask-hover); }
 .lib-status { font-size: 12px; color: var(--subtle); line-height: 1.5; }
@@ -415,7 +419,7 @@ header {
     <button class="drop" id="libDrop" type="button">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6.5 9.5L12 4l5.5 5.5M4 16v2.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V16"/></svg>
       <span class="drop-title">Add to Library</span>
-      <span class="drop-sub">Drop files or click. PDF, Word, Excel, CSV, text, photos.</span>
+      <span class="drop-sub">Drop files anywhere on this panel, or click. PDF, Word, Excel, CSV, text, photos.</span>
     </button>
     <input type="file" id="libInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
     <div class="lib-status" id="libStatus">Loading your library…</div>
@@ -432,7 +436,7 @@ header {
           <p class="ask-sub" id="askSub"></p>
           <button class="tab-drop" id="tabDrop" type="button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-            <span id="tabDropLabel">Drop a file or click to upload</span>
+            <span id="tabDropLabel">Drop a file here or click to upload</span>
           </button>
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
@@ -638,7 +642,7 @@ function renderLibrary() {
   const ok = library.filter(d => d.status === 'ok');
   const total = ok.reduce((n, d) => n + d.text.length, 0);
   if (!library.length) setLibStatus(libCol ? 'No documents yet. Add leases, budgets, contracts and reports.' : 'No documents yet. Documents you add stay for this visit only. Sign in to claude.ai to save them.', !libCol);
-  else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · about ${Math.round(total / 1000)}k characters` + (libCol ? ' · saved' : ' · this visit only'));
+  else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · ${total < 1000 ? 'under 1k' : 'about ' + Math.round(total / 1000) + 'k'} characters` + (libCol ? ' · saved' : ' · this visit only'));
   $('libSearch').hidden = library.length < 6;
   const f = libFilter.toLowerCase();
   $('libList').innerHTML = library.filter(d => !f || d.name.toLowerCase().includes(f)).map(d => {
@@ -939,19 +943,28 @@ $('chatInput').addEventListener('input', autosize);
 $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
 
 /* ---------- Upload wiring ---------- */
-function wireDrop(el, input, handler) {
+function wireClick(el, input, handler) {
   el.addEventListener('click', () => input.click());
-  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
-  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
-  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('dragover'); if (e.dataTransfer.files.length) handler([...e.dataTransfer.files]); });
   input.addEventListener('change', () => { if (input.files.length) handler([...input.files]); input.value = ''; });
 }
-wireDrop($('libDrop'), $('libInput'), addToLibrary);
-wireDrop($('tabDrop'), $('tabInput'), addToTab);
+wireClick($('libDrop'), $('libInput'), addToLibrary);
+wireClick($('tabDrop'), $('tabInput'), addToTab);
 $('attachBtn').addEventListener('click', () => $('tabInput').click());
-const center = document.querySelector('.center');
-center.addEventListener('dragover', e => e.preventDefault());
-center.addEventListener('drop', e => { if (e.target.closest('#tabDrop')) return; e.preventDefault(); if (e.dataTransfer.files.length) addToTab([...e.dataTransfer.files]); });
+const hasFiles = e => !!(e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files'));
+function dropZone(el, handler) {
+  let depth = 0;
+  const off = () => { depth = 0; el.classList.remove('drag-on'); };
+  el.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; el.classList.add('drag-on'); });
+  el.addEventListener('dragover', e => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; el.classList.add('drag-on'); });
+  el.addEventListener('dragleave', () => { depth--; if (depth <= 0) off(); });
+  el.addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); e.stopPropagation(); off(); if (e.dataTransfer.files.length) handler([...e.dataTransfer.files]); });
+}
+dropZone($('library'), addToLibrary);
+dropZone(document.querySelector('.center'), addToTab);
+// Files dropped anywhere else do nothing (the browser would otherwise open them).
+document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+document.addEventListener('drop', e => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener('dragend', () => document.querySelectorAll('.drag-on').forEach(x => x.classList.remove('drag-on')));
 
 /* ---------- Menus ---------- */
 function closeAll() { $('sideMenu').classList.remove('open'); $('library').classList.remove('open'); $('overlay').classList.remove('open'); }
