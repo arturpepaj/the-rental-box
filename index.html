@@ -495,11 +495,11 @@ header {
           <button class="icon-btn" id="attachBtn" title="Attach a file to this section" aria-label="Attach a file">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.4 11.1l-9.2 9.2a6 6 0 01-8.5-8.5l9.2-9.2a4 4 0 015.7 5.7l-9.2 9.2a2 2 0 01-2.8-2.8l8.5-8.5"/></svg>
           </button>
-          <button class="oracle-btn" id="mailBtn" hidden title="Oracle: searches Outlook, Teams, SharePoint and Slack" aria-label="Oracle search across Outlook, Teams, SharePoint and Slack" aria-pressed="true">
+          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about the manager’s desk documents…" aria-label="Your question"></textarea>
+          <button class="oracle-btn" id="mailBtn" hidden title="Oracle: searches Outlook, Teams, SharePoint and Slack. Answers take longer." aria-label="Oracle search across Outlook, Teams, SharePoint and Slack" aria-pressed="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M19 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".85"/><path d="M5 15.5l.6 1.6 1.6.6-1.6.6L5 20l-.6-1.7-1.6-.6 1.6-.6z" opacity=".7"/></svg>
             <span class="oracle-label">Oracle</span>
           </button>
-          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about the manager’s desk documents…" aria-label="Your question"></textarea>
           <button class="icon-btn send" id="sendBtn" title="Send" aria-label="Send">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
@@ -1162,7 +1162,8 @@ function copyFor(code) {
     queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
   })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
 }
-function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = 'Answers can be wrong. Check the source document.'; f.classList.remove('warn'); }, 5000); }
+function footDefault() { return emailReady() ? '✦ Oracle is on: it searches Outlook, Teams, SharePoint and Slack, so answers take longer (often 1 to 2 minutes). Answers can be wrong. Check the source.' : 'Answers can be wrong. Check the source document.'; }
+function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = footDefault(); f.classList.remove('warn'); }, 5000); }
 
 /* ---------- Rendering answers ---------- */
 function inline(s) {
@@ -1251,12 +1252,13 @@ function setMailBtn() {
   const b = $('mailBtn');
   b.hidden = !(mcp && limits && limits.tools);
   b.setAttribute('aria-pressed', emailOn ? 'true' : 'false');
-  b.title = emailOn ? 'Oracle is on: searches Outlook, Teams, SharePoint and Slack' : 'Oracle is off: answers from the Library only';
+  const f = $('footNote'); if (!f.classList.contains('warn')) f.textContent = footDefault();
+  b.title = emailOn ? 'Oracle is on: searches Outlook, Teams, SharePoint and Slack. Answers take longer, often 1 to 2 minutes.' : 'Oracle is off: answers from the Library only';
 }
 $('mailBtn').addEventListener('click', () => {
   emailOn = !emailOn; setMailBtn();
   try { localStorage.setItem('rb-email', emailOn ? 'on' : 'off'); } catch (e) {}
-  showFootWarn(emailOn ? 'Oracle is on. Claude searches Outlook, Teams, SharePoint and Slack.' : 'Oracle is off. Claude answers from the Library only.');
+  showFootWarn(emailOn ? 'Oracle is on. Answers take longer, often 1 to 2 minutes.' : 'Oracle is off. Claude answers from the Library only.');
 });
 function setSendState() {
   const b = $('sendBtn');
