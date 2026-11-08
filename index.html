@@ -1,656 +1,291 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Artur’s Box</title>
+<title>The Rental Box</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* Layout: header / [library rail | ask column] / section grid. Deliberately dark, single theme. */
 :root {
+  color-scheme: dark;
   --paper: #0e0d0b;
   --ink: #f3eee6;
   --surface: #161411;
-  --surface-2: #1a1714;
+  --surface-2: #1d1a16;
   --line: #3d342c;
   --line-strong: #5c4c3e;
   --ask: #c4a07e;
-  --packet: #c4a07e;
-  --pine: #c4a07e;
-  --pine-hover: #e0c4a8;
-  --budgets: #d07a58;
-  --redflag: #c45a3a;
-  --danger: #c45a3a;
-  --warn: #e0b45a;
-  --minutes: #e0b45a;
+  --ask-hover: #e0c4a8;
+  --rust: #d07a58;
+  --danger: #e07a5f;
+  --ok: #8ea37a;
   --muted: #cfc6ba;
-  --subtle: #8d867c;
-  --rephrase: #e0c4a8;
-  --cloudbox: #8ea37a;
-  --dim: #8d867c;
+  --subtle: #9a9288;
+  --on-ask: #1a1714;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
+html, body { height: 100%; }
 body {
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: var(--sans);
   background: var(--paper);
   color: var(--ink);
-  height: 100dvh;
   overflow: hidden;
-}
-
-.side-menu {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 320px;
-  height: 100vh;
-  background: var(--surface);
-  border-right: 1px solid var(--line);
-  z-index: 200;
-  transform: translateX(-100%);
-  transition: transform 0.25s ease;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
-
-.side-menu.open {
-  transform: translateX(0);
-}
-
-.side-menu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.close-menu {
-  background: none;
-  border: none;
-  color: var(--ink);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-}
-
-.side-menu-links {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0;
-}
-
-.menu-section {
-  padding: 14px 20px;
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--ask);
-  cursor: pointer;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.menu-section::after { content: '▸'; font-size: 10px; }
-.menu-section.open::after { content: '▾'; }
-.menu-sub {
-  display: none;
-  background: var(--surface-2);
-}
-.menu-sub.open { display: block; }
-.menu-sub a {
-  display: block;
-  padding: 10px 20px 10px 32px;
-  color: var(--ink);
-  text-decoration: none;
-  font-size: 12px;
-  border-bottom: 1px solid var(--line);
-}
-.menu-sub-section {
-  padding: 10px 20px 10px 32px;
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 1px solid var(--line);
-}
-.menu-sub-section::after { content: ' ▸'; font-size: 9px; }
-.menu-sub-section.open::after { content: ' ▾'; }
-.menu-sub-sub {
-  display: none;
-  background: #111;
-}
-.menu-sub-sub.open { display: block; }
-.menu-sub-sub a {
-  padding-left: 48px !important;
-  font-size: 11px;
-}
-  display: block;
-  padding: 12px 20px;
-  color: var(--ink);
-  text-decoration: none;
-  font-size: 13px;
-  border-bottom: 1px solid var(--line);
-  transition: background 0.15s;
-}
-
-.side-menu-links a:hover {
-  background: var(--surface-2);
-  color: var(--ask);
-}
-
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 99;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-
-.menu-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-.accent-bar {
-  height: 3px;
-  background: var(--ask);
-}
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--ask); outline-offset: 2px; }
 
 /* Header */
 header {
-  display: flex;
-  align-items: center;
-  height: 64px;
-  padding: 0 16px;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 64px;
+  padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
   border-bottom: 1px solid var(--line);
   background: var(--surface);
-  gap: 12px;
-}
-
-.menu-btn {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.menu-btn:hover { background: var(--surface-2); }
-
-.header-center {
-  flex: 1;
-  min-width: 0;
-}
-
-.property-select {
-  font-size: 11px;
-  color: var(--subtle);
-  margin-bottom: 2px;
-}
-
-.property-name {
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.header-time {
-  text-align: center;
-  padding: 0 8px;
-  min-width: 80px;
-}
-
-.header-time .label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--subtle);
-}
-
-.header-time .dash {
-  font-size: 13px;
-  font-weight: 800;
-  margin: 2px 0;
-}
-
-.header-time .clock {
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.trial { color: var(--budgets); }
-.signin { color: var(--ask); cursor: pointer; }
-.copyright { color: var(--budgets); font-size: 11px; }
-
-/* Main layout */
-.main {
-  display: flex;
-  height: calc(100dvh - 67px - 258px - 70px);
-  overflow: hidden;
-}
-
-/* Left library panel */
-.library {
-  width: 320px;
-  border-right: 1px solid var(--line);
-  padding: 24px 20px;
-  overflow-y: auto;
-  background: var(--paper);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.library-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--subtle);
-  text-transform: uppercase;
-}
-
-.packet-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.packet-note {
-  font-size: 11px;
-  color: var(--subtle);
-  margin-top: 8px;
-  font-style: italic;
-}
-
-.upload-zone {
-  margin-top: auto;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  padding: 32px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.upload-zone.dragover, .tab-upload.dragover {
-  border-color: var(--ask);
-  background: rgba(196, 160, 126, 0.1);
-}
-  border-color: var(--line-strong);
-  background: rgba(255,255,255,0.02);
-}
-
-.upload-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.upload-sub {
-  font-size: 12px;
-  color: var(--subtle);
-  margin-bottom: 16px;
-}
-
-.file-status {
-  font-size: 12px;
-  color: var(--dim);
-}
-.last-updated {
-  font-size: 10px;
-  color: var(--subtle);
-  margin-top: 6px;
-}
-
-.file-list {
-  margin-top: 12px;
-  width: 100%;
-  text-align: left;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.file-item {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Center */
-.center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  text-align: center;
-  overflow-y: auto;
-}
-
-.ask-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 45px;
-  font-weight: 400;
-  letter-spacing: -0.5px;
-  margin-bottom: 20px;
-  color: var(--ink);
-}
-
-.desk-panel {
-  width: 100%;
-  max-width: 640px;
-  margin-bottom: 24px;
-  display: none;
-}
-.desk-panel.active { display: block; }
-.desk-search input {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 16px;
-  color: var(--ink);
-  font-size: 14px;
-  outline: none;
-}
-.desk-search input:focus { border-color: var(--line-strong); }
-.search-results {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: left;
-}
-.desk-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 16px 0;
-}
-.desk-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px;
-  text-align: left;
-}
-.desk-card h3 {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--subtle);
-  margin-bottom: 10px;
-}
-.contact {
-  font-size: 13px;
-  margin: 6px 0;
-  color: var(--ink);
-}
-.contact a { color: var(--ask); text-decoration: none; }
-.todo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin: 6px 0;
-  color: var(--ink);
-  cursor: pointer;
-}
-.recent-list { font-size: 13px; color: var(--muted); }
-.recent-item {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--line);
-  cursor: pointer;
-}
-.recent-item:hover { color: var(--ink); }
-.desk-actions { display: flex; gap: 10px; margin-top: 12px; }
-.desk-btn {
-  background: var(--ask);
-  color: #1a1714;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.desk-btn:hover { background: var(--pine-hover); }
-
-.tab-upload {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 16px auto;
-  padding: 12px 20px;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 13px;
-  max-width: 320px;
-  transition: border-color 0.15s, background 0.15s;
-}
-.tab-upload-note {
-  font-size: 11px;
-  color: var(--subtle);
-  margin-top: 6px;
-  max-width: 320px;
-}
-  border-color: var(--line-strong);
-  background: rgba(255,255,255,0.02);
-  color: var(--ink);
-}
-  font-size: 12px;
-  color: var(--subtle);
-  max-width: 480px;
-  line-height: 1.5;
-  margin-top: 16px;
-}
-
-.disclaimer {
-  font-size: 11.5px;
-  color: var(--subtle);
-  max-width: 520px;
-  line-height: 1.55;
-  margin-top: 12px;
-}
-
-.disclaimer a { color: var(--ask); text-decoration: none; }
-
-/* Input bar */
-.input-bar {
-  border-top: 1px solid var(--line);
-  background: var(--paper);
-  padding: 16px 20px 12px;
-}
-
-.input-wrap {
-  max-width: 640px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chat-input {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 14px 20px;
-  font-size: 14px;
-  color: var(--ink);
-  outline: none;
-  font-family: inherit;
-}
-
-.chat-input::placeholder { color: var(--subtle); }
-.chat-input:focus { border-color: var(--line-strong); }
-
-.icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
   flex-shrink: 0;
 }
-
-.icon-btn.close-btn {
-  background: #e8a090;
-  border-color: #e8a090;
-  color: #1a1714;
+.sq-btn {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); cursor: pointer; flex-shrink: 0;
 }
-.icon-btn.close-btn:hover {
-  background: #f0b0a0;
+.sq-btn:hover { background: var(--surface-2); }
+.header-center { flex: 1; min-width: 0; }
+.brand { font-size: 11px; letter-spacing: 1px; font-weight: 700; color: var(--subtle); }
+.property-name {
+  font-size: 14px; font-weight: 600; background: none; border: none; color: var(--ink);
+  padding: 2px 0; width: 100%; max-width: 360px; outline: none; border-bottom: 1px dashed transparent;
 }
+.property-name:hover, .property-name:focus { border-bottom-color: var(--line-strong); }
+.header-time { text-align: right; font-variant-numeric: tabular-nums; }
+.header-time .label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--subtle); }
+.header-time .clock { font-size: 13px; font-weight: 700; }
+.lib-toggle { display: none; }
 
-.samples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 10px;
-  max-width: 640px;
-  margin-left: auto;
-  margin-right: auto;
+/* Side menu (portals) */
+.side-menu {
+  position: fixed; top: 0; left: 0; bottom: 0; width: min(320px, 88vw);
+  background: var(--surface); border-right: 1px solid var(--line);
+  z-index: 200; transform: translateX(-100%); transition: transform 0.25s ease;
+  display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
 }
-
-.sample-q {
-  font-size: 12px;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+.side-menu.open { transform: translateX(0); }
+.side-menu-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 14px;
 }
-
-.sample-q:hover {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
-  color: var(--ink);
+.close-menu { background: none; border: none; color: var(--ink); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.side-menu-links { flex: 1; overflow-y: auto; padding: 12px 0; }
+.menu-section {
+  padding: 14px 20px; font-weight: 700; font-size: 13px; color: var(--ask); cursor: pointer;
+  border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;
+  background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left;
 }
+.menu-section::after { content: '▸'; font-size: 10px; }
+.menu-section.open::after { content: '▾'; }
+.menu-sub { display: none; background: var(--surface-2); }
+.menu-sub.open { display: block; }
+.menu-sub a { display: block; padding: 10px 20px 10px 32px; color: var(--ink); text-decoration: none; font-size: 12px; border-bottom: 1px solid var(--line); }
+.menu-sub a:hover { color: var(--ask); }
+.menu-sub-section {
+  padding: 10px 20px 10px 32px; font-weight: 600; font-size: 12px; color: var(--muted); cursor: pointer;
+  border: 0; border-bottom: 1px solid var(--line); background: none; width: 100%; text-align: left;
+}
+.menu-sub-section::after { content: ' ▸'; font-size: 9px; }
+.menu-sub-section.open::after { content: ' ▾'; }
+.menu-sub-sub { display: none; background: var(--paper); }
+.menu-sub-sub.open { display: block; }
+.menu-sub-sub a { padding-left: 48px; font-size: 11px; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.overlay.open { opacity: 1; pointer-events: auto; }
 
-/* Bottom nav */
+/* Main */
+.main { flex: 1; min-height: 0; display: flex; }
+
+/* Library */
+.library {
+  width: 320px; flex-shrink: 0; border-right: 1px solid var(--line);
+  padding: 20px; overflow-y: auto; background: var(--paper);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--subtle); text-transform: uppercase; }
+.lib-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lib-close { display: none; background: none; border: none; color: var(--ink); font-size: 18px; cursor: pointer; }
+.packet-title { font-size: 18px; font-weight: 600; margin-top: 4px; }
+.packet-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
+.drop {
+  border: 1px dashed var(--line-strong); border-radius: 12px; padding: 20px 16px; text-align: center;
+  cursor: pointer; background: none; color: var(--ink); width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.drop:hover, .drop.dragover { border-color: var(--ask); background: rgba(196,160,126,0.08); }
+.drop-title { font-size: 14px; font-weight: 600; }
+.drop-sub { font-size: 12px; color: var(--subtle); }
+.lib-status { font-size: 12px; color: var(--subtle); line-height: 1.5; }
+.lib-status.warn { color: var(--rust); }
+.lib-search {
+  width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 9px 12px; color: var(--ink); font-size: 13px; font-family: inherit; outline: none;
+}
+.lib-search:focus { border-color: var(--line-strong); }
+.file-list { display: flex; flex-direction: column; }
+.file-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--line);
+}
+.file-name { font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.file-meta { font-size: 11px; color: var(--subtle); grid-column: 1; }
+.file-meta.err { color: var(--danger); }
+.file-meta.busy { color: var(--ask); }
+.file-del {
+  grid-row: 1 / span 2; grid-column: 2; background: none; border: 1px solid transparent; color: var(--subtle);
+  font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 8px; white-space: nowrap;
+}
+.file-del:hover { color: var(--ink); border-color: var(--line); }
+.file-del.confirm { color: var(--on-ask); background: var(--danger); }
+
+/* Ask column */
+.center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.thread {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding-block: 28px 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.thread-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 12px; }
+.ask-title { font-family: var(--serif); font-size: clamp(34px, 6vw, 48px); font-weight: 400; letter-spacing: -0.5px; text-wrap: balance; }
+.ask-sub { font-size: 14px; color: var(--muted); max-width: 520px; line-height: 1.55; text-wrap: balance; }
+.hero.compact { flex-direction: row; justify-content: space-between; text-align: left; padding-top: 0; }
+.hero.compact .ask-title { font-size: 26px; }
+.hero.compact .ask-sub, .hero.compact .tab-drop, .hero.compact .tab-note { display: none; }
+.new-chat { display: none; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 16px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.hero.compact .new-chat { display: inline-block; }
+.new-chat:hover { color: var(--ink); border-color: var(--line-strong); }
+.tab-drop {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border: 1px dashed var(--line-strong); border-radius: 12px;
+  cursor: pointer; color: var(--muted); font-size: 13px; max-width: 360px; width: 100%;
+  background: none; transition: border-color 0.15s, background 0.15s;
+}
+.tab-drop:hover, .tab-drop.dragover { border-color: var(--ask); background: rgba(196,160,126,0.08); color: var(--ink); }
+.tab-note { font-size: 11.5px; color: var(--subtle); max-width: 360px; line-height: 1.5; }
+.msg { display: flex; flex-direction: column; gap: 6px; }
+.msg.user { align-items: flex-end; }
+.bubble { font-size: 14.5px; line-height: 1.6; max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.msg.user .bubble { background: var(--surface-2); border: 1px solid var(--line); padding: 10px 14px; border-radius: 16px 16px 4px 16px; max-width: 85%; white-space: pre-wrap; }
+.msg.bot .bubble { color: var(--ink); }
+.who { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--subtle); text-transform: uppercase; }
+.msg.bot .who { color: var(--ask); }
+.bubble p { margin: 0 0 10px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble h3, .bubble h4 { font-size: 15px; font-weight: 700; margin: 14px 0 6px; color: var(--ask-hover); }
+.bubble ul, .bubble ol { margin: 0 0 10px 22px; }
+.bubble li { margin: 3px 0; }
+.bubble code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+.bubble pre { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow-x: auto; margin: 0 0 10px; }
+.bubble pre code { background: none; padding: 0; }
+.bubble .tbl { overflow-x: auto; margin: 0 0 10px; }
+.bubble table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.bubble th, .bubble td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+.bubble th { background: var(--surface-2); }
+.bubble strong { color: var(--ask-hover); font-weight: 600; }
+.msg-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.mini { background: none; border: 1px solid var(--line); color: var(--muted); font-size: 11.5px; padding: 4px 10px; border-radius: 12px; cursor: pointer; }
+.mini:hover { color: var(--ink); border-color: var(--line-strong); }
+.used { font-size: 11px; color: var(--subtle); }
+.err-line { font-size: 13px; color: var(--danger); }
+.thinking { color: var(--subtle); font-style: italic; }
+
+/* Composer */
+.composer {
+  border-top: 1px solid var(--line); background: var(--paper); flex-shrink: 0;
+  padding-block: 12px 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.composer-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 6px 4px 10px; max-width: 100%; }
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.chip.busy span { color: var(--ask); }
+.chip.err span { color: var(--danger); }
+.chip button { background: none; border: none; color: var(--subtle); cursor: pointer; font-size: 13px; padding: 0 4px; }
+.chip button:hover { color: var(--ink); }
+.input-wrap { display: flex; align-items: flex-end; gap: 8px; }
+.chat-input {
+  flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px;
+  padding: 12px 18px; font-size: 14.5px; color: var(--ink); outline: none; font-family: inherit;
+  resize: none; max-height: 160px; line-height: 1.45;
+}
+.chat-input::placeholder { color: var(--subtle); }
+.chat-input:focus { border-color: var(--line-strong); }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn.send { background: var(--ask); border-color: var(--ask); color: var(--on-ask); }
+.icon-btn.send:hover { background: var(--ask-hover); }
+.icon-btn.send:disabled { opacity: 0.45; cursor: default; }
+.icon-btn.stop { background: var(--danger); border-color: var(--danger); color: var(--on-ask); }
+.samples { display: flex; flex-wrap: wrap; gap: 6px; }
+.sample-q { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+.sample-q:hover { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
+.foot-note { font-size: 11px; color: var(--subtle); text-align: center; }
+.foot-note.warn { color: var(--rust); }
+
+/* Sections */
 .bottom-nav {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  height: 258px;
-  background: var(--line);
-  border-top: 1px solid var(--line);
-  position: sticky;
-  bottom: 0;
-  z-index: 30;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
+  background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
 .nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 2px;
-  border: none;
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  transition: background 0.15s;
-  height: 85px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 4px; border: none; background: var(--surface); color: var(--ink); cursor: pointer;
+  font-size: 11.5px; font-weight: 700; min-height: 56px; text-align: center; line-height: 1.2;
 }
-
 .nav-btn:hover { background: var(--surface-2); }
-.nav-btn.active {
-  color: #1a1714;
-  font-weight: 900;
-  box-shadow: inset 0 0 0 3px rgba(0,0,0,0.25);
-}
-.nav-btn[data-mode="emergency"].active { background: #e8d5c0; }
-.nav-btn[data-mode="legal"].active { background: #d4c4b0; }
-.nav-btn[data-mode="budgeting"].active { background: #c4b5a0; }
-.nav-btn[data-mode="plumbing"].active { background: #b8a898; }
-.nav-btn[data-mode="electric"].active { background: #c8b8a8; }
-.nav-btn[data-mode="mechanical"].active { background: #d0c0b0; }
-.nav-btn[data-mode="staff"].active { background: #c0b0a0; }
-.nav-btn[data-mode="lease"].active { background: #b8a890; }
-.nav-btn[data-mode="applications"].active { background: #c8b8a8; }
-.nav-btn[data-mode="arrears"].active { background: #d07a58; }
-.nav-btn[data-mode="contracts"].active { background: #c8b8a0; }
-.nav-btn[data-mode="it"].active { background: #a8b8c8; }
-.nav-btn[data-mode="desk"].active { background: #d4c4b8; }
-.nav-btn[data-mode="records"].active { background: #a89078; }
-.nav-btn[data-mode="vendors"].active { background: #b8a898; }
+.nav-btn.active { background: var(--ask); color: var(--on-ask); }
+.nav-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.nav-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rust); display: none; }
+.nav-btn.has-chat .dot { display: block; }
 
-.nav-btn svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Responsive */
 @media (max-width: 900px) {
-  .library { display: none; }
-  .bottom-nav { grid-template-columns: repeat(5, 1fr); height: 258px; }
-  .ask-title { font-size: 36px; }
+  .library {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
+    border-right: 0; border-left: 1px solid var(--line);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .library.open { transform: translateX(0); }
+  .lib-toggle { display: grid; }
+  .lib-close { display: block; }
 }
-
 @media (max-width: 640px) {
   .header-time { display: none; }
-  .bottom-nav { font-size: 9px; }
+  .bottom-nav { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .bottom-nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex: 0 0 auto; width: 96px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-menu, .library, .overlay { transition: none; }
 }
 </style>
-</head>
-<body>
 
-<div class="side-menu" id="sideMenu">
+<div class="side-menu" id="sideMenu" aria-label="Portals">
   <div class="side-menu-header">
     <span>Portals</span>
-    <button class="close-menu" onclick="toggleMenu()">✕</button>
+    <button class="close-menu" id="closeMenu" aria-label="Close menu">✕</button>
   </div>
   <div class="side-menu-links">
-    <div class="menu-section" onclick="toggleSection(this)">Company Logins</div>
+    <button class="menu-section">Company Logins</button>
     <div class="menu-sub">
       <a href="https://www.yardi.com" target="_blank" rel="noopener">Yardi Voyager</a>
       <a href="https://www.rentcafe.com" target="_blank" rel="noopener">RentCafe</a>
@@ -661,9 +296,9 @@ header {
       <a href="https://www.clickpay.com" target="_blank" rel="noopener">ClickPay</a>
       <a href="https://www.gozego.com" target="_blank" rel="noopener">Zego</a>
     </div>
-    <div class="menu-section" onclick="toggleSection(this)">New York State</div>
+    <button class="menu-section">New York State</button>
     <div class="menu-sub">
-      <div class="menu-sub-section" onclick="event.stopPropagation(); toggleSection(this)">NEW YORK CITY</div>
+      <button class="menu-sub-section">NEW YORK CITY</button>
       <div class="menu-sub-sub">
         <a href="https://housingconnect.nyc.gov" target="_blank" rel="noopener">NYC Housing Connect</a>
         <a href="https://hpdonline.nyc.gov" target="_blank" rel="noopener">HPD Online</a>
@@ -676,11 +311,11 @@ header {
         <a href="https://portal.311.nyc.gov" target="_blank" rel="noopener">NYC 311</a>
         <a href="https://www.nyc.gov/finance" target="_blank" rel="noopener">NYC Department of Finance</a>
         <a href="https://a836-acris.nyc.gov" target="_blank" rel="noopener">ACRIS</a>
-        <a href="https://www.nyc.gov/dep" target="_blank" rel="noopener">DEP Water & Sewer</a>
+        <a href="https://www.nyc.gov/dep" target="_blank" rel="noopener">DEP Water &amp; Sewer</a>
         <a href="https://www.nyc.gov/cchr" target="_blank" rel="noopener">NYC Commission on Human Rights</a>
         <a href="https://www.coned.com" target="_blank" rel="noopener">Con Edison</a>
       </div>
-      <div class="menu-sub-section" onclick="event.stopPropagation(); toggleSection(this)">WESTCHESTER</div>
+      <button class="menu-sub-section">WESTCHESTER</button>
       <div class="menu-sub-sub">
         <a href="https://www.westchestergov.com" target="_blank" rel="noopener">Westchester County</a>
         <a href="https://humanrights.westchestergov.com" target="_blank" rel="noopener">Westchester Human Rights Commission</a>
@@ -691,7 +326,7 @@ header {
         <a href="https://www.coned.com" target="_blank" rel="noopener">Con Edison</a>
         <a href="https://www.nyseg.com" target="_blank" rel="noopener">NYSEG</a>
       </div>
-      <a href="https://hcr.ny.gov" target="_blank" rel="noopener">NYS Homes & Community Renewal / DHCR</a>
+      <a href="https://hcr.ny.gov" target="_blank" rel="noopener">NYS Homes &amp; Community Renewal / DHCR</a>
       <a href="https://rentconnect.hcr.ny.gov" target="_blank" rel="noopener">DHCR Rent Connect</a>
       <a href="https://dhr.ny.gov" target="_blank" rel="noopener">NYS Division of Human Rights</a>
       <a href="https://ag.ny.gov" target="_blank" rel="noopener">NYS Attorney General, Tenants’ Rights</a>
@@ -700,7 +335,7 @@ header {
       <a href="https://iapps.courts.state.ny.us/nyscef" target="_blank" rel="noopener">NYSCEF</a>
       <a href="https://www.nyserda.ny.gov" target="_blank" rel="noopener">NYSERDA</a>
     </div>
-    <div class="menu-section" onclick="toggleSection(this)">New Jersey</div>
+    <button class="menu-section">New Jersey</button>
     <div class="menu-sub">
       <a href="https://www.nj.gov/dca" target="_blank" rel="noopener">NJ Dept. of Community Affairs</a>
       <a href="https://www.njcivilrights.gov" target="_blank" rel="noopener">NJ Division on Civil Rights</a>
@@ -708,21 +343,21 @@ header {
       <a href="https://www.nj.gov/treasury/taxation" target="_blank" rel="noopener">NJ Division of Taxation</a>
       <a href="https://www.nj.gov/dep" target="_blank" rel="noopener">NJ Dept. of Environmental Protection</a>
       <a href="https://www.jerseycitynj.gov" target="_blank" rel="noopener">Jersey City</a>
-      <a href="https://www.pseg.com" target="_blank" rel="noopener">PSE&G</a>
+      <a href="https://www.pseg.com" target="_blank" rel="noopener">PSE&amp;G</a>
     </div>
-    <div class="menu-section" onclick="toggleSection(this)">Connecticut</div>
+    <button class="menu-section">Connecticut</button>
     <div class="menu-sub">
       <a href="https://www.jud.ct.gov" target="_blank" rel="noopener">CT Judicial Branch, Housing Court</a>
       <a href="https://portal.ct.gov/chro" target="_blank" rel="noopener">CT Commission on Human Rights and Opportunities</a>
       <a href="https://portal.ct.gov/doh" target="_blank" rel="noopener">CT Department of Housing</a>
       <a href="https://business.ct.gov" target="_blank" rel="noopener">CT Business Portal</a>
-      <a href="https://portal.ct.gov/deep" target="_blank" rel="noopener">CT Dept. of Energy & Environmental Protection</a>
+      <a href="https://portal.ct.gov/deep" target="_blank" rel="noopener">CT Dept. of Energy &amp; Environmental Protection</a>
       <a href="https://www.eversource.com" target="_blank" rel="noopener">Eversource</a>
       <a href="https://www.uinet.com" target="_blank" rel="noopener">United Illuminating</a>
     </div>
-    <div class="menu-section" onclick="toggleSection(this)">Pennsylvania (Philadelphia)</div>
+    <button class="menu-section">Pennsylvania (Philadelphia)</button>
     <div class="menu-sub">
-      <a href="https://www.phila.gov/li" target="_blank" rel="noopener">Philadelphia Licenses & Inspections</a>
+      <a href="https://www.phila.gov/li" target="_blank" rel="noopener">Philadelphia Licenses &amp; Inspections</a>
       <a href="https://eclipse.phila.gov" target="_blank" rel="noopener">Philadelphia eCLIPSE</a>
       <a href="https://property.phila.gov" target="_blank" rel="noopener">Philadelphia Property Search</a>
       <a href="https://water.phila.gov" target="_blank" rel="noopener">Philadelphia Water Department</a>
@@ -734,448 +369,621 @@ header {
     </div>
   </div>
 </div>
-<div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+<div class="overlay" id="overlay"></div>
 
 <header>
-  <button class="menu-btn" onclick="toggleMenu()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M4 6h16M4 12h16M4 18h16"/>
-    </svg>
+  <button class="sq-btn" id="menuBtn" aria-label="Open portals menu">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
   <div class="header-center">
-    <div class="property-select">THE RENTAL BOX</div>
-    <div class="property-name">Address, New York, NY</div>
+    <div class="brand">THE RENTAL BOX</div>
+    <input class="property-name" id="propertyName" value="Address, New York, NY" aria-label="Building address" maxlength="120">
   </div>
   <div class="header-time">
     <div class="label">New York, NY</div>
-    <div class="dash">—</div>
-    <div class="clock" id="clock">5:16 PM</div>
+    <div class="clock" id="clock">—</div>
   </div>
-  <div class="header-right">
-    <div class="copyright">© The Rental Box</div>
-  </div>
+  <button class="sq-btn lib-toggle" id="libToggle" aria-label="Open library">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5"/></svg>
+  </button>
 </header>
 
 <div class="main">
-  <aside class="library" id="library">
-    <div class="library-label">LIBRARY</div>
+  <aside class="library" id="library" aria-label="Library">
     <div>
+      <div class="lib-head">
+        <div class="eyebrow">Library</div>
+        <button class="lib-close" id="libClose" aria-label="Close library">✕</button>
+      </div>
       <div class="packet-title">Building Documents</div>
-      <p class="packet-desc">Permanent database of all building documents — leases, budgets, compliance records, contracts, and more.</p>
+      <p class="packet-desc">Leases, budgets, compliance records, contracts and more. Claude reads these for every question, in every section. Saved privately to your account.</p>
     </div>
-    <div class="upload-zone" id="libraryDrop" onclick="uploadToLibrary()" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleLibraryDrop(event)">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px; color:var(--subtle);">
-        <path d="M12 19V5M5 12l7-7 7 7"/>
-      </svg>
-      <div class="upload-title">Add to Library</div>
-      <div class="upload-sub">Drop files here or click to upload</div>
-      <div class="file-status" id="libraryStatus">No documents yet</div>
-    </div>
+    <button class="drop" id="libDrop" type="button">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--subtle)"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      <span class="drop-title">Add to Library</span>
+      <span class="drop-sub">Drop files or click. PDF, Word, Excel, CSV, text, photos.</span>
+    </button>
+    <input type="file" id="libInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
+    <div class="lib-status" id="libStatus">Loading your library…</div>
+    <input class="lib-search" id="libSearch" type="search" placeholder="Filter documents…" aria-label="Filter documents" hidden>
+    <div class="file-list" id="libList"></div>
   </aside>
 
   <div class="center">
-    <div id="deskPanel" class="desk-panel">
-      <div class="desk-search">
-        <input type="text" id="globalSearch" placeholder="Search all packets…" oninput="globalSearch(this.value)">
-        <div id="searchResults" class="search-results"></div>
-      </div>
-      <div class="desk-grid">
-        <div class="desk-card">
-          <h3>Open Items</h3>
-          <label class="todo"><input type="checkbox"> Leak in 4B — plumber scheduled</label>
-          <label class="todo"><input type="checkbox"> HPD violation — deadline Friday</label>
-          <label class="todo"><input type="checkbox"> Lease renewal due — Unit 7A</label>
-          <label class="todo"><input type="checkbox"> Elevator inspection next week</label>
+    <div class="thread" id="thread">
+      <div class="thread-inner" id="threadInner">
+        <div class="hero" id="hero">
+          <h1 class="ask-title" id="askTitle">Manager’s Desk</h1>
+          <button class="new-chat" id="newChat" type="button">New chat</button>
+          <p class="ask-sub" id="askSub"></p>
+          <button class="tab-drop" id="tabDrop" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <span id="tabDropLabel">Drop a file or click to upload</span>
+          </button>
+          <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
+        <div id="messages" class="thread-inner" style="max-width:none"></div>
       </div>
     </div>
-    <h1 class="ask-title" id="askTitle">Manager’s Desk</h1>
-    <p class="ask-sub" id="askSub">Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.</p>
-    <div class="tab-upload" id="tabDrop" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleTabDrop(event)" onclick="uploadForTab()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M12 19V5M5 12l7-7 7 7"/>
-      </svg>
-      <span id="tabUploadLabel">Drop a file or click to upload</span>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <div class="chips" id="chips"></div>
+        <div class="input-wrap">
+          <button class="icon-btn" id="attachBtn" title="Attach a file to this section" aria-label="Attach a file">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.4 11.1l-9.2 9.2a6 6 0 01-8.5-8.5l9.2-9.2a4 4 0 015.7 5.7l-9.2 9.2a2 2 0 01-2.8-2.8l8.5-8.5"/></svg>
+          </button>
+          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about the manager’s desk documents…" aria-label="Your question"></textarea>
+          <button class="icon-btn send" id="sendBtn" title="Send" aria-label="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+        <input type="file" id="tabInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
+        <div class="samples" id="samples"></div>
+        <div class="foot-note" id="footNote">Enter to send · Shift+Enter for a new line · Answers can be wrong, check the source document</div>
+      </div>
     </div>
-    <p class="tab-upload-note" id="tabUploadNote">Upload a document here to ask questions about it. This is separate from the Library.</p>
-    <p class="disclaimer">
-      ⌘ Enter to send.
-    </p>
   </div>
 </div>
 
-<div class="input-bar">
-  <div class="input-wrap">
-    <input class="chat-input" id="chatInput" placeholder="Ask about the manager’s desk documents..." onkeydown="if(event.key==='Enter')send()">
-    <button class="icon-btn" onclick="send()" title="Send">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 19V5M5 12l7-7 7 7"/>
-      </svg>
-    </button>
-    <button class="icon-btn close-btn" onclick="document.getElementById('chatInput').value=''" title="Clear">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 6L6 18M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-  <div class="samples" id="samples"></div>
-</div>
-
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-mode="desk" onclick="setMode(this, 'Manager’s Desk', 'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.')">
-    <svg viewBox="0 0 24 24"><path d="M3 9h18v10H3zM3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M8 13h8"/></svg>
-    Manager’s Desk
-  </button>
-  <button class="nav-btn" data-mode="lease" onclick="setMode(this, 'Lease & Rules', 'Lease agreements, house rules, and occupancy guidelines.')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-    Lease & Rules
-  </button>
-  <button class="nav-btn" data-mode="applications" onclick="setMode(this, 'Rental Applications', 'Application forms, screening criteria, approval process, and required documents.')">
-    <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
-    Rental Applications
-  </button>
-  <button class="nav-btn" data-mode="arrears" onclick="setMode(this, 'Rent Collection & Arrears', 'Rent collection status, arrears tracking, payment plans, and collection notices.')">
-    <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-    Rent Collection & Arrears
-  </button>
-  <button class="nav-btn" data-mode="legal" onclick="setMode(this, 'Legal Check', 'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.')">
-    <svg viewBox="0 0 24 24"><path d="M12 3v18M3 9h18M7 21h10"/></svg>
-    Legal Check
-  </button>
-  <button class="nav-btn" data-mode="budgeting" onclick="setMode(this, 'Budget & Rent Roll', 'Operating budgets, rent roll, reserve funds, capital projects, and financial reports. Capital projects.')">
-    <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 9h6v6H9z"/></svg>
-    Budget & Rent Roll
-  </button>
-  <button class="nav-btn" data-mode="it" onclick="setMode(this, 'Virtual IT Help', 'Take a screenshot of the problem and ask for help with software, portals, or building systems.')">
-    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01"/><path d="M9 11l3 3 3-3"/></svg>
-    Virtual IT Help
-  </button>
-  <button class="nav-btn" data-mode="contracts" onclick="setMode(this, 'Misc Contracts', 'Vendor agreements, service contracts, and miscellaneous legal documents.')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-    Misc Contracts
-  </button>
-  <button class="nav-btn" data-mode="staff" onclick="setMode(this, 'Staff Schedule', 'Staffing schedules, responsibilities, and contact information.')">
-    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-    Staff Schedule
-  </button>
-  <button class="nav-btn" data-mode="vendors" onclick="setMode(this, 'Vendors & Invoices', 'Vendor list, invoices, payment status, and service agreements.')">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-    Vendors & Invoices
-  </button>
-  <button class="nav-btn" data-mode="plumbing" onclick="setMode(this, 'Plumbing', 'Water systems, maintenance history, vendor contracts, and incident reports.')">
-    <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M8 8l8 8M16 8l-8 8"/></svg>
-    Plumbing
-  </button>
-  <button class="nav-btn" data-mode="electric" onclick="setMode(this, 'Electric', 'Electrical systems, panels, generators, and related maintenance records.')">
-    <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    Electric
-  </button>
-  <button class="nav-btn" data-mode="mechanical" onclick="setMode(this, 'Mechanical & Elevators', 'HVAC, boilers, elevators machinery, inspection dates, and mechanical room docs. Preventive maintenance schedule based on maintenance contracts.')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.9 4.9l2.8 2.8m8.6 8.6l2.8 2.8M4.9 19.1l2.8-2.8m8.6-8.6l2.8-2.8"/></svg>
-    Mechanical & Elevators
-  </button>
-  <button class="nav-btn" data-mode="records" onclick="setMode(this, 'Building Records & Compliance', 'Certificates of occupancy, permits, inspection reports, violations, and official building documents. Annual Compliance Calendar: NYC deadlines.')">
-    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-    Building Records & Compliance
-  </button>
-  <button class="nav-btn" data-mode="emergency" onclick="setMode(this, 'Emergency Prep', 'Ask what to do in a fire, flood, medical emergency, power outage, or other building incidents.')">
-    <svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    Emergency Prep
-  </button>
-</nav>
+<nav class="bottom-nav" id="nav" aria-label="Sections"></nav>
 
 <script>
-let uploadedFiles = {};
-let currentMode = 'Manager’s Desk';
-
-let libraryFiles = [];
-let tabFiles = {};
-
-function handleLibraryDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('dragover');
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    const file = files[0].name;
-    if (!libraryFiles.includes(file)) libraryFiles.push(file);
-    const status = document.getElementById('libraryStatus');
-    status.innerHTML = libraryFiles.map(f => `<div class="file-item"><span>${f}</span><span style="color:var(--subtle)">library</span></div>`).join('');
-  }
-}
-
-function handleTabDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('dragover');
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    const file = files[0].name;
-    if (!tabFiles[currentMode]) tabFiles[currentMode] = [];
-    if (!tabFiles[currentMode].includes(file)) tabFiles[currentMode].push(file);
-    document.getElementById('tabUploadLabel').textContent = `Uploaded: ${file}`;
-    document.getElementById('tabUploadNote').textContent = `Ask questions about this ${file}. Separate from Library.`;
-  }
-}
-
-function uploadToLibrary() {
-  const samples = ['Lease.pdf', 'Budget.xlsx', 'Compliance.pdf', 'Contract.docx'];
-  const file = samples[Math.floor(Math.random() * samples.length)];
-  if (!libraryFiles.includes(file)) libraryFiles.push(file);
-  const status = document.getElementById('libraryStatus');
-  status.innerHTML = libraryFiles.map(f => `<div class="file-item"><span>${f}</span><span style="color:var(--subtle)">library</span></div>`).join('');
-}
-
-function uploadForTab() {
-  const samples = ['Inquiry.pdf', 'Form.pdf', 'Notice.docx', 'Screenshot.png'];
-  const file = samples[Math.floor(Math.random() * samples.length)];
-  if (!tabFiles[currentMode]) tabFiles[currentMode] = [];
-  if (!tabFiles[currentMode].includes(file)) tabFiles[currentMode].push(file);
-  document.getElementById('tabUploadLabel').textContent = `Uploaded: ${file}`;
-  document.getElementById('tabUploadNote').textContent = `Ask questions about this ${file}. Separate from Library.`;
-}
-
-const samples = {
-  'Emergency Prep': [
-    'What to do in a fire?',
-    'Who to call for a flood?',
-    'Power outage procedure?'
-  ],
-  'Legal Check': [
-    'Are we compliant with Local Law 97?',
-    'What does the bylaws say about sublets?',
-    'Any open legal disputes?'
-  ],
-  'Budget & Rent Roll': [
-    'Capital projects',
-    'What’s the reserve fund balance?',
-    'Compare last year vs this year'
-  ],
-  'Plumbing': [
-    'Recent leak history?',
-    'When was the riser replaced?',
-    'Vendor contract status?'
-  ],
-  'Electric': [
-    'Generator last tested?',
-    'Any open electrical violations?',
-    'Panel upgrade status?'
-  ],
-  'Mechanical & Elevators': [
-    'Preventive maintenance schedule based on maintenance contracts',
-    'Elevator inspection due date?',
-    'HVAC filter schedule?'
-  ],
-  'Building Records & Compliance': [
-    'Annual Compliance Calendar: NYC deadlines',
-    'Certificate of occupancy on file?',
-    'Open permits or violations?'
-  ],
-  'Staff Schedule': [
-    'Who is on duty tonight?',
-    'Weekend coverage?',
-    'Manager contact info?'
-  ],
-  'Vendors & Invoices': [
-    'Open invoices?',
-    'Vendor payment status?',
-    'Service agreement terms?'
-  ],
-  'Lease & Rules': [
-    'Pet policy?',
-    'Alteration rules?',
-    'Noise complaint process?'
-  ],
-  'Rental Applications': [
-    'What documents are required?',
-    'Application fee and process?',
-    'Typical approval timeline?'
-  ],
-  'Rent Collection & Arrears': [
-    'Who is behind on rent?',
-    'Payment plan options?',
-    'Collection notice template?'
-  ],
-  'Misc Contracts': [
-    'Expiring vendor contracts?',
-    'Cleaning contract terms?',
-    'Insurance renewal date?'
-  ],
-  'Virtual IT Help': [
-    'How do I fix this error?',
-    'Portal won’t load — screenshot attached',
-    'Help with Yardi login issue'
-  ],
-  'Manager’s Desk': [
-    'Open work orders?',
-    'Pending board items?',
-    'Today’s priorities?'
-  ]
+/* ---------- Sections ---------- */
+const ICONS = {
+  desk: '<path d="M3 9h18v10H3zM3 9V5a2 2 0 012-2h14a2 2 0 012 2v4M8 13h8"/>',
+  lease: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+  applications: '<path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
+  arrears: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
+  legal: '<path d="M12 3v18M3 9h18M7 21h10"/>',
+  budgeting: '<path d="M3 3h18v18H3zM9 9h6v6H9z"/>',
+  it: '<path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 8v4M12 16h.01"/>',
+  contracts: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>',
+  staff: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>',
+  vendors: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+  plumbing: '<path d="M12 2.7c3 4 6 7.3 6 11.3a6 6 0 01-12 0c0-4 3-7.3 6-11.3z"/>',
+  electric: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+  mechanical: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.9 4.9l2.8 2.8m8.6 8.6l2.8 2.8M4.9 19.1l2.8-2.8m8.6-8.6l2.8-2.8"/>',
+  records: '<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>',
+  emergency: '<path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
 };
+const SECTIONS = [
+  { key:'desk', title:'Manager’s Desk', desc:'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.', samples:['What are today’s priorities?','Summarize the documents in the library','Fill this blank form for me'] },
+  { key:'lease', title:'Lease & Rules', desc:'Lease agreements, house rules, occupancy guidelines and resident policies.', samples:['What is the pet policy?','What are the alteration rules?','How do we handle a noise complaint?'] },
+  { key:'applications', title:'Rental Applications', desc:'Application forms, screening criteria, approval process and required documents.', samples:['What documents are required?','What is the application fee and process?','Typical approval timeline?'] },
+  { key:'arrears', title:'Rent Collection & Arrears', desc:'Rent collection status, arrears tracking, payment plans and collection notices.', samples:['Who is behind on rent?','What payment plan options do we have?','Draft a rent reminder letter'] },
+  { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['Are we compliant with Local Law 97?','What do the bylaws say about sublets?','Any open legal disputes?'] },
+  { key:'budgeting', title:'Budget & Rent Roll', desc:'Operating budgets, rent roll, reserve funds, capital projects and financial reports.', samples:['List the capital projects','What is the reserve fund balance?','Compare last year vs this year'] },
+  { key:'it', title:'Virtual IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
+  { key:'contracts', title:'Misc Contracts', desc:'Vendor agreements, service contracts, insurance and other legal documents.', samples:['Which vendor contracts expire soon?','What are the cleaning contract terms?','When does insurance renew?'] },
+  { key:'staff', title:'Staff Schedule', desc:'Staffing schedules, responsibilities, contact lists and coverage plans.', samples:['Who is on duty tonight?','Who covers the weekend?','Manager contact info?'] },
+  { key:'vendors', title:'Vendors & Invoices', desc:'Vendor list, invoices, payment status and service agreements.', samples:['Which invoices are open?','Check this invoice against the contract','Vendor payment status?'] },
+  { key:'plumbing', title:'Plumbing', desc:'Water systems, leak history, riser work, vendor contracts and incident reports.', samples:['Recent leak history?','When was the riser replaced?','Plumbing contract status?'] },
+  { key:'electric', title:'Electric', desc:'Electrical systems, panels, generators, violations and maintenance records.', samples:['When was the generator last tested?','Any open electrical violations?','Panel upgrade status?'] },
+  { key:'mechanical', title:'Mechanical & Elevators', desc:'HVAC, boilers, elevator machinery, inspection dates and mechanical room documents. Preventive maintenance from your service contracts.', samples:['Build a preventive maintenance schedule from our contracts','When is the elevator inspection due?','HVAC filter schedule?'] },
+  { key:'records', title:'Building Records & Compliance', desc:'Certificates of occupancy, permits, inspection reports, violations and official building documents. Annual NYC compliance calendar.', samples:['Make an annual NYC compliance calendar','Is the certificate of occupancy on file?','Open permits or violations?'] },
+  { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident.', samples:['What do we do in a fire?','Who do we call for a flood?','Power outage procedure?'] }
+];
+const byKey = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
 
-const libraryText = {
-  'Manager’s Desk': 'Ask what to do. Get step-by-step help from your building’s documents. Upload a blank form and the Box will fill it.',
-  'Lease & Rules': 'Lease agreements, house rules, occupancy guidelines, and resident policies.',
-  'Rental Applications': 'Application forms, screening criteria, approval process, and required documents.',
-  'Rent Collection & Arrears': 'Rent collection status, arrears tracking, payment plans, and collection notices.',
-  'Legal Check': 'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.',
-  'Budget & Rent Roll': 'Operating budgets, rent roll, reserve funds, capital projects, and financial reports. Capital projects.',
-  'Staff Schedule': 'Staffing schedules, responsibilities, contact lists, and coverage plans.',
-  'Vendors & Invoices': 'Vendor list, invoices, payment status, and service agreements.',
-  'Plumbing': 'Water systems, leak history, riser work, vendor contracts, and incident reports.',
-  'Electric': 'Electrical systems, panels, generators, violations, and maintenance records.',
-  'Mechanical & Elevators': 'HVAC, boilers, elevators machinery, inspection dates, and mechanical room docs. Preventive maintenance schedule based on maintenance contracts.',
-  'Building Records & Compliance': 'Certificates of occupancy, permits, inspection reports, violations, and official building documents. Annual Compliance Calendar: NYC deadlines.',
-  'Emergency Prep': 'Fire safety plans, flood procedures, medical emergency contacts, power outage steps, and incident protocols.',
-  'Misc Contracts': 'Vendor agreements, service contracts, insurance, and miscellaneous legal documents.',
-  'Virtual IT Help': 'Take a screenshot of the problem and ask for help with software, portals, or building systems.'
+/* ---------- State ---------- */
+let mode = 'desk';
+const threads = {};      // key -> [{role, content, used?}]
+const tabFiles = {};     // key -> [{id, name, kind:'text'|'image', text, blob, status, note}]
+let library = [];        // [{id, name, kind, size, added, text, status, note}]
+let libFilter = '';
+let sample = null, db = null, userCap = null, downloads = null, libCol = null;
+let limits = null;
+let busy = false, controller = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const fmtSize = b => b > 1048576 ? (b/1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b/1024)) + ' KB';
+
+/* ---------- Libraries for reading files (loaded only when needed) ---------- */
+const LIBS = {
+  pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  docx: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  xlsx: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 };
-
-let recentQuestions = [];
-
-function globalSearch(q) {
-  const results = document.getElementById('searchResults');
-  if (!q.trim()) { results.innerHTML = ''; return; }
-  const matches = [];
-  Object.keys(samples).forEach(tab => {
-    samples[tab].forEach(s => {
-      if (s.toLowerCase().includes(q.toLowerCase())) {
-        matches.push(`<div class="recent-item" onclick="openSample('${tab}', '${s.replace(/'/g, "\\'")}')">${tab}: ${s}</div>`);
-      }
-    });
+const loaded = {};
+function loadScript(src) {
+  if (!loaded[src]) loaded[src] = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load a reader for this file type.'));
+    document.head.appendChild(s);
   });
-  results.innerHTML = matches.length ? matches.slice(0, 5).join('') : '<div>No matches</div>';
+  return loaded[src];
 }
 
-function openSample(tab, text) {
-  document.getElementById('chatInput').value = text;
-  document.getElementById('chatInput').focus();
-  document.getElementById('searchResults').innerHTML = '';
-  document.getElementById('globalSearch').value = '';
+/* ---------- Reading files ---------- */
+const ext = n => (n.split('.').pop() || '').toLowerCase();
+const isImage = f => (f.type || '').startsWith('image/') || ['png','jpg','jpeg','gif','webp','heic'].includes(ext(f.name));
+
+async function transcribeImages(blobs, name) {
+  if (!sample) throw new Error('Claude is not available on this view, so images and scans cannot be read.');
+  const lim = limits && limits.images;
+  if (!lim) throw new Error('Image reading is not available on this view.');
+  const use = blobs.slice(0, lim.maxCount);
+  const r = await sample(
+    `These ${use.length} image(s) come from the document "${name}", uploaded by a residential building manager. ` +
+    `Transcribe ALL readable text exactly, in reading order. Keep tables as Markdown tables. ` +
+    `For photos, drawings or screenshots, also describe what is shown in 2-5 plain sentences (equipment, damage, error messages, labels, dates). ` +
+    `Write only the transcription and description.`,
+    { images: use, modelTier: 'default', cache: false }
+  );
+  let text = r.text.trim();
+  if (blobs.length > use.length) text += `\n\n[Note: only the first ${use.length} of ${blobs.length} pages were read.]`;
+  return { text, partial: blobs.length > use.length };
 }
 
-function addRecent(q) {
-  if (!q) return;
-  recentQuestions.unshift(q);
-  if (recentQuestions.length > 5) recentQuestions.pop();
-  renderRecent();
+async function readPdf(file) {
+  await loadScript(LIBS.pdf); await loadScript(LIBS.pdfWorker);
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  let out = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    out += `\n--- Page ${i} ---\n` + tc.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join('');
+  }
+  const letters = out.replace(/--- Page \d+ ---/g, '').replace(/\s/g, '').length;
+  if (letters >= 40 * pdf.numPages) return { text: out.trim() };
+  // Looks scanned: render pages and let Claude read them.
+  const max = Math.min(pdf.numPages, (limits && limits.images ? limits.images.maxCount : 0) || 0, 10);
+  if (!max) return { text: out.trim(), note: 'Scanned PDF, text could not be read here.' };
+  const blobs = [];
+  for (let i = 1; i <= pdf.numPages && blobs.length < max; i++) {
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale: 1.6 });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    blobs.push(await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82)));
+  }
+  const t = await transcribeImages(blobs, file.name);
+  const partial = pdf.numPages > blobs.length;
+  return { text: t.text + (partial ? `\n\n[Note: scanned PDF, only the first ${blobs.length} of ${pdf.numPages} pages were read.]` : ''), note: partial ? `Scan: ${blobs.length} of ${pdf.numPages} pages read` : 'Scanned, read by Claude' };
 }
 
-function renderRecent() {
-  const el = document.getElementById('recentQuestions');
-  if (!el) return;
-  el.innerHTML = recentQuestions.length 
-    ? recentQuestions.map(q => `<div class="recent-item" onclick="document.getElementById('chatInput').value='${q.replace(/'/g, "\\'")}';document.getElementById('chatInput').focus();">${q}</div>`).join('')
-    : '<div style="color:var(--dim)">No recent questions</div>';
+async function readFile(file) {
+  const e = ext(file.name);
+  if (isImage(file)) return { kind: 'image', blob: file };
+  if (e === 'pdf' || file.type === 'application/pdf') return readPdf(file);
+  if (e === 'docx') {
+    await loadScript(LIBS.docx);
+    const r = await window.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return { text: r.value.trim() };
+  }
+  if (e === 'xlsx' || e === 'xls') {
+    await loadScript(LIBS.xlsx);
+    const wb = window.XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
+    return { text: wb.SheetNames.map(n => `--- Sheet: ${n} ---\n` + window.XLSX.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false })).join('\n\n').trim() };
+  }
+  if (e === 'doc') throw new Error('Old .doc files cannot be read. Save it as .docx or PDF.');
+  const t = await file.text();
+  return { text: (e === 'html' || e === 'htm') ? t.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+\n/g, '\n') : t };
 }
 
-function exportAnswer() {
-  const text = document.getElementById('chatInput').value || 'No question entered';
-  const blob = new Blob([`The Rental Box — Manager’s Desk\n\nQuestion: ${text}\n\nAnswer: (demo — connect your documents for real answers)`], {type: 'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'rental-box-answer.txt';
-  a.click();
+/* ---------- Library storage (private to the signed-in viewer) ---------- */
+const CHUNK = 60000;
+async function saveLibDoc(d) {
+  if (!libCol) return;
+  const parts = [];
+  for (let i = 0; i < d.text.length; i += CHUNK) parts.push(d.text.slice(i, i + CHUNK));
+  for (let i = 0; i < parts.length; i++) await libCol.doc(`c_${d.id}_${i}`).set({ type: 'chunk', fid: d.id, n: i, text: parts[i] });
+  await libCol.doc(`m_${d.id}`).set({ type: 'meta', fid: d.id, name: d.name, size: d.size, added: d.added, chunks: parts.length, note: d.note || '' });
+}
+async function deleteLibDoc(d) {
+  if (!libCol) return;
+  await libCol.doc(`m_${d.id}`).delete();
+  for (let i = 0; i < (d.chunks || Math.ceil(d.text.length / CHUNK) || 1); i++) {
+    try { await libCol.doc(`c_${d.id}_${i}`).delete(); } catch (e) {}
+  }
+}
+async function loadLibrary() {
+  if (!libCol) return;
+  const timer = setTimeout(() => setLibStatus('Your library is taking a long time to load. Check your connection.', true), 10000);
+  try {
+    const snap = await libCol.where('type', '==', 'meta').get();
+    const metas = snap.docs.map(s => s.data()).filter(Boolean).sort((a, b) => (b.added || 0) - (a.added || 0));
+    const docs = await Promise.all(metas.map(async m => {
+      const chunks = await Promise.all(Array.from({ length: m.chunks || 0 }, (_, i) => libCol.doc(`c_${m.fid}_${i}`).get()));
+      const text = chunks.map(c => (c.data() || {}).text || '').join('');
+      return { id: m.fid, name: m.name, size: m.size, added: m.added, chunks: m.chunks, note: m.note, text, status: 'ok' };
+    }));
+    library = docs.concat(library.filter(d => d.status !== 'ok'));
+    clearTimeout(timer);
+    renderLibrary();
+  } catch (e) {
+    clearTimeout(timer);
+    setLibStatus('Could not load your saved documents. Reload the page to try again.', true);
+  }
 }
 
-function emailAnswer() {
-  const text = document.getElementById('chatInput').value || '';
-  window.location.href = `mailto:?subject=Rental Box Question&body=${encodeURIComponent(text)}`;
+/* ---------- Library UI ---------- */
+function setLibStatus(t, warn) { const el = $('libStatus'); el.textContent = t; el.classList.toggle('warn', !!warn); }
+function renderLibrary() {
+  const ok = library.filter(d => d.status === 'ok');
+  const total = ok.reduce((n, d) => n + d.text.length, 0);
+  if (!library.length) setLibStatus(libCol ? 'No documents yet. Add leases, budgets, contracts and reports.' : 'No documents yet. Documents you add stay for this visit only. Sign in to claude.ai to save them.', !libCol);
+  else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · about ${Math.round(total / 1000)}k characters` + (libCol ? ' · saved' : ' · this visit only'));
+  $('libSearch').hidden = library.length < 6;
+  const f = libFilter.toLowerCase();
+  $('libList').innerHTML = library.filter(d => !f || d.name.toLowerCase().includes(f)).map(d => {
+    const meta = d.status === 'busy' ? `<div class="file-meta busy">${esc(d.note || 'Reading…')}</div>`
+      : d.status === 'err' ? `<div class="file-meta err">${esc(d.note)}</div>`
+      : `<div class="file-meta">${fmtSize(d.size || 0)} · ${new Date(d.added).toLocaleDateString()}${d.note ? ' · ' + esc(d.note) : ''}</div>`;
+    return `<div class="file-item"><div class="file-name">${esc(d.name)}</div>${meta}${d.status === 'busy' ? '' : `<button class="file-del" data-id="${d.id}">Remove</button>`}</div>`;
+  }).join('');
 }
+$('libList').addEventListener('click', async e => {
+  const b = e.target.closest('.file-del'); if (!b) return;
+  const d = library.find(x => x.id === b.dataset.id); if (!d) return;
+  if (d.status === 'err') { library = library.filter(x => x !== d); renderLibrary(); return; }
+  if (!b.classList.contains('confirm')) {
+    b.classList.add('confirm'); b.textContent = 'Remove?';
+    setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = 'Remove'; } }, 3500);
+    return;
+  }
+  library = library.filter(x => x !== d); renderLibrary();
+  try { await deleteLibDoc(d); } catch (err) { setLibStatus('Could not remove it from your saved library. Reload and try again.', true); }
+});
+$('libSearch').addEventListener('input', e => { libFilter = e.target.value; renderLibrary(); });
 
-function setMode(btn, mode, desc) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentMode = mode;
-  document.getElementById('askTitle').textContent = mode;
-  document.getElementById('askSub').textContent = libraryText[mode] || desc;
-  document.getElementById('chatInput').placeholder = `Ask about the ${mode.toLowerCase()} documents...`;
-  const deskPanel = document.getElementById('deskPanel');
-  if (deskPanel) deskPanel.classList.toggle('active', mode === 'Manager’s Desk');
-  const tabUploadLabel = document.getElementById('tabUploadLabel');
-  const tabUploadNote = document.getElementById('tabUploadNote');
-  if (tabUploadLabel) tabUploadLabel.textContent = 'Drop a file or click to upload';
-  if (tabUploadNote) tabUploadNote.textContent = 'Upload a document here to ask questions about it. This is separate from the Library.';
-  renderSamples(mode);
-}
-
-function renderSamples(mode) {
-  const container = document.getElementById('samples');
-  const qs = samples[mode] || [];
-  container.innerHTML = qs.map(q => 
-    `<span class="sample-q" onclick="askSample(this)">${q}</span>`
-  ).join('');
-}
-
-function askSample(el) {
-  document.getElementById('chatInput').value = el.textContent;
-  document.getElementById('chatInput').focus();
-}
-
-// Paste screenshot hint for Virtual IT Help
-document.addEventListener('paste', (e) => {
-  if (currentMode === 'Virtual IT Help') {
-    const items = e.clipboardData?.items;
-    if (items) {
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          document.getElementById('tabUploadLabel').textContent = 'Screenshot pasted — ready to ask';
-          break;
-        }
+async function addToLibrary(files) {
+  for (const file of files) {
+    const d = { id: uid(), name: file.name, size: file.size, added: Date.now(), text: '', status: 'busy', note: 'Reading…' };
+    library.unshift(d); renderLibrary();
+    try {
+      if (file.size > 40 * 1048576) throw new Error('File is over 40 MB.');
+      const r = await readFile(file);
+      if (r.kind === 'image') { d.note = 'Claude is reading the image…'; renderLibrary(); const t = await transcribeImages([r.blob], file.name); d.text = t.text; d.note = 'Image, read by Claude'; }
+      else { d.text = r.text || ''; d.note = r.note || ''; }
+      if (!d.text.trim()) throw new Error('No readable text found.');
+      d.status = 'ok';
+      if (libCol) {
+        d.status = 'busy'; const keep = d.note; d.note = 'Saving…'; renderLibrary();
+        d.note = keep; d.status = 'ok';
+        try { await saveLibDoc(d); d.chunks = Math.ceil(d.text.length / CHUNK); }
+        catch (se) { d.note = 'Not saved (' + readErr(se).replace(/\.$/, '') + '). Usable this visit only.'; }
       }
+    } catch (err) {
+      d.status = 'err'; d.note = readErr(err);
     }
+    renderLibrary();
+  }
+}
+function readErr(err) {
+  if (err && err.code === 'quota_exceeded') return 'Library storage is full. Remove some documents.';
+  if (err && (err.code === 'permission_denied' || err.code === 'unauthenticated')) return 'Could not save. Sign in to claude.ai and reload.';
+  if (err && err.code && typeof err.code === 'string' && !/^(invalid|internal|unavailable)/.test(err.code) && copyFor(err.code) !== copyFor('x')) return copyFor(err.code);
+  return (err && err.message) ? err.message : 'Could not read this file.';
+}
+
+/* ---------- Section uploads (this section only, this visit) ---------- */
+async function addToTab(files) {
+  const key = mode;
+  tabFiles[key] = tabFiles[key] || [];
+  for (const file of files) {
+    const f = { id: uid(), name: file.name, kind: 'text', text: '', status: 'busy' };
+    tabFiles[key].push(f); renderChips();
+    try {
+      if (file.size > 40 * 1048576) throw new Error('File is over 40 MB.');
+      const r = await readFile(file);
+      if (r.kind === 'image') { f.kind = 'image'; f.blob = r.blob; }
+      else { f.text = r.text || ''; f.note = r.note; if (!f.text.trim()) throw new Error('No readable text found.'); }
+      f.status = 'ok';
+    } catch (err) { f.status = 'err'; f.note = readErr(err); }
+    renderChips();
+  }
+}
+function renderChips() {
+  const list = tabFiles[mode] || [];
+  $('chips').innerHTML = list.map(f => `<span class="chip ${f.status === 'busy' ? 'busy' : f.status === 'err' ? 'err' : ''}" title="${esc(f.note || f.name)}"><span>${f.kind === 'image' ? '🖼 ' : ''}${esc(f.name)}${f.status === 'busy' ? ' · reading…' : f.status === 'err' ? ' · ' + esc(f.note) : ''}</span><button data-id="${f.id}" aria-label="Remove ${esc(f.name)}">✕</button></span>`).join('');
+  $('tabDropLabel').textContent = list.length ? `${list.length} file${list.length > 1 ? 's' : ''} attached · add more` : 'Drop a file or click to upload';
+}
+$('chips').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  tabFiles[mode] = (tabFiles[mode] || []).filter(f => f.id !== b.dataset.id); renderChips();
+});
+document.addEventListener('paste', e => {
+  const items = e.clipboardData ? [...e.clipboardData.items] : [];
+  const imgs = items.filter(i => i.type.startsWith('image/')).map(i => i.getAsFile()).filter(Boolean);
+  if (!imgs.length) return;
+  e.preventDefault();
+  addToTab(imgs.map((b, i) => new File([b], `Screenshot ${new Date().toLocaleTimeString().replace(/:\d\d /, ' ')}${imgs.length > 1 ? ' ' + (i + 1) : ''}.png`, { type: b.type })));
+});
+
+/* ---------- Choosing which document text goes to Claude ---------- */
+const STOP = new Set('the and for are was were with that this from what when where which who whom how our your you have has had any all can will would should about into out not but its their them they there then than does did do is it of to in on at by an or as be we us a i'.split(' '));
+function terms(s) { return [...new Set(s.toLowerCase().match(/[a-z0-9][a-z0-9'\-]{2,}/g) || [])].filter(t => !STOP.has(t)); }
+function buildContext(question, budget) {
+  const sec = byKey[mode];
+  const tabDocs = (tabFiles[mode] || []).filter(f => f.status === 'ok' && f.kind === 'text').map(f => ({ name: f.name, text: f.text, where: 'Uploaded in this section' }));
+  const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
+  const all = tabDocs.concat(libDocs);
+  const used = [];
+  const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
+  const fullSize = all.reduce((n, d) => n + d.text.length + 120, 0);
+  if (fullSize <= budget) { all.forEach(d => used.push(d.name)); return { text: all.map(d => fmt(d, d.text)).join('\n\n'), used, partial: false }; }
+  // Too much text: section uploads go in whole (as far as they fit), library passages are ranked by match.
+  let left = budget, out = [];
+  for (const d of tabDocs) { const body = d.text.slice(0, Math.max(0, left - 200)); if (body.length < 200) break; out.push(fmt(d, body)); used.push(d.name); left -= body.length + 200; }
+  const q = terms(question + ' ' + sec.title + ' ' + sec.desc);
+  const qq = terms(question);
+  const passages = [];
+  libDocs.forEach((d, di) => {
+    const nameTerms = terms(d.name);
+    for (let i = 0, n = 0; i < d.text.length; i += 2500, n++) {
+      const t = d.text.slice(i, i + 2800), low = t.toLowerCase();
+      let score = 0;
+      for (const w of q) { let k = low.split(w).length - 1; if (k) score += (qq.includes(w) ? 3 : 1) * Math.min(k, 5); }
+      for (const w of nameTerms) if (q.includes(w)) score += 4;
+      if (n === 0) score += 0.5;
+      passages.push({ di, n, t, score });
+    }
+  });
+  passages.sort((a, b) => b.score - a.score);
+  const pick = [];
+  for (const p of passages) { if (p.t.length + 60 > left) continue; pick.push(p); left -= p.t.length + 60; if (left < 600) break; }
+  pick.sort((a, b) => a.di - b.di || a.n - b.n);
+  const grouped = {};
+  for (const p of pick) (grouped[p.di] = grouped[p.di] || []).push(`[excerpt ${p.n + 1}]\n${p.t}`);
+  for (const di of Object.keys(grouped)) { const d = libDocs[di]; out.push(fmt(d, grouped[di].join('\n…\n'))); used.push(d.name); }
+  return { text: out.join('\n\n'), used, partial: true };
+}
+
+/* ---------- Asking Claude ---------- */
+function instructions(context) {
+  const sec = byKey[mode];
+  const bld = $('propertyName').value.trim();
+  return `You are The Rental Box, an assistant for a residential property manager in New York.
+Building: ${bld || 'not given'}. Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
+Current section: ${sec.title}. ${sec.desc}
+
+How to answer:
+- Use the documents below first. After each fact taken from a document, name it in brackets, like [Lease - 4B.pdf].
+- If the documents do not answer the question, say so in one short line, then give general guidance and label it "General guidance".
+- Write plain, simple English. Short sentences. No jargon. The reader's first language is not English.
+- When asked what to do, give numbered steps. Put deadlines, amounts and phone numbers in bold.
+- To fill a blank form: list each field with the value to enter. Mark anything not found as [needed].
+- Legal, fair housing and Housing Court questions: give practical guidance, and say when to call counsel. You are not a lawyer.
+- Life-safety emergencies (fire, gas smell, flood with electrical risk, medical): first line is "Call 911 now."
+- Never invent numbers, dates, names or document contents.
+${context.text ? `\nDocuments${context.partial ? ' (only the most relevant parts were included because there is a lot of text)' : ''}:\n${context.text}` : '\nNo documents have been uploaded yet. Answer with general guidance and suggest which documents to upload.'}`;
+}
+
+async function send(textOverride) {
+  if (busy) return;
+  const input = $('chatInput');
+  const q = (textOverride || input.value).trim();
+  if (!q) return;
+  if (!sample) { showFootWarn('Claude is not available here. Open this page on claude.ai while signed in.'); return; }
+  const files = tabFiles[mode] || [];
+  if (files.some(f => f.status === 'busy')) { showFootWarn('Wait until your files finish reading.'); return; }
+  if (library.some(d => d.status === 'busy')) { showFootWarn('Wait until the library finishes reading.'); return; }
+  input.value = ''; autosize();
+  const key = mode;
+  const thread = threads[key] = threads[key] || [];
+  thread.push({ role: 'user', content: q });
+  const bot = { role: 'assistant', content: '', pending: true };
+  thread.push(bot);
+  render();
+
+  const maxBytes = (limits && limits.maxPromptBytes) || 150000;
+  const history = thread.slice(0, -2).filter(m => !m.error && m.content).slice(-6).map(m => ({ role: m.role, content: m.content.slice(0, 6000) }));
+  const histBytes = history.reduce((n, m) => n + m.content.length * 1.2, 0);
+  const budget = Math.max(4000, Math.floor((maxBytes - histBytes - 4000 - q.length * 2) / 1.15));
+  const ctx = buildContext(q, budget);
+  const images = files.filter(f => f.status === 'ok' && f.kind === 'image').map(f => f.blob);
+  const imgNote = images.length ? `\n\nThe user also attached ${images.length} image(s) (${files.filter(f => f.kind === 'image').map(f => f.name).join(', ')}). Look at them carefully.` : '';
+  const messages = history.concat([{ role: 'user', content: instructions(ctx) + imgNote + `\n\nQuestion: ${q}` }]);
+  bot.used = ctx.used;
+
+  busy = true; controller = new AbortController(); setSendState();
+  try {
+    const opts = { signal: controller.signal, cache: false, modelTier: 'default', onText: ({ text }) => { bot.content = text; bot.pending = false; renderLast(); } };
+    if (images.length && limits && limits.images) opts.images = images.slice(0, limits.images.maxCount);
+    const r = await sample(messages, opts);
+    bot.content = r.text; bot.pending = false;
+    if (r.truncated) bot.note = 'The answer was cut short. Ask for less at a time.';
+  } catch (e) {
+    bot.pending = false;
+    if (e && e.code === 'cancelled') { bot.note = 'Stopped.'; if (!bot.content) bot.content = e.text || ''; }
+    else { bot.error = copyFor(e && e.code); if (e && e.text) bot.content = e.text; }
+  } finally {
+    busy = false; controller = null; setSendState(); render();
+  }
+}
+function copyFor(code) {
+  return ({
+    not_granted: 'Claude access was not allowed for this page. Use the Permissions menu on the page to allow it.',
+    rate_limited: 'You reached a usage limit. Wait a little, then ask again.',
+    prompt_too_large: 'Too much text to send at once. Remove some attached files or ask a narrower question.',
+    session_expired: 'Your claude.ai session expired. Reload the page.',
+    sampling_disabled: 'Asking Claude from pages is turned off for your account.',
+    capability_disabled: 'Asking Claude from pages is turned off for your account.',
+    image_rejected: 'One of the images could not be read. Try a PNG or JPG.',
+    images_unavailable: 'Images cannot be sent from this view.',
+    refused: 'Claude could not answer this one. Try asking another way.',
+    empty_completion: 'Claude returned an empty answer. Ask again.',
+    queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
+  })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
+}
+function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = 'Enter to send · Shift+Enter for a new line · Answers can be wrong, check the source document'; f.classList.remove('warn'); }, 5000); }
+
+/* ---------- Rendering answers ---------- */
+function inline(s) {
+  return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+}
+function md(src) {
+  const lines = esc(src).split('\n'); let html = '', i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^```/.test(l)) { let code = []; i++; while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]); i++; html += `<pre><code>${code.join('\n')}</code></pre>`; continue; }
+    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1])) {
+      const row = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()));
+      let h = `<div class="tbl"><table><thead><tr>${row(l).map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>`; i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) h += `<tr>${row(lines[i++]).map(c => `<td>${c}</td>`).join('')}</tr>`;
+      html += h + '</tbody></table></div>'; continue;
+    }
+    const hm = l.match(/^#{1,4}\s+(.*)/); if (hm) { html += `<h3>${inline(hm[1])}</h3>`; i++; continue; }
+    if (/^\s*[-*•]\s+/.test(l)) { let h = '<ul>'; while (i < lines.length && /^\s*[-*•]\s+/.test(lines[i])) h += `<li>${inline(lines[i++].replace(/^\s*[-*•]\s+/, ''))}</li>`; html += h + '</ul>'; continue; }
+    if (/^\s*\d+[.)]\s+/.test(l)) { let h = '<ol>'; while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) h += `<li>${inline(lines[i++].replace(/^\s*\d+[.)]\s+/, ''))}</li>`; html += h + '</ol>'; continue; }
+    if (!l.trim()) { i++; continue; }
+    let p = []; while (i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|\s*[-*•]\s+|\s*\d+[.)]\s+|\s*\|)/.test(lines[i])) p.push(inline(lines[i++]));
+    if (p.length) html += `<p>${p.join('<br>')}</p>`; else { html += `<p>${inline(l)}</p>`; i++; }
+  }
+  return html;
+}
+function msgHtml(m, idx) {
+  if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`;
+  let body = m.pending ? '<span class="thinking">Reading your documents…</span>' : md(m.content);
+  let foot = '';
+  if (m.error) foot += `<div class="err-line">${esc(m.error)}</div>`;
+  if (m.note) foot += `<div class="used">${esc(m.note)}</div>`;
+  if (!m.pending && m.content) {
+    foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
+    if (m.used && m.used.length) foot += `<div class="used">Documents checked: ${esc(m.used.slice(0, 8).join(', '))}${m.used.length > 8 ? ` and ${m.used.length - 8} more` : ''}</div>`;
+  }
+  return `<div class="msg bot"><div class="who">The Box</div><div class="bubble">${body}</div>${foot}</div>`;
+}
+function render() {
+  const t = threads[mode] || [];
+  $('messages').innerHTML = t.map(msgHtml).join('');
+  $('hero').classList.toggle('compact', t.length > 0);
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('has-chat', !!(threads[b.dataset.key] || []).length && b.dataset.key !== mode));
+  scrollDown();
+}
+function renderLast() {
+  const t = threads[mode] || []; const el = $('messages').lastElementChild;
+  if (el && t.length) { el.outerHTML = msgHtml(t[t.length - 1], t.length - 1); scrollDown(); } else render();
+}
+function scrollDown() { const th = $('thread'); if (th.scrollHeight - th.scrollTop - th.clientHeight < 240 || busy) th.scrollTop = th.scrollHeight; }
+$('messages').addEventListener('click', async e => {
+  const b = e.target.closest('.mini'); if (!b) return;
+  const m = (threads[mode] || [])[+b.dataset.i]; if (!m) return;
+  if (b.dataset.act === 'copy') {
+    try { await navigator.clipboard.writeText(m.content); b.textContent = 'Copied'; }
+    catch (err) { const r = document.createRange(); r.selectNodeContents(b.closest('.msg').querySelector('.bubble')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected, press Ctrl+C'; }
+    setTimeout(() => { b.textContent = 'Copy'; }, 2000);
+  } else if (b.dataset.act === 'save' && downloads) {
+    const q = (threads[mode] || [])[+b.dataset.i - 1];
+    const data = `The Rental Box — ${byKey[mode].title}\n${$('propertyName').value}\n${new Date().toLocaleString()}\n\nQuestion:\n${q ? q.content : ''}\n\nAnswer:\n${m.content}\n`;
+    try { await downloads.save({ filename: `rental-box-${mode}-answer.txt`, data }); } catch (err) { /* viewer declined */ }
   }
 });
 
-// Initialize samples and library text on load
-renderSamples('Manager’s Desk');
-document.getElementById('askTitle').textContent = 'Manager’s Desk';
-document.getElementById('askSub').textContent = libraryText['Manager’s Desk'];
-document.getElementById('deskPanel').classList.add('active');
-document.getElementById('tabUploadLabel').textContent = 'Drop a file or click to upload';
-currentMode = 'Manager’s Desk';
-renderRecent();
-
-function send() {
-  const input = document.getElementById('chatInput');
-  if (!input.value.trim()) return;
-  addRecent(input.value.trim());
-  alert('Demo only — documents stay local.\n\nQuestion: ' + input.value);
-  input.value = '';
+/* ---------- Sections UI ---------- */
+function renderNav() {
+  $('nav').innerHTML = SECTIONS.map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
 }
-
-function toggleSection(el) {
-  el.classList.toggle('open');
-  const sub = el.nextElementSibling;
-  if (sub && (sub.classList.contains('menu-sub') || sub.classList.contains('menu-sub-sub'))) {
-    sub.classList.toggle('open');
-  }
+function setMode(key) {
+  if (busy && controller) controller.abort();
+  mode = key; const s = byKey[key];
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+  $('askTitle').textContent = s.title;
+  $('askSub').textContent = s.desc;
+  $('chatInput').placeholder = `Ask about ${s.title.toLowerCase()}…`;
+  $('samples').innerHTML = s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
+  renderChips(); render();
 }
+$('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
+$('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return; $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
+$('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 
-function toggleMenu() {
-  document.getElementById('sideMenu').classList.toggle('open');
-  document.getElementById('menuOverlay').classList.toggle('open');
+/* ---------- Composer ---------- */
+function setSendState() {
+  const b = $('sendBtn');
+  b.classList.toggle('stop', busy); b.classList.toggle('send', !busy);
+  b.title = busy ? 'Stop' : 'Send'; b.setAttribute('aria-label', b.title);
+  b.innerHTML = busy ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
+                     : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 }
+$('sendBtn').addEventListener('click', () => { if (busy && controller) controller.abort(); else send(); });
+function autosize() { const t = $('chatInput'); t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; }
+$('chatInput').addEventListener('input', autosize);
+$('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
 
-function toggleLibrary() {
-  const lib = document.getElementById('library');
-  lib.style.display = lib.style.display === 'none' ? 'flex' : 'none';
+/* ---------- Upload wiring ---------- */
+function wireDrop(el, input, handler) {
+  el.addEventListener('click', () => input.click());
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('dragover'); if (e.dataTransfer.files.length) handler([...e.dataTransfer.files]); });
+  input.addEventListener('change', () => { if (input.files.length) handler([...input.files]); input.value = ''; });
 }
+wireDrop($('libDrop'), $('libInput'), addToLibrary);
+wireDrop($('tabDrop'), $('tabInput'), addToTab);
+$('attachBtn').addEventListener('click', () => $('tabInput').click());
+const center = document.querySelector('.center');
+center.addEventListener('dragover', e => e.preventDefault());
+center.addEventListener('drop', e => { if (e.target.closest('#tabDrop')) return; e.preventDefault(); if (e.dataTransfer.files.length) addToTab([...e.dataTransfer.files]); });
 
+/* ---------- Menus ---------- */
+function closeAll() { $('sideMenu').classList.remove('open'); $('library').classList.remove('open'); $('overlay').classList.remove('open'); }
+$('menuBtn').addEventListener('click', () => { $('sideMenu').classList.add('open'); $('overlay').classList.add('open'); });
+$('closeMenu').addEventListener('click', closeAll);
+$('overlay').addEventListener('click', closeAll);
+$('libToggle').addEventListener('click', () => { $('library').classList.add('open'); $('overlay').classList.add('open'); });
+$('libClose').addEventListener('click', closeAll);
+document.querySelectorAll('.menu-section, .menu-sub-section').forEach(b => b.addEventListener('click', e => {
+  e.stopPropagation(); b.classList.toggle('open');
+  const sub = b.nextElementSibling; if (sub) sub.classList.toggle('open');
+}));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+/* ---------- Building name (remembered in this browser only) ---------- */
+try { const v = localStorage.getItem('rb-building'); if (v) $('propertyName').value = v; } catch (e) {}
+$('propertyName').addEventListener('change', e => { try { localStorage.setItem('rb-building', e.target.value); } catch (err) {} });
+
+/* ---------- Clock ---------- */
 function updateClock() {
-  const now = new Date();
-  let h = now.getHours();
-  const m = now.getMinutes().toString().padStart(2, '0');
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  document.getElementById('clock').textContent = `${h}:${m} ${ampm}`;
+  try { $('clock').textContent = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }); }
+  catch (e) { $('clock').textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 }
-setInterval(updateClock, 30000);
-updateClock();
+setInterval(updateClock, 30000); updateClock();
 
-// Cmd/Ctrl + Enter
-document.getElementById('chatInput').addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') send();
-});
+/* ---------- Start ---------- */
+renderNav(); setMode('desk'); setSendState(); renderLibrary();
+setLibStatus('Loading your library…');
+
+(async () => {
+  if (!window.claude || !window.claude.use) {
+    setLibStatus('Open this page on claude.ai to read documents with Claude.', true);
+    showFootWarn('Open this page on claude.ai to ask Claude.');
+    return;
+  }
+  const [s, d, u, dl] = await Promise.all(['sample', 'db', 'user', 'downloads'].map(n => window.claude.use(n).catch(() => null)));
+  sample = s; db = d; userCap = u; downloads = dl;
+  if (sample) { try { limits = await sample.limits(); } catch (e) { limits = null; } }
+  else { $('footNote').textContent = 'Claude is not available on this view. Sign in to claude.ai to ask questions.'; $('footNote').classList.add('warn'); }
+  let id = null;
+  if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
+  if (db && id) { libCol = db.collection('data/users/' + id); await loadLibrary(); }
+  else { renderLibrary(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
+  render();
+})();
 </script>
-
-</body>
-</html>
