@@ -318,6 +318,8 @@ header {
 .sample-q:hover { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
 .foot-note { font-size: 11px; color: var(--subtle); text-align: center; }
 .foot-note.warn { color: var(--rust); }
+.copyright { order: 99; font-size: 10.5px; color: var(--subtle); text-align: center; opacity: 0.8; letter-spacing: 0.2px; }
+.side-copyright { padding: 14px 20px; font-size: 11px; color: var(--subtle); border-top: 1px solid var(--line); }
 
 /* Sections */
 .bottom-nav {
@@ -452,6 +454,7 @@ header {
       <a href="https://www.pgworks.com" target="_blank" rel="noopener">PGW Gas</a>
     </div>
   </div>
+  <div class="side-copyright">© 2026 Artur Pepaj. All rights reserved.</div>
 </div>
 <div class="overlay" id="overlay"></div>
 
@@ -541,6 +544,7 @@ header {
         </div>
         <input type="file" id="tabInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
         <div class="samples" id="samples"></div>
+        <div class="copyright">© 2026 Artur Pepaj. All rights reserved.</div>
         <div class="foot-note" id="footNote">Answers can be wrong. Check the source document.</div>
       </div>
     </div>
