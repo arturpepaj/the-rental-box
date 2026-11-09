@@ -244,6 +244,10 @@ header {
 }
 .composer-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips-label { flex-basis: 100%; font-size: 11px; color: var(--subtle); }
+.sent-files { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.sent-files span { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 2px 8px; }
+.sent-files em { font-style: normal; color: var(--ok); font-weight: 700; align-self: center; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 6px 4px 10px; max-width: 100%; }
 .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .chip.busy span { color: var(--ask); }
@@ -994,7 +998,7 @@ async function addToTab(files) {
 }
 function renderChips() {
   const list = tabFiles[mode] || [];
-  $('chips').innerHTML = list.map(f => `<span class="chip ${f.status === 'busy' ? 'busy' : f.status === 'err' ? 'err' : ''}" title="${esc(f.note || f.name)}"><span>${f.kind === 'image' ? '🖼 ' : ''}${esc(f.name)}${f.status === 'busy' ? ' · reading…' : f.status === 'err' ? ' · ' + esc(f.note) : ''}</span><button data-id="${f.id}" aria-label="Remove ${esc(f.name)}">✕</button></span>`).join('');
+  $('chips').innerHTML = (list.length ? '<span class="chips-label">Attached to this tab. Claude reads it with every question here:</span>' : '') + list.map(f => `<span class="chip ${f.status === 'busy' ? 'busy' : f.status === 'err' ? 'err' : ''}" title="${esc(f.note || f.name)}"><span>${f.kind === 'image' ? '🖼 ' : ''}${esc(f.name)}${f.status === 'busy' ? ' · reading…' : f.status === 'err' ? ' · ' + esc(f.note) : ''}</span><button data-id="${f.id}" aria-label="Remove ${esc(f.name)}">✕</button></span>`).join('');
   $('tabDropLabel').textContent = list.length ? `${list.length} file${list.length > 1 ? 's' : ''} attached · add more` : 'Drop a file or click to upload';
 }
 $('chips').addEventListener('click', e => {
@@ -1270,7 +1274,7 @@ async function send(textOverride, extraTask, roar) {
   input.value = ''; autosize();
   const key = mode;
   const thread = threads[key] = threads[key] || [];
-  thread.push({ role: 'user', content: q });
+  thread.push({ role: 'user', content: q, files: files.filter(f => f.status === 'ok').map(f => f.name) });
   const bot = { role: 'assistant', content: '', pending: true, streaming: true };
   thread.push(bot);
   render();
@@ -1358,7 +1362,7 @@ function md(src) {
   return html;
 }
 function msgHtml(m, idx) {
-  if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.content)}</div></div>`;
+  if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.content)}</div>${m.files && m.files.length ? `<div class="sent-files">${m.files.map(n => `<span>📎 ${esc(n)}</span>`).join('')}<em>sent</em></div>` : ''}</div>`;
   let body = m.pending ? `<span class="thinking">${esc(m.status || 'Reading your documents…')}</span>` : md(m.content);
   let foot = '';
   if (m.streaming && m.status && !m.pending) foot += `<div class="used thinking">${esc(m.status)}</div>`;
