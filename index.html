@@ -529,17 +529,17 @@ header {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
           <div class="roar-wrap" id="roarWrap" hidden>
-          <button class="oracle-btn" id="mailBtn" aria-describedby="roarTip" aria-label="Roar search across all uploaded documents, Outlook, Teams, SharePoint and Slack" aria-pressed="true">
+          <button class="oracle-btn" id="mailBtn" aria-describedby="roarTip" aria-label="Ask with Roar: uploaded documents plus Outlook, Teams, SharePoint and Slack" aria-pressed="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M19 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".85"/><path d="M5 15.5l.6 1.6 1.6.6-1.6.6L5 20l-.6-1.7-1.6-.6 1.6-.6z" opacity=".7"/></svg>
             <span class="oracle-label">Roar</span>
           </button>
           <div class="roar-tip" id="roarTip" role="tooltip">
-            <div class="roar-tip-head"><span class="roar-tip-star">✦</span><span class="roar-tip-title">Roar</span><span class="roar-tip-state" id="roarState">On</span></div>
-            <p class="roar-tip-lead" id="roarLead">One search across everything you work with.</p>
+            <div class="roar-tip-head"><span class="roar-tip-star">✦</span><span class="roar-tip-title">Roar</span><span class="roar-tip-state" id="roarState">Ready</span></div>
+            <p class="roar-tip-lead" id="roarLead">Asks your question across uploaded documents and your connected apps.</p>
             <div class="roar-tip-sources">
               <span>Uploaded documents</span><span>Outlook</span><span>Teams</span><span>SharePoint</span><span>Slack</span>
             </div>
-            <div class="roar-tip-foot"><span>⏱ Takes longer, often 1 to 2 minutes</span><span id="roarHint">Click to turn off</span></div>
+            <div class="roar-tip-foot"><span>⏱ Takes longer, often 1 to 2 minutes</span><span id="roarHint">Click to ask with Roar</span></div>
           </div>
           </div>
         </div>
@@ -596,8 +596,6 @@ let library = [];        // [{id, name, kind, size, added, text, status, note}]
 let libFilter = '';
 let sample = null, db = null, userCap = null, downloads = null, libCol = null, mcp = null;
 const MS = 'Microsoft 365';
-let emailOn = true;
-try { emailOn = localStorage.getItem('rb-email') !== 'off'; } catch (e) {}
 let limits = null;
 let busy = false, controller = null;
 
@@ -962,7 +960,8 @@ How to answer:
 - Rental applications: only check if an application is complete against the listed requirements. If the application is not in the documents, say to export it from OnSite and upload it (until an OnSite API or AI connector is available). Never recommend approving or rejecting an applicant, and never judge applicants by protected traits.
 - Leases, payables (invoices, vendor payments) and receivables (rent charges, tenant payments, arrears) will be pulled from Yardi Virtuoso. Never ask the user to upload them. If you need them and they are not in the documents, say this data will come from Yardi Virtuoso. Exception: you may ask the user to upload an invoice to check it for duplicates.
 - Duplicate invoice check: compare the uploaded invoice with every other invoice and payment in the documents. Flag the same invoice number (also with small changes like extra zeros, dashes or letters), the same vendor with the same or very close amount (within about 1%), and close dates. List each possible duplicate with vendor, invoice number, amount and date, and say how sure you are.
-- Never invent numbers, dates, names or document contents.${withEmail ? `
+- Never invent numbers, dates, names or document contents.${withEmail ? '' : `
+- Answer only from the uploaded documents below. If they do not answer the question, say so in one line and suggest asking again with Roar, which also searches Outlook, Teams, SharePoint and Slack.`}${withEmail ? `
 - You can search the user's Outlook with search_email, Teams messages with search_teams and SharePoint files with search_sharepoint, and Slack with search_slack and read_slack_thread when they are offered. Open emails, Teams messages and SharePoint files with read_email. When the documents here do not have what you need (budgets, reports, contracts, board packages), look in SharePoint. Use them when the question says email, or when the answer may be in email (a unit, tenant, vendor, attorney, board, complaint or date). Only read email. Never say you sent, moved or changed any email.
 - For "when did ... first contact me": search several ways (for unit 1005 try "1005", "Apt 1005", "#1005", "unit 1005", each with and without the topic word). Results are not in date order. When nextOffset is given, get more pages. Compare all dates yourself and give the EARLIEST matching email: date, sender and subject. Read it with read_email to confirm it is about the topic.
 - Open attachments with read_email when they matter, and say if one could only be partly read.
@@ -1134,13 +1133,13 @@ function slackSampleTools(bot) {
       catch (e) { const c = e && e.code; throw new Error(c === 'server_not_connected' || c === 'server_not_found' ? 'Slack is not connected yet.' : c === 'needs_reauth' ? 'Slack needs to be signed in again.' : (e && e.message) || 'Slack search failed.'); }
     } }));
 }
-function emailReady() { return !!(mcp && emailOn && limits && limits.tools && limits.tools.maxCount >= 4); }
+function emailReady() { return !!(mcp && limits && limits.tools && limits.tools.maxCount >= 4); }
 
-async function send(textOverride, extraTask) {
+async function send(textOverride, extraTask, roar) {
   if (busy) return;
   const input = $('chatInput');
   const q = (textOverride || input.value).trim();
-  if (!q) return;
+  if (!q) { if (roar) { $('chatInput').focus(); showFootWarn('Type your question first, then press Roar.'); } return; }
   if (!sample) { showFootWarn('Claude is not available here. Open this page on claude.ai while signed in.'); return; }
   const files = tabFiles[mode] || [];
   if (files.some(f => f.status === 'busy')) { showFootWarn('Wait until your files finish reading.'); return; }
@@ -1160,7 +1159,8 @@ async function send(textOverride, extraTask) {
   const ctx = buildContext(q, budget);
   const images = files.filter(f => f.status === 'ok' && f.kind === 'image').map(f => f.blob);
   const imgNote = images.length ? `\n\nThe user also attached ${images.length} image(s) (${files.filter(f => f.kind === 'image').map(f => f.name).join(', ')}). Look at them carefully.` : '';
-  const useEmail = emailReady();
+  const useEmail = !!roar && emailReady();
+  if (roar && !useEmail) showFootWarn('Connectors are not available here, so only uploaded documents were checked.');
   const messages = history.concat([{ role: 'user', content: instructions(ctx, useEmail) + imgNote + (extraTask ? `\n\n${extraTask}` : '') + `\n\nQuestion: ${q}` }]);
   bot.used = ctx.used;
 
@@ -1207,7 +1207,7 @@ function copyFor(code) {
     queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
   })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
 }
-function footDefault() { return emailReady() ? '✦ Roar is on: it searches all uploaded documents, Outlook, Teams, SharePoint and Slack, so answers take longer (often 1 to 2 minutes). Answers can be wrong. Check the source.' : 'Answers can be wrong. Check the source document.'; }
+function footDefault() { return emailReady() ? '↑ Send checks uploaded documents only. ✦ Roar also searches Outlook, Teams, SharePoint and Slack, so it takes longer (often 1 to 2 minutes). Answers can be wrong. Check the source.' : 'Send checks uploaded documents only. Answers can be wrong. Check the source document.'; }
 function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = footDefault(); f.classList.remove('warn'); }, 5000); }
 
 /* ---------- Rendering answers ---------- */
@@ -1289,20 +1289,20 @@ function setMode(key) {
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
-  if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; if (!emailReady()) showFootWarn('Turn on Roar so Claude can search all uploaded documents, Outlook, Teams, SharePoint and Slack.'); send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit)); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
+  if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit), true); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
 $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 
 /* ---------- Composer ---------- */
 function setRoarTip(working) {
-  $('roarState').textContent = working ? 'Searching' : emailOn ? 'On' : 'Off';
-  $('roarState').dataset.state = working ? 'busy' : emailOn ? 'on' : 'off';
-  $('roarLead').textContent = working ? 'Looking through everything now.' : emailOn ? 'One search across everything you work with.' : 'Off: answers come from uploaded documents only.';
-  $('roarHint').textContent = working ? 'Click to stop' : emailOn ? 'Click to turn off' : 'Click to turn on';
+  $('roarState').textContent = working ? 'Searching' : 'Ready';
+  $('roarState').dataset.state = working ? 'busy' : 'on';
+  $('roarLead').textContent = working ? 'Looking through everything now.' : 'Asks your question across uploaded documents and your connected apps. Send checks uploaded documents only.';
+  $('roarHint').textContent = working ? 'Click to stop' : 'Click to ask with Roar';
 }
 function setMailBtn() {
   const b = $('mailBtn');
   $('roarWrap').hidden = !(mcp && limits && limits.tools);
-  b.setAttribute('aria-pressed', emailOn ? 'true' : 'false');
+  b.removeAttribute('aria-pressed');
   const f = $('footNote'); if (!f.classList.contains('warn')) f.textContent = footDefault();
   setRoarTip();
 }
@@ -1313,14 +1313,13 @@ $('mailBtn').addEventListener('click', () => {
     showFootWarn('Search stopped.');
     return;
   }
-  emailOn = !emailOn; setMailBtn();
-  try { localStorage.setItem('rb-email', emailOn ? 'on' : 'off'); } catch (e) {}
-  showFootWarn(emailOn ? 'Roar is on. Answers take longer, often 1 to 2 minutes.' : 'Roar is off. Claude answers from uploaded documents only.');
+  if (busy) return;
+  send(undefined, undefined, true);
 });
 function setSendState() {
   const b = $('sendBtn');
   b.classList.toggle('stop', busy); b.classList.toggle('send', !busy);
-  b.title = busy ? 'Stop' : 'Send'; b.setAttribute('aria-label', b.title);
+  b.title = busy ? 'Stop' : 'Send: checks uploaded documents only'; b.setAttribute('aria-label', b.title);
   b.innerHTML = busy ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
                      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 }
