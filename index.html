@@ -1369,7 +1369,7 @@ function msgHtml(m, idx) {
   if (m.error) foot += `<div class="err-line">${esc(m.error)}</div>`;
   if (m.note) foot += `<div class="used">${esc(m.note)}</div>`;
   if (!m.pending && !m.streaming && m.content) {
-    foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button><button class="mini" data-act="tasks" data-i="${idx}">Make tasks from this</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
+    foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button><button class="mini" data-act="tasks" data-i="${idx}">Make tasks from this</button><button class="mini" data-act="lib" data-i="${idx}" ${m.savedToLib ? 'disabled' : ''}>${m.savedToLib ? 'Saved to Library ✓' : 'Save to Library'}</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
     if (m.used && m.used.length) foot += `<div class="used">Documents checked: ${esc(m.used.slice(0, 8).join(', '))}${m.used.length > 8 ? ` and ${m.used.length - 8} more` : ''}</div>`;
   }
   return `<div class="msg bot"><div class="who">The ToolBox</div><div class="bubble">${body}</div>${foot}</div>`;
@@ -1393,6 +1393,25 @@ $('messages').addEventListener('click', async e => {
     try { await navigator.clipboard.writeText(m.content); b.textContent = 'Copied'; }
     catch (err) { const r = document.createRange(); r.selectNodeContents(b.closest('.msg').querySelector('.bubble')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected, press Ctrl+C'; }
     setTimeout(() => { b.textContent = 'Copy'; }, 2000);
+  } else if (b.dataset.act === 'lib') {
+    if (m.savedToLib) return;
+    const q = (threads[mode] || [])[+b.dataset.i - 1];
+    const qText = q ? q.content : '';
+    const day = new Date();
+    const short = qText.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50) || 'Answer';
+    const name = `Answer · ${byKey[mode].title} · ${short} · ${day.toLocaleDateString('en-US')}.txt`;
+    const text = `Saved answer from The Rental ToolBox\nSection: ${byKey[mode].title}\nBuilding: ${$('propertyName').value.trim() || 'not given'}\nDate: ${day.toLocaleString('en-US')}\n\nQuestion:\n${qText}\n\nAnswer:\n${m.content}\n${m.used && m.used.length ? '\nDocuments checked: ' + m.used.join(', ') + '\n' : ''}`;
+    const d = { id: uid(), name, size: text.length, added: Date.now(), text, status: 'busy', note: 'Saving…' };
+    library.unshift(d); renderLibrary();
+    b.disabled = true; b.textContent = 'Saving…';
+    try {
+      d.status = 'ok'; d.note = 'Saved answer';
+      if (libCol) { await saveLibDoc(d); d.chunks = Math.ceil(text.length / CHUNK); }
+      m.savedToLib = true; b.textContent = libCol ? 'Saved to Library ✓' : 'Saved for this visit only';
+    } catch (err) {
+      library = library.filter(x => x !== d); b.disabled = false; b.textContent = 'Could not save. Try again';
+    }
+    renderLibrary();
   } else if (b.dataset.act === 'tasks') {
     b.disabled = true; b.textContent = 'Finding tasks…';
     try { const n = await tasksFromAnswer(m.content); b.textContent = n ? `Added ${n} task${n > 1 ? 's' : ''}` : 'No tasks found'; }
@@ -1776,7 +1795,7 @@ setLibStatus('Loading your library…');
     try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
   }
   if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
-  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } startTasks(); await loadLibrary(); }
+  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } try { startTasks(); } catch (e) { renderTasks(); } await loadLibrary(); }
   else { renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
   render();
 })();
