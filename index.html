@@ -369,7 +369,10 @@ header {
 .task .task-due.overdue { color: #b3261e; }
 .task .task-due.today { color: #a0520c; }
 .task-src { display: inline-flex; align-items: center; gap: 3px; }
-.task-status-row { grid-column: 1 / -1; display: flex; gap: 5px; }
+.task-status-row { grid-column: 1 / -1; display: flex; gap: 4px; align-items: center; }
+.task-link { grid-column: 1 / -1; justify-self: start; font-size: 10.5px; font-weight: 800; color: #1f4f8a; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.task-link:hover { color: #0d3566; }
+.task-link.off { text-decoration: none; color: color-mix(in srgb, var(--st-ink) 65%, transparent); font-weight: 600; }
 .st-btn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font: inherit; font-size: 10px; font-weight: 700; padding: 3px 7px 3px 5px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.55); color: #4a423b; }
 .st-btn::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
 .st-btn[data-s="todo"] { --dot: #e8837a; }
@@ -1108,7 +1111,7 @@ function compactSearch(r) {
     if (!it || typeof it !== 'object') continue;
     if (it.nextOffset != null || it.nextCursor) { next = it.nextOffset != null ? it.nextOffset : null; continue; }
     if (!it.uri) continue;
-    emails.push({ uri: it.uri, date: it.receivedDateTime || it.sentDateTime || '', from: [it.senderName, it.sender].filter(Boolean).join(' <') + (it.senderName && it.sender ? '>' : ''), subject: it.subject || '', hasAttachments: !!it.hasAttachments, preview: String(it.summary || '').slice(0, 220) });
+    emails.push({ uri: it.uri, date: it.receivedDateTime || it.sentDateTime || '', from: [it.senderName, it.sender].filter(Boolean).join(' <') + (it.senderName && it.sender ? '>' : ''), subject: it.subject || '', hasAttachments: !!it.hasAttachments, preview: String(it.summary || '').slice(0, 220), link: it.webLink || '' });
   }
   return JSON.stringify({ emails, nextOffset: next, note: next != null ? 'More results exist. Call again with this offset.' : 'No more results.' }).slice(0, 30000);
 }
@@ -1126,7 +1129,7 @@ function compactTeams(r) {
     if (it.nextOffset != null) { next = it.nextOffset; continue; }
     if (!it.uri) continue;
     const f = it.from || {};
-    messages.push({ uri: it.uri, date: it.createdDateTime || '', from: [f.displayName, f.email].filter(Boolean).join(' <') + (f.displayName && f.email ? '>' : ''), text: String(it.summary || '').slice(0, 400) });
+    messages.push({ uri: it.uri, date: it.createdDateTime || '', from: [f.displayName, f.email].filter(Boolean).join(' <') + (f.displayName && f.email ? '>' : ''), text: String(it.summary || '').slice(0, 400), link: it.webUrl || '' });
   }
   return JSON.stringify({ messages, nextOffset: next, note: next != null ? 'More results exist. Call again with this offset.' : 'No more results.' }).slice(0, 30000);
 }
@@ -1145,7 +1148,7 @@ function compactFiles(r) {
     if (!it.uri) continue;
     let folder = '';
     try { folder = decodeURI(String(it.webUrl || '')).replace(/^https?:\/\/[^/]+/, '').split('/').slice(0, -1).join('/'); } catch (e) {}
-    files.push({ uri: it.uri, name: it.name || '', folder: folder.slice(-160), modified: it.lastModifiedDateTime || '', preview: String(it.summary || it.content || '').replace(/<[^>]+>/g, '').slice(0, 300) });
+    files.push({ uri: it.uri, name: it.name || '', folder: folder.slice(-160), modified: it.lastModifiedDateTime || '', preview: String(it.summary || it.content || '').replace(/<[^>]+>/g, '').slice(0, 300), link: it.webUrl || '' });
   }
   return JSON.stringify({ files, nextOffset: next, note: next != null ? 'More results exist. Call again with this offset.' : 'No more results.' }).slice(0, 30000);
 }
@@ -1518,7 +1521,7 @@ function renderTasks() {
       <div class="task-body"><div class="task-title">${esc(t.title)}</div>
         <div class="task-meta">${sec ? `<span class="task-sec">${esc(sec)}</span>` : ''}${t.unit ? `<span>Unit ${esc(t.unit)}</span>` : ''}${due ? `<span class="task-due ${due.cls}">${esc(due.text)}</span>` : ''}${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${src}</div></div>
       ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
-      <div class="task-status-row" role="group" aria-label="Status">${st}</div>
+      <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
     </div>`;
   }).join('');
   const st = $('taskStatus');
@@ -1527,12 +1530,21 @@ function renderTasks() {
   else { st.classList.remove('warn'); st.textContent = scanMsg; }
 }
 async function addTask(t) {
-  const doc = { title: String(t.title || '').slice(0, 160), unit: String(t.unit || '').slice(0, 12), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '', owner: String(t.owner || '').slice(0, 40), section: byKey[t.section] ? t.section : mode, status: 'todo', done: false, source: String(t.source || '').slice(0, 20), sourceLabel: String(t.sourceLabel || '').slice(0, 120), sourceDate: String(t.sourceDate || '').slice(0, 10), key: taskKey(t), createdBy: myId || '', createdAt: Date.now(), doneAt: 0 };
+  const doc = { title: String(t.title || '').slice(0, 160), unit: String(t.unit || '').slice(0, 12), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '', owner: String(t.owner || '').slice(0, 40), section: byKey[t.section] ? t.section : mode, status: 'todo', done: false, source: String(t.source || '').slice(0, 20), sourceLabel: String(t.sourceLabel || '').slice(0, 120), sourceDate: String(t.sourceDate || '').slice(0, 10), sourceUrl: safeLink(t.sourceUrl), key: taskKey(t), createdBy: myId || '', createdAt: Date.now(), doneAt: 0 };
   if (!doc.title.trim()) return false;
   if (tasks.some(x => x.key === doc.key || taskKey(x) === doc.key)) return false;
   if (taskCol) await taskCol.add(doc);
   else { tasks.push(Object.assign({ id: uid() }, doc)); renderTasks(); }
   return true;
+}
+function safeLink(u) {
+  u = String(u || '').trim();
+  if (!/^https:\/\//i.test(u) || u.length > 2000) return '';
+  try {
+    const fixed = u.replace(/\s/g, '%20').replace(/"/g, '%22');
+    const h = new URL(fixed).hostname.toLowerCase();
+    return /(^|\.)(office365\.com|office\.com|outlook\.com|sharepoint\.com|microsoft\.com|live\.com|slack\.com)$/.test(h) ? fixed : '';
+  } catch (e) { return ''; }
 }
 function taskKey(t) { return (String(t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 60)) + '|' + String(t.unit || '').toLowerCase().trim(); }
 async function tasksFromAnswer(text) {
@@ -1577,7 +1589,7 @@ function compactCalendar(r) {
     if (!it || typeof it !== 'object') continue;
     if (it.nextOffset != null) { next = it.nextOffset; continue; }
     if (!it.uri) continue;
-    events.push({ uri: it.uri, subject: it.subject || '', start: it.start && it.start.dateTime || '', end: it.end && it.end.dateTime || '', timeZone: it.start && it.start.timeZone || '', organizer: it.organizerName || it.organizer || '', location: it.location || '', cancelled: !!it.isCancelled });
+    events.push({ uri: it.uri, subject: it.subject || '', start: it.start && it.start.dateTime || '', end: it.end && it.end.dateTime || '', timeZone: it.start && it.start.timeZone || '', organizer: it.organizerName || it.organizer || '', location: it.location || '', cancelled: !!it.isCancelled, link: it.webLink || '' });
   }
   return JSON.stringify({ events, nextOffset: next }).slice(0, 30000);
 }
@@ -1626,8 +1638,8 @@ Look in all of these, using the tools:
 Make only real tasks that still need someone to act. One task per action. Do not repeat these existing tasks:
 ${existing || '(none yet)'}
 Reply with only a JSON array (at most 25) of objects:
-{"title": short action starting with a verb, "section": one of [${SECTIONS.map(x => x.key).join(', ')}] (${keys}), "unit": apartment or unit or "", "due": "YYYY-MM-DD" or "", "owner": person or vendor who should act or "", "source": "email" | "calendar" | "teams" | "sharepoint" | "slack" | "document", "sourceLabel": email subject, event name or file name, "sourceDate": "YYYY-MM-DD" or ""}
-Example: [{"title":"Approve Liberty Elevator repair quote","section":"vendors","unit":"","due":"2026-11-14","owner":"","source":"email","sourceLabel":"Elevator repair proposal","sourceDate":"2026-11-07"}]
+{"title": short action starting with a verb, "section": one of [${SECTIONS.map(x => x.key).join(', ')}] (${keys}), "unit": apartment or unit or "", "due": "YYYY-MM-DD" or "", "owner": person or vendor who should act or "", "source": "email" | "calendar" | "teams" | "sharepoint" | "slack" | "document", "sourceLabel": email subject, event name or file name, "sourceDate": "YYYY-MM-DD" or "", "sourceUrl": the item's "link" copied exactly from the tool result, or "" for uploaded documents}
+Example: [{"title":"Approve Liberty Elevator repair quote","section":"vendors","unit":"","due":"2026-11-14","owner":"","source":"email","sourceLabel":"Elevator repair proposal","sourceDate":"2026-11-07","sourceUrl":"https://outlook.office365.com/owa/?ItemID=..."}]
 ${ctx.text ? '\nUploaded documents:\n' + ctx.text : ''}`;
     say('Scanning email, calendar, Teams, SharePoint and documents…');
     const out = await sample.json(prompt, { tools: tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length), modelTier: 'default', cache: false });
