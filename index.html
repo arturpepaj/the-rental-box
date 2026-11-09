@@ -687,7 +687,7 @@ const ICONS = {
   emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>'
 };
 const SECTIONS = [
-  { key:'desk', title:'Manager’s Desk', desc:'Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
+  { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'applications', title:'Rental Applications', desc:'Application forms, required documents and the application process. Upload OnSite application reports (Excel or PDF) here or to the Library until an OnSite API or AI connector is available. The ToolBox checks if an application is complete. It does not approve or reject applicants.', samples:['Has the applicant for unit 1005 sent all documents?','What documents are required?','What is the application fee and process?'] },
   { key:'arrears', title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
@@ -701,6 +701,7 @@ const SECTIONS = [
   { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident.', samples:['Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
 ];
 const byKey = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
+function deskName(first) { byKey.desk.title = first ? `${first}’s Desk` : 'Manager’s Desk'; }
 
 /* ---------- State ---------- */
 let mode = 'desk';
@@ -1402,7 +1403,7 @@ function setMode(key) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
   $('askTitle').textContent = s.title;
   $('askSub').textContent = s.desc;
-  $('chatInput').placeholder = `Ask about ${s.title.toLowerCase()}…`;
+  $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
 }
@@ -1715,6 +1716,9 @@ setLibStatus('Loading your library…');
   else { $('footNote').textContent = 'Claude is not available on this view. Sign in to claude.ai to ask questions.'; $('footNote').classList.add('warn'); }
   setMailBtn();
   let id = null;
+  if (userCap) {
+    try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
+  }
   if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
   if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } startTasks(); await loadLibrary(); }
   else { renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
