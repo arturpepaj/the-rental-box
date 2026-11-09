@@ -359,6 +359,8 @@ header {
 .task-add-btn:hover { background: var(--ask-hover); }
 .task-filters { display: flex; gap: 4px; }
 .task-filters button { flex: 1; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 14px; padding: 5px 6px; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.f-n { font-size: 10px; font-weight: 800; opacity: 0.8; }
+.f-n:empty { display: none; }
 .task-filters button.on { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
 .task-list { display: flex; flex-direction: column; }
 .task { --st-bg: #fde3e1; --st-ink: #3b2321; display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: start; padding: 10px 11px; margin-bottom: 8px; border-radius: 12px; background: var(--st-bg); color: var(--st-ink); transition: background 0.2s ease; }
@@ -655,9 +657,9 @@ header {
       <div class="task-scan-row"><span class="task-scan-when" id="taskScanWhen">Not scanned yet</span><button type="button" class="task-scan-btn" id="taskScanBtn">✦ Scan now</button></div>
     </div>
     <div class="task-filters" id="taskFilters" role="tablist">
-      <button type="button" data-f="all" class="on">Open</button>
-      <button type="button" data-f="doing">In Progress</button>
-      <button type="button" data-f="done">Completed</button>
+      <button type="button" data-f="todo" class="on">Not Started <span class="f-n" id="fnTodo"></span></button>
+      <button type="button" data-f="doing">In Progress <span class="f-n" id="fnDoing"></span></button>
+      <button type="button" data-f="done">Completed <span class="f-n" id="fnDone"></span></button>
     </div>
     <div class="task-list" id="taskList"></div>
     <p class="task-status" id="taskStatus">Loading tasks…</p>
@@ -1489,7 +1491,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); 
 
 /* ---------- Open Tasks (shared, live) ---------- */
 let tasks = [];            // [{id, title, unit, due, owner, section, done, createdBy, createdAt, doneAt}]
-let taskFilter = 'all';
+let taskFilter = 'todo';
+const DONE_KEEP_MS = 30 * 24 * 3600000;
 let taskCol = null;
 const todayStr = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 function fmtDue(due) {
@@ -1506,8 +1509,10 @@ function renderTasks() {
   const open = tasks.filter(x => x.status !== 'done');
   $('taskCount').textContent = open.length;
   const badge = $('tasksBadge'); badge.textContent = open.length; badge.hidden = !open.length;
-  let list = taskFilter === 'done' ? tasks.filter(x => x.status === 'done') : open;
-  if (taskFilter === 'doing') list = list.filter(x => x.status === 'doing');
+  const recentDone = tasks.filter(x => x.status === 'done' && Date.now() - (x.doneAt || x.createdAt || 0) < DONE_KEEP_MS);
+  const counts = { todo: open.filter(x => x.status === 'todo').length, doing: open.filter(x => x.status === 'doing').length, done: recentDone.length };
+  $('fnTodo').textContent = counts.todo || ''; $('fnDoing').textContent = counts.doing || ''; $('fnDone').textContent = counts.done || '';
+  let list = taskFilter === 'done' ? recentDone : open.filter(x => x.status === taskFilter);
   list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
     : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0))).slice(0, 200);
   $('taskList').innerHTML = list.map(t => {
@@ -1525,7 +1530,8 @@ function renderTasks() {
     </div>`;
   }).join('');
   const st = $('taskStatus');
-  if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No finished tasks yet.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No open tasks found. Press ✦ Scan now to look again.'); }
+  if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No tasks completed in the last 30 days.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No tasks waiting to start. Press ✦ Scan now to look again.'); }
+  else if (taskFilter === 'done' && !scanMsg) { st.classList.remove('warn'); st.textContent = 'Completed tasks stay here for 30 days.'; }
   else if (!taskCol) { st.classList.add('warn'); st.textContent = 'Tasks stay for this visit only. Sign in to claude.ai to share them with your team.'; }
   else { st.classList.remove('warn'); st.textContent = scanMsg; }
 }
