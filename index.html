@@ -653,7 +653,7 @@ header {
     </div>
     <div class="task-filters" id="taskFilters" role="tablist">
       <button type="button" data-f="all" class="on">Open</button>
-      <button type="button" data-f="tab">This tab</button>
+      <button type="button" data-f="doing">In Progress</button>
       <button type="button" data-f="done">Completed</button>
     </div>
     <div class="task-list" id="taskList"></div>
@@ -1504,7 +1504,7 @@ function renderTasks() {
   $('taskCount').textContent = open.length;
   const badge = $('tasksBadge'); badge.textContent = open.length; badge.hidden = !open.length;
   let list = taskFilter === 'done' ? tasks.filter(x => x.status === 'done') : open;
-  if (taskFilter === 'tab') list = list.filter(x => x.section === mode);
+  if (taskFilter === 'doing') list = list.filter(x => x.status === 'doing');
   list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
     : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0))).slice(0, 200);
   $('taskList').innerHTML = list.map(t => {
@@ -1522,7 +1522,7 @@ function renderTasks() {
     </div>`;
   }).join('');
   const st = $('taskStatus');
-  if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No finished tasks yet.' : taskFilter === 'tab' ? `No open tasks for ${byKey[mode].title}.` : (scanning ? 'Scanning for tasks…' : 'No open tasks found. Press ✦ Scan now to look again.'); }
+  if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No finished tasks yet.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No open tasks found. Press ✦ Scan now to look again.'); }
   else if (!taskCol) { st.classList.add('warn'); st.textContent = 'Tasks stay for this visit only. Sign in to claude.ai to share them with your team.'; }
   else { st.classList.remove('warn'); st.textContent = scanMsg; }
 }
