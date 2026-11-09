@@ -1532,7 +1532,11 @@ function renderTasks() {
 async function addTask(t) {
   const doc = { title: String(t.title || '').slice(0, 160), unit: String(t.unit || '').slice(0, 12), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '', owner: String(t.owner || '').slice(0, 40), section: byKey[t.section] ? t.section : mode, status: 'todo', done: false, source: String(t.source || '').slice(0, 20), sourceLabel: String(t.sourceLabel || '').slice(0, 120), sourceDate: String(t.sourceDate || '').slice(0, 10), sourceUrl: safeLink(t.sourceUrl), key: taskKey(t), createdBy: myId || '', createdAt: Date.now(), doneAt: 0 };
   if (!doc.title.trim()) return false;
-  if (tasks.some(x => x.key === doc.key || taskKey(x) === doc.key)) return false;
+  const dup = tasks.find(x => x.key === doc.key || taskKey(x) === doc.key);
+  if (dup) {
+    if (!dup.sourceUrl && doc.sourceUrl && taskCol) { try { await taskCol.doc(dup.id).update({ sourceUrl: doc.sourceUrl, source: dup.source || doc.source, sourceLabel: dup.sourceLabel || doc.sourceLabel }); } catch (e) {} }
+    return false;
+  }
   if (taskCol) await taskCol.add(doc);
   else { tasks.push(Object.assign({ id: uid() }, doc)); renderTasks(); }
   return true;
