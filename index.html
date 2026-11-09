@@ -281,6 +281,12 @@ header {
 .roar-tip-sources span { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(232,195,158,0.25); color: var(--ink); }
 .roar-tip-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--subtle); border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; }
 .roar-tip-foot span:last-child { color: #e8c39e; font-weight: 700; }
+.send-tip { width: 280px; background: linear-gradient(160deg, #1f1b17, #171411) padding-box, linear-gradient(120deg, #e0c4a8, #c4a07e) border-box; box-shadow: 0 18px 40px rgba(0,0,0,0.55), 0 0 26px rgba(196,160,126,0.22); }
+.send-tip::after { right: 16px; background: #171411; border-right-color: #c4a07e; border-bottom-color: #c4a07e; }
+.send-tip-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--ask); color: var(--on-ask); font-weight: 800; font-size: 14px; }
+.send-tip-title { background: none; color: var(--ask-hover); }
+.send-tip .roar-tip-sources span { border-color: rgba(196,160,126,0.35); }
+.send-tip .roar-tip-foot span:first-child { color: var(--muted); }
 @media (hover: none) { .roar-tip { display: none; } }
 @media (prefers-reduced-motion: reduce) { .roar-tip { transition: none; } }
 .oracle-btn {
@@ -525,9 +531,19 @@ header {
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.4 11.1l-9.2 9.2a6 6 0 01-8.5-8.5l9.2-9.2a4 4 0 015.7 5.7l-9.2 9.2a2 2 0 01-2.8-2.8l8.5-8.5"/></svg>
           </button>
           <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask about the manager’s desk documents…" aria-label="Your question"></textarea>
-          <button class="icon-btn send" id="sendBtn" title="Send" aria-label="Send">
+          <div class="roar-wrap send-wrap">
+          <button class="icon-btn send" id="sendBtn" aria-label="Send: checks uploaded documents only" aria-describedby="sendTip">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
+          <div class="roar-tip send-tip" id="sendTip" role="tooltip">
+            <div class="roar-tip-head"><span class="send-tip-icon">↑</span><span class="roar-tip-title send-tip-title">Send</span><span class="roar-tip-state" id="sendState" data-state="on">Fast</span></div>
+            <p class="roar-tip-lead" id="sendLead">Checks only your documents: the Library and files uploaded in this section.</p>
+            <div class="roar-tip-sources">
+              <span>Library</span><span>Uploaded here</span>
+            </div>
+            <div class="roar-tip-foot"><span>Need email, Teams, SharePoint or Slack? Use ✦ Roar</span><span id="sendHint">Click or press Enter</span></div>
+          </div>
+          </div>
           <div class="roar-wrap" id="roarWrap" hidden>
           <button class="oracle-btn" id="mailBtn" aria-describedby="roarTip" aria-label="Ask with Roar: uploaded documents plus Outlook, Teams, SharePoint and Slack" aria-pressed="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M19 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".85"/><path d="M5 15.5l.6 1.6 1.6.6-1.6.6L5 20l-.6-1.7-1.6-.6 1.6-.6z" opacity=".7"/></svg>
@@ -1319,7 +1335,10 @@ $('mailBtn').addEventListener('click', () => {
 function setSendState() {
   const b = $('sendBtn');
   b.classList.toggle('stop', busy); b.classList.toggle('send', !busy);
-  b.title = busy ? 'Stop' : 'Send: checks uploaded documents only'; b.setAttribute('aria-label', b.title);
+  b.setAttribute('aria-label', busy ? 'Stop' : 'Send: checks uploaded documents only');
+  $('sendState').textContent = busy ? 'Working' : 'Fast'; $('sendState').dataset.state = busy ? 'busy' : 'on';
+  $('sendLead').textContent = busy ? 'Claude is answering now.' : 'Checks only your documents: the Library and files uploaded in this section.';
+  $('sendHint').textContent = busy ? 'Click to stop' : 'Click or press Enter';
   b.innerHTML = busy ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>'
                      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 }
