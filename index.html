@@ -358,7 +358,7 @@ header {
 .task-add-btn { align-self: flex-end; background: var(--ask); color: var(--on-ask); border: none; border-radius: 16px; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .task-add-btn:hover { background: var(--ask-hover); }
 .task-filters { display: flex; gap: 4px; }
-.task-filters button { flex: 1; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 14px; padding: 5px 6px; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.task-filters button { flex: 1; white-space: nowrap; min-width: 0; padding-left: 3px; padding-right: 3px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 14px; padding: 5px 3px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }
 .f-n { font-size: 10px; font-weight: 800; opacity: 0.8; }
 .f-n:empty { display: none; }
 .task-filters button.on { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
@@ -374,6 +374,10 @@ header {
 .task-status-row { grid-column: 1 / -1; display: flex; gap: 4px; align-items: center; }
 .task-link { grid-column: 1 / -1; justify-self: start; font-size: 10.5px; font-weight: 800; color: #1f4f8a; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 .task-link:hover { color: #0d3566; }
+.task-find { background: none; border: none; padding: 0; font: inherit; font-size: 10.5px; font-weight: 800; cursor: pointer; }
+.task-find:disabled { cursor: default; opacity: 0.7; text-decoration: none; }
+.task-src-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.task-src-link:hover { color: #1f4f8a; }
 .task-link.off { text-decoration: none; color: color-mix(in srgb, var(--st-ink) 65%, transparent); font-weight: 600; }
 .st-btn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font: inherit; font-size: 10px; font-weight: 700; padding: 3px 7px 3px 5px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.12); background: rgba(255,255,255,0.55); color: #4a423b; }
 .st-btn::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
@@ -1521,13 +1525,17 @@ function renderTasks() {
     const sec = byKey[t.section] ? byKey[t.section].title : '';
     const canDel = canDelete || t.createdBy === myId || !taskCol;
     const srcIcon = { email: '✉', calendar: '📅', teams: '💬', sharepoint: '📁', document: '📄', slack: '#', answer: '✦' }[t.source] || '';
-    const src = t.sourceLabel ? `<span class="task-src" title="${esc(t.sourceLabel)}">${srcIcon} ${esc(t.sourceLabel.length > 40 ? t.sourceLabel.slice(0, 40) + '…' : t.sourceLabel)}</span>` : '';
+    const shortLbl = t.sourceLabel ? esc(t.sourceLabel.length > 40 ? t.sourceLabel.slice(0, 40) + '…' : t.sourceLabel) : '';
+    const src = !t.sourceLabel ? '' : t.sourceUrl
+      ? `<a class="task-src task-src-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener" title="Open ${esc(t.sourceLabel)}">${srcIcon} ${shortLbl}</a>`
+      : `<span class="task-src" title="${esc(t.sourceLabel)}">${srcIcon} ${shortLbl}</span>`;
+    const canFind = !t.sourceUrl && t.sourceLabel && ['email', 'calendar', 'teams', 'sharepoint', 'document'].includes(t.source) && emailReady();
     const st = [['todo', 'Not started'], ['doing', 'In progress'], ['done', 'Completed']].map(([k, l]) => `<button class="st-btn${t.status === k ? ' on' : ''}" data-s="${k}" aria-pressed="${t.status === k}">${l}</button>`).join('');
     return `<div class="task" data-id="${esc(t.id)}" data-status="${esc(t.status)}">
       <div class="task-body"><div class="task-title">${esc(t.title)}</div>
         <div class="task-meta">${sec ? `<span class="task-sec">${esc(sec)}</span>` : ''}${t.unit ? `<span>Unit ${esc(t.unit)}</span>` : ''}${due ? `<span class="task-due ${due.cls}">${esc(due.text)}</span>` : ''}${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${src}</div></div>
       ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
-      <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
+      <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : canFind ? `<button type="button" class="task-link task-find" ${finding.has(t.id) ? 'disabled' : ''}>${finding.has(t.id) ? 'Finding the link…' : findFailed.has(t.id) ? 'Link not found. Try again' : 'Link to Source ↗'}</button>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
     </div>`;
   }).join('');
   const st = $('taskStatus');
@@ -1547,6 +1555,45 @@ async function addTask(t) {
   if (taskCol) await taskCol.add(doc);
   else { tasks.push(Object.assign({ id: uid() }, doc)); renderTasks(); }
   return true;
+}
+const finding = new Set(), findFailed = new Set();
+function parseItems(r) {
+  let items = [];
+  if (Array.isArray(r && r.payload)) return r.payload;
+  for (const block of ((r && r.content) || []).filter(b => b && b.type === 'text')) {
+    const t = block.text.trim();
+    try { const v = JSON.parse(t); items = items.concat(Array.isArray(v) ? v : [v]); continue; } catch (e) {}
+    for (const part of t.replace(/}\s*{/g, '}\u0001{').split('\u0001')) { try { items.push(JSON.parse(part)); } catch (e) {} }
+  }
+  return items.filter(x => x && typeof x === 'object' && x.uri);
+}
+async function findSourceLink(t) {
+  if (finding.has(t.id) || !mcp) return;
+  finding.add(t.id); findFailed.delete(t.id); renderTasks();
+  const q = String(t.sourceLabel || '').replace(/["()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const plan = {
+    calendar: ['outlook_calendar_search', { query: q, limit: 10, offset: 0 }, 'webLink', 'subject'],
+    teams: ['chat_message_search', { query: q, limit: 10, offset: 0 }, 'webUrl', 'summary'],
+    sharepoint: ['sharepoint_search', { query: q, limit: 10, offset: 0 }, 'webUrl', 'name'],
+    document: ['sharepoint_search', { query: q, limit: 10, offset: 0 }, 'webUrl', 'name'],
+    email: ['outlook_email_search', { query: q, limit: 10, offset: 0 }, 'webLink', 'subject']
+  }[t.source] || ['outlook_email_search', { query: q, limit: 10, offset: 0 }, 'webLink', 'subject'];
+  let link = '';
+  try {
+    const items = parseItems(await mcp.callTool(MS, plan[0], plan[1], { cache: false }));
+    const norm = x => String(x || '').toLowerCase().replace(/^(re|fw|fwd):\s*/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+    const want = norm(t.sourceLabel);
+    const best = items.find(it => norm(it[plan[3]]) === want) || items.find(it => norm(it[plan[3]]).includes(want) || want.includes(norm(it[plan[3]]))) || items[0];
+    link = safeLink(best && best[plan[2]]);
+  } catch (e) { link = ''; }
+  finding.delete(t.id);
+  if (link) {
+    t.sourceUrl = link;
+    if (taskCol) { try { await taskCol.doc(t.id).update({ sourceUrl: link }); } catch (e) {} }
+    renderTasks();
+    const a = document.querySelector(`.task[data-id="${CSS.escape(t.id)}"] a.task-link`);
+    if (a) { a.focus(); try { window.open(link, '_blank', 'noopener'); } catch (e) {} }
+  } else { findFailed.add(t.id); renderTasks(); }
 }
 function safeLink(u) {
   u = String(u || '').trim();
@@ -1575,6 +1622,7 @@ $('taskFilters').addEventListener('click', e => {
 $('taskList').addEventListener('click', async e => {
   const row = e.target.closest('.task'); if (!row) return;
   const t = tasks.find(x => x.id === row.dataset.id); if (!t) return;
+  if (e.target.closest('.task-find')) { findSourceLink(t); return; }
   const sb = e.target.closest('.st-btn');
   if (sb) {
     const prev = t.status, status = sb.dataset.s;
