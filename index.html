@@ -622,7 +622,7 @@ header {
             <span class="oracle-label">Roar</span>
           </button>
           <div class="roar-tip" id="roarTip" role="tooltip">
-            <div class="roar-tip-head"><span class="roar-tip-star">✦</span><span class="roar-tip-title">Roar</span><span class="roar-tip-state" id="roarState">Ready</span></div>
+            <div class="roar-tip-head"><span class="roar-tip-star">✦</span><span class="roar-tip-title">Roar</span><span class="roar-tip-state" id="roarState">In-Depth</span></div>
             <p class="roar-tip-lead" id="roarLead">Asks your question across the Library, files uploaded here and your connected apps.</p>
             <div class="roar-tip-sources">
               <span>Library</span><span>Uploaded here</span><span>Outlook</span><span>Teams</span><span>SharePoint</span><span>Slack</span><span>+ All other connectors</span>
@@ -1408,7 +1408,7 @@ $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 
 /* ---------- Composer ---------- */
 function setRoarTip(working) {
-  $('roarState').textContent = working ? 'Searching' : 'Ready';
+  $('roarState').textContent = working ? 'Searching' : 'In-Depth';
   $('roarState').dataset.state = working ? 'busy' : 'on';
   $('roarLead').textContent = working ? 'Looking through everything now.' : 'Asks your question across the Library, files uploaded here and your connected apps. Send checks only the Library and files uploaded here.';
   $('roarHint').textContent = working ? 'Click to stop' : 'Click to ask with Roar';
