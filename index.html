@@ -1330,7 +1330,7 @@ function copyFor(code) {
     queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
   })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
 }
-function footDefault() { return emailReady() ? '↑ Send checks uploaded documents only. ✦ Roar also searches Outlook, Teams, SharePoint and Slack, so it takes longer (often 1 to 2 minutes). Answers can be wrong. Check the source.' : 'Send checks uploaded documents only. Answers can be wrong. Check the source document.'; }
+function footDefault() { return 'Answers can be wrong. Check the source document.'; }
 function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = footDefault(); f.classList.remove('warn'); }, 5000); }
 
 /* ---------- Rendering answers ---------- */
