@@ -345,6 +345,53 @@ header {
 .nav-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rust); display: none; }
 .nav-btn.has-chat .dot { display: block; }
 
+/* Open Tasks */
+.tasks { width: 310px; flex-shrink: 0; border-left: 1px solid var(--line); padding: 20px; overflow-y: auto; background: var(--paper); display: flex; flex-direction: column; gap: 14px; }
+.tasks-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tasks-close { display: none; }
+.task-count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; margin-left: 4px; border-radius: 10px; background: var(--ask); color: var(--on-ask); font-size: 11.5px; font-weight: 800; vertical-align: 2px; font-variant-numeric: tabular-nums; }
+.task-add { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.task-add-row { display: grid; grid-template-columns: 64px 1fr 72px; gap: 6px; }
+.task-input { min-width: 0; width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); font: inherit; font-size: 12.5px; padding: 7px 9px; outline: none; }
+.task-input:focus { border-color: var(--ask); }
+.task-input::placeholder { color: var(--subtle); }
+.task-add-btn { align-self: flex-end; background: var(--ask); color: var(--on-ask); border: none; border-radius: 16px; padding: 6px 14px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.task-add-btn:hover { background: var(--ask-hover); }
+.task-filters { display: flex; gap: 4px; }
+.task-filters button { flex: 1; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 14px; padding: 5px 6px; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+.task-filters button.on { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
+.task-list { display: flex; flex-direction: column; }
+.task { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.task-check { width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: none; cursor: pointer; display: grid; place-items: center; color: transparent; padding: 0; }
+.task-check:hover { border-color: var(--ok); color: var(--ok); }
+.task.done .task-check { background: var(--ok); border-color: var(--ok); color: var(--on-ask); }
+.task-body { min-width: 0; }
+.task-title { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.task.done .task-title { text-decoration: line-through; color: var(--subtle); }
+.task-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; font-size: 11px; color: var(--subtle); }
+.task-sec { color: var(--ask); font-weight: 600; }
+.task-due.overdue { color: var(--danger); font-weight: 700; }
+.task-due.today { color: var(--rust); font-weight: 700; }
+.task-del { background: none; border: none; color: var(--subtle); cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 6px; opacity: 0; }
+.task:hover .task-del, .task-del:focus-visible { opacity: 1; }
+.task-del:hover { color: var(--ink); }
+.task-status { font-size: 12px; color: var(--subtle); line-height: 1.5; }
+.task-status.warn { color: var(--rust); }
+.tasks-toggle { display: none; position: relative; }
+.toggle-badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--ask); color: var(--on-ask); font-size: 10.5px; font-weight: 800; display: grid; place-items: center; }
+.tasks.drag-on { box-shadow: none; }
+@media (max-width: 1180px) {
+  .tasks {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
+    transform: translateX(100%); transition: transform 0.25s ease;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .tasks.open { transform: translateX(0); }
+  .tasks-toggle { display: grid; }
+  .tasks-close { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
   .library {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
@@ -480,6 +527,10 @@ header {
     <div class="label">New York, NY</div>
     <div class="clock" id="clock">—</div>
   </div>
+  <button class="sq-btn tasks-toggle" id="tasksToggle" aria-label="Open tasks">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L6.5 5M3.5 12l1.2 1.2 1.8-2.2M3.5 18l1.2 1.2 1.8-2.2"/></svg>
+    <span class="toggle-badge" id="tasksBadge" hidden>0</span>
+  </button>
   <button class="sq-btn lib-toggle" id="libToggle" aria-label="Open library">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5"/></svg>
   </button>
@@ -566,6 +617,32 @@ header {
       </div>
     </div>
   </div>
+
+  <aside class="tasks" id="tasks" aria-label="Open Tasks">
+    <div class="tasks-head">
+      <div>
+        <div class="eyebrow">Shared with your team</div>
+        <div class="packet-title">Open Tasks <span class="task-count" id="taskCount">0</span></div>
+      </div>
+      <button class="lib-close tasks-close" id="tasksClose" aria-label="Close tasks">✕</button>
+    </div>
+    <form class="task-add" id="taskForm" autocomplete="off">
+      <input id="taskTitle" class="task-input" placeholder="Add a task, e.g. Call plumber about 1005 leak" maxlength="160" aria-label="Task">
+      <div class="task-add-row">
+        <input id="taskUnit" class="task-input" placeholder="Unit" maxlength="12" aria-label="Unit">
+        <input id="taskDue" class="task-input" type="date" aria-label="Due date">
+        <input id="taskOwner" class="task-input" placeholder="Who" maxlength="40" aria-label="Who will do it">
+      </div>
+      <button type="submit" class="task-add-btn">Add task</button>
+    </form>
+    <div class="task-filters" id="taskFilters" role="tablist">
+      <button type="button" data-f="all" class="on">All tabs</button>
+      <button type="button" data-f="tab">This tab</button>
+      <button type="button" data-f="done">Done</button>
+    </div>
+    <div class="task-list" id="taskList"></div>
+    <p class="task-status" id="taskStatus">Loading tasks…</p>
+  </aside>
 </div>
 
 <nav class="bottom-nav" id="nav" aria-label="Sections"></nav>
@@ -1258,7 +1335,7 @@ function msgHtml(m, idx) {
   if (m.error) foot += `<div class="err-line">${esc(m.error)}</div>`;
   if (m.note) foot += `<div class="used">${esc(m.note)}</div>`;
   if (!m.pending && !m.streaming && m.content) {
-    foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
+    foot += `<div class="msg-tools"><button class="mini" data-act="copy" data-i="${idx}">Copy</button><button class="mini" data-act="tasks" data-i="${idx}">Make tasks from this</button>${downloads ? `<button class="mini" data-act="save" data-i="${idx}">Save as file</button>` : ''}</div>`;
     if (m.used && m.used.length) foot += `<div class="used">Documents checked: ${esc(m.used.slice(0, 8).join(', '))}${m.used.length > 8 ? ` and ${m.used.length - 8} more` : ''}</div>`;
   }
   return `<div class="msg bot"><div class="who">The ToolBox</div><div class="bubble">${body}</div>${foot}</div>`;
@@ -1282,6 +1359,11 @@ $('messages').addEventListener('click', async e => {
     try { await navigator.clipboard.writeText(m.content); b.textContent = 'Copied'; }
     catch (err) { const r = document.createRange(); r.selectNodeContents(b.closest('.msg').querySelector('.bubble')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected, press Ctrl+C'; }
     setTimeout(() => { b.textContent = 'Copy'; }, 2000);
+  } else if (b.dataset.act === 'tasks') {
+    b.disabled = true; b.textContent = 'Finding tasks…';
+    try { const n = await tasksFromAnswer(m.content); b.textContent = n ? `Added ${n} task${n > 1 ? 's' : ''}` : 'No tasks found'; }
+    catch (err) { b.textContent = 'Could not make tasks'; }
+    setTimeout(() => { b.disabled = false; b.textContent = 'Make tasks from this'; }, 3000);
   } else if (b.dataset.act === 'save' && downloads) {
     const q = (threads[mode] || [])[+b.dataset.i - 1];
     const data = `The Rental ToolBox — ${byKey[mode].title}\n${$('propertyName').value}\n${new Date().toLocaleString()}\n\nQuestion:\n${q ? q.content : ''}\n\nAnswer:\n${m.content}\n`;
@@ -1301,7 +1383,7 @@ function setMode(key) {
   $('askSub').textContent = s.desc;
   $('chatInput').placeholder = `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
-  renderChips(); render();
+  renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
@@ -1372,7 +1454,9 @@ document.addEventListener('drop', e => { if (hasFiles(e)) e.preventDefault(); })
 window.addEventListener('dragend', () => document.querySelectorAll('.drag-on').forEach(x => x.classList.remove('drag-on')));
 
 /* ---------- Menus ---------- */
-function closeAll() { $('sideMenu').classList.remove('open'); $('library').classList.remove('open'); $('overlay').classList.remove('open'); }
+function closeAll() { $('sideMenu').classList.remove('open'); $('library').classList.remove('open'); $('tasks').classList.remove('open'); $('overlay').classList.remove('open'); }
+$('tasksToggle').addEventListener('click', () => { $('tasks').classList.add('open'); $('overlay').classList.add('open'); });
+$('tasksClose').addEventListener('click', closeAll);
 $('menuBtn').addEventListener('click', () => { $('sideMenu').classList.add('open'); $('overlay').classList.add('open'); });
 $('closeMenu').addEventListener('click', closeAll);
 $('overlay').addEventListener('click', closeAll);
@@ -1383,6 +1467,98 @@ document.querySelectorAll('.menu-section, .menu-sub-section').forEach(b => b.add
   const sub = b.nextElementSibling; if (sub) sub.classList.toggle('open');
 }));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+/* ---------- Open Tasks (shared, live) ---------- */
+let tasks = [];            // [{id, title, unit, due, owner, section, done, createdBy, createdAt, doneAt}]
+let taskFilter = 'all';
+let taskCol = null;
+const todayStr = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+function fmtDue(due) {
+  if (!due) return null;
+  const t = todayStr();
+  const d = new Date(due + 'T12:00:00');
+  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (due < t) return { cls: 'overdue', text: `Due ${label} · overdue` };
+  if (due === t) return { cls: 'today', text: 'Due today' };
+  return { cls: '', text: `Due ${label}` };
+}
+function renderTasks() {
+  const open = tasks.filter(x => !x.done);
+  $('taskCount').textContent = open.length;
+  const badge = $('tasksBadge'); badge.textContent = open.length; badge.hidden = !open.length;
+  let list = taskFilter === 'done' ? tasks.filter(x => x.done) : open;
+  if (taskFilter === 'tab') list = list.filter(x => x.section === mode);
+  list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
+    : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0))).slice(0, 200);
+  $('taskList').innerHTML = list.map(t => {
+    const due = fmtDue(t.due);
+    const sec = byKey[t.section] ? byKey[t.section].title : '';
+    const canDel = canDelete || t.createdBy === myId || !taskCol;
+    return `<div class="task${t.done ? ' done' : ''}" data-id="${esc(t.id)}">
+      <button class="task-check" aria-label="${t.done ? 'Mark as open' : 'Mark as done'}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+      <div class="task-body"><div class="task-title">${esc(t.title)}</div>
+        <div class="task-meta">${sec ? `<span class="task-sec">${esc(sec)}</span>` : ''}${t.unit ? `<span>Unit ${esc(t.unit)}</span>` : ''}${due ? `<span class="task-due ${due.cls}">${esc(due.text)}</span>` : ''}${t.owner ? `<span>${esc(t.owner)}</span>` : ''}</div></div>
+      ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
+    </div>`;
+  }).join('');
+  const st = $('taskStatus');
+  if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No finished tasks yet.' : taskFilter === 'tab' ? `No open tasks for ${byKey[mode].title}.` : 'No open tasks. Add one above, or press “Make tasks from this” under an answer.'; }
+  else if (!taskCol) { st.classList.add('warn'); st.textContent = 'Tasks stay for this visit only. Sign in to claude.ai to share them with your team.'; }
+  else { st.classList.remove('warn'); st.textContent = ''; }
+}
+async function addTask(t) {
+  const doc = { title: String(t.title || '').slice(0, 160), unit: String(t.unit || '').slice(0, 12), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '', owner: String(t.owner || '').slice(0, 40), section: t.section || mode, done: false, createdBy: myId || '', createdAt: Date.now(), doneAt: 0 };
+  if (!doc.title.trim()) return;
+  if (taskCol) await taskCol.add(doc);
+  else { tasks.push(Object.assign({ id: uid() }, doc)); renderTasks(); }
+}
+async function tasksFromAnswer(text) {
+  if (!sample) throw new Error('no sample');
+  const out = await sample.json(`Find the follow-up tasks a building manager should do in the text below. Return JSON: an array of at most 8 objects with keys "title" (short action starting with a verb, under 100 characters), "unit" (apartment or unit number, or ""), "due" (YYYY-MM-DD if a date is stated or clearly implied, else ""), "owner" (person or vendor who should do it if named, else ""). Today is ${todayStr()}. Return [] if there are no tasks.\n\nText:\n${text.slice(0, 20000)}`, { modelTier: 'quick', cache: false });
+  const items = Array.isArray(out) ? out.slice(0, 8) : [];
+  for (const it of items) if (it && it.title) await addTask(it);
+  return items.filter(it => it && it.title).length;
+}
+$('taskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = $('taskTitle').value.trim();
+  if (!title) { $('taskTitle').focus(); return; }
+  try {
+    await addTask({ title, unit: $('taskUnit').value.trim(), due: $('taskDue').value, owner: $('taskOwner').value.trim() });
+    $('taskTitle').value = ''; $('taskUnit').value = ''; $('taskDue').value = ''; $('taskOwner').value = '';
+  } catch (err) { $('taskStatus').textContent = 'Could not add the task. You may need Contributor access to this page.'; $('taskStatus').classList.add('warn'); }
+});
+$('taskFilters').addEventListener('click', e => {
+  const b = e.target.closest('button[data-f]'); if (!b) return;
+  taskFilter = b.dataset.f;
+  document.querySelectorAll('#taskFilters button').forEach(x => x.classList.toggle('on', x === b));
+  renderTasks();
+});
+$('taskList').addEventListener('click', async e => {
+  const row = e.target.closest('.task'); if (!row) return;
+  const t = tasks.find(x => x.id === row.dataset.id); if (!t) return;
+  if (e.target.closest('.task-check')) {
+    const done = !t.done;
+    t.done = done; t.doneAt = done ? Date.now() : 0; renderTasks();
+    if (taskCol) try { await taskCol.doc(t.id).update({ done, doneAt: t.doneAt, doneBy: myId || '' }); } catch (err) { t.done = !done; renderTasks(); }
+  } else if (e.target.closest('.task-del')) {
+    tasks = tasks.filter(x => x !== t); renderTasks();
+    if (taskCol) try { await taskCol.doc(t.id).delete(); } catch (err) { $('taskStatus').textContent = 'Could not delete the task.'; }
+  }
+});
+function startTasks() {
+  if (!db || !myId) { renderTasks(); return; }
+  taskCol = db.collection('tasks');
+  const timer = setTimeout(() => { $('taskStatus').textContent = 'Tasks are taking a long time to load. Check your connection.'; $('taskStatus').classList.add('warn'); }, 10000);
+  taskCol.onSnapshot(snap => {
+    clearTimeout(timer);
+    tasks = snap.docs.map(d => Object.assign({ id: d.id }, d.data() || {})).filter(t => t.title);
+    renderTasks();
+  }, err => {
+    clearTimeout(timer);
+    $('taskStatus').textContent = 'Could not load tasks. You may need Contributor access to this page.'; $('taskStatus').classList.add('warn');
+  });
+}
 
 /* ---------- Building name (remembered in this browser only) ---------- */
 try { const v = localStorage.getItem('rb-building'); if (v) $('propertyName').value = v; } catch (e) {}
@@ -1412,8 +1588,8 @@ setLibStatus('Loading your library…');
   setMailBtn();
   let id = null;
   if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
-  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } await loadLibrary(); }
-  else { renderLibrary(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
+  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } startTasks(); await loadLibrary(); }
+  else { renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
   render();
 })();
 </script>
