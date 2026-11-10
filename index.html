@@ -148,6 +148,26 @@ header {
 .lib-toggle:hover { background: var(--ask-hover); }
 .lib-status { font-size: 12px; color: var(--subtle); line-height: 1.5; }
 .lib-status.warn { color: var(--rust); }
+.conn { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.conn-head { display: flex; justify-content: space-between; align-items: center; }
+.conn-refresh { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 12px; padding: 3px 9px; font: inherit; font-size: 11px; cursor: pointer; }
+.conn-refresh:hover { color: var(--ink); border-color: var(--line-strong); }
+.conn-list { display: flex; flex-direction: column; gap: 6px; }
+.conn-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.conn-name { min-width: 0; }
+.conn-name small { display: block; font-size: 10.5px; color: var(--subtle); }
+.conn-state { font-size: 11px; font-weight: 700; white-space: nowrap; }
+.conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--subtle); }
+.conn-dot[data-s="on"] { background: #6fbf68; box-shadow: 0 0 6px rgba(111,191,104,0.6); }
+.conn-dot[data-s="ask"] { background: #e6c13d; }
+.conn-dot[data-s="reauth"] { background: #e8837a; }
+.conn-dot[data-s="off"], .conn-dot[data-s="wait"] { background: #6b625a; }
+.conn-dot[data-s="manual"] { background: transparent; border: 1.5px solid var(--subtle); }
+.conn-state[data-s="on"] { color: #8fd18a; }
+.conn-state[data-s="ask"] { color: #e6c13d; }
+.conn-state[data-s="reauth"] { color: #f0a49c; }
+.conn-state[data-s="off"], .conn-state[data-s="manual"] { color: var(--subtle); }
+.conn-note { font-size: 11px; color: var(--subtle); }
 .lib-search {
   width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
   padding: 9px 12px; color: var(--ink); font-size: 13px; font-family: inherit; outline: none;
@@ -593,6 +613,13 @@ header {
     <div class="lib-status" id="libStatus">Loading your library…</div>
     <input class="lib-search" id="libSearch" type="search" placeholder="Filter documents…" aria-label="Filter documents" hidden>
     <div class="file-list" id="libList"></div>
+    <section class="conn" aria-label="Connections">
+      <div class="conn-head"><div class="eyebrow">Connections</div><button type="button" class="conn-refresh" id="connRefresh">Refresh</button></div>
+      <div class="conn-list" id="connList">
+        <div class="conn-row"><span class="conn-dot" data-s="wait"></span><span class="conn-name">Checking…</span></div>
+      </div>
+      <p class="conn-note">Manage connections in claude.ai Settings, Connectors.</p>
+    </section>
   </aside>
 
   <div class="center">
@@ -1315,6 +1342,7 @@ async function send(textOverride, extraTask, roar) {
   } finally {
     $('mailBtn').classList.remove('working');
     $('mailBtn').querySelector('.oracle-label').textContent = 'Roar';
+    renderConnections();
     setMailBtn();
     bot.streaming = false; busy = false; controller = null; setSendState(); render();
   }
@@ -1442,6 +1470,36 @@ $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn')
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
   if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit), true); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
 $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
+
+/* ---------- Connections status ---------- */
+const CONN = [
+  { server: 'Microsoft 365', label: 'Microsoft 365', sub: 'Outlook, Calendar, Teams, SharePoint' },
+  { server: 'Slack', label: 'Slack', sub: 'Messages and threads' },
+  { label: 'Yardi Virtuoso', sub: 'Leases, payables, receivables', manual: 'Planned' },
+  { label: 'BuildingLink', sub: 'Upload exports to the Library', manual: 'Upload' },
+  { label: 'OnSite', sub: 'Upload exports to the Library', manual: 'Upload' }
+];
+const CONN_TEXT = { on: 'Connected', ask: 'Allow on first use', reauth: 'Sign in again', off: 'Not connected' };
+async function renderConnections() {
+  let servers = [];
+  let ok = !!mcp;
+  if (mcp) { try { servers = (await mcp.listTools()).servers || []; } catch (e) { ok = false; } }
+  $('connList').innerHTML = CONN.map(c => {
+    let st;
+    if (c.manual) st = 'manual';
+    else if (!ok) st = 'off';
+    else {
+      const sv = servers.find(x => x.server === c.server);
+      if (!sv || !sv.tools || !sv.tools.length) st = 'off';
+      else if (sv.authStatus === 'connected') st = 'on';
+      else if (sv.authStatus === 'needs_reauth') st = 'reauth';
+      else st = 'ask';
+    }
+    const txt = c.manual || CONN_TEXT[st];
+    return `<div class="conn-row"><span class="conn-dot" data-s="${st}"></span><span class="conn-name">${esc(c.label)}<small>${esc(c.sub)}</small></span><span class="conn-state" data-s="${st}">${esc(txt)}</span></div>`;
+  }).join('');
+}
+$('connRefresh').addEventListener('click', () => { slackTools = null; renderConnections(); });
 
 /* ---------- Composer ---------- */
 function setRoarTip(working) {
@@ -1783,6 +1841,7 @@ setLibStatus('Loading your library…');
   if (!window.claude || !window.claude.use) {
     setLibStatus('Open this page on claude.ai to read documents with Claude.', true);
     showFootWarn('Open this page on claude.ai to ask Claude.');
+    renderConnections();
     return;
   }
   const [s, d, u, dl, m] = await Promise.all(['sample', 'db', 'user', 'downloads', 'mcp'].map(n => window.claude.use(n).catch(() => null)));
@@ -1790,6 +1849,7 @@ setLibStatus('Loading your library…');
   if (sample) { try { limits = await sample.limits(); } catch (e) { limits = null; } }
   else { $('footNote').textContent = 'Claude is not available on this view. Sign in to claude.ai to ask questions.'; $('footNote').classList.add('warn'); }
   setMailBtn();
+  renderConnections();
   let id = null;
   if (userCap) {
     try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
