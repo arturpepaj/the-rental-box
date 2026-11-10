@@ -1475,9 +1475,7 @@ $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 const CONN = [
   { server: 'Microsoft 365', label: 'Microsoft 365', sub: 'Outlook, Calendar, Teams, SharePoint' },
   { server: 'Slack', label: 'Slack', sub: 'Messages and threads' },
-  { label: 'Yardi Virtuoso', sub: 'Leases, payables, receivables', manual: 'Planned' },
-  { label: 'BuildingLink', sub: 'Upload exports to the Library', manual: 'Upload' },
-  { label: 'OnSite', sub: 'Upload exports to the Library', manual: 'Upload' }
+  { label: 'Yardi Virtuoso', sub: 'Leases, payables, receivables', manual: 'Planned' }
 ];
 const CONN_TEXT = { on: 'Connected', ask: 'Allow on first use', reauth: 'Sign in again', off: 'Not connected' };
 async function renderConnections() {
