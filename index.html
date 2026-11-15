@@ -471,6 +471,65 @@ header {
 @media (prefers-reduced-motion: reduce) {
   .side-menu, .library, .overlay { transition: none; }
 }
+/* ---- NYC records (Compliance & Violations) ---- */
+.nyc { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.nyc[hidden] { display: none; }
+.nyc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+.nyc-bld { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nyc-bld b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--ink); line-height: 1.1; }
+.nyc-bld span { font-size: 12px; color: var(--muted); }
+.nyc-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.nyc-btn { font: 500 13px var(--sans); color: var(--on-ask); background: var(--ask); border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+.nyc-btn:hover { background: var(--ask-hover); }
+.nyc-btn.ghost { background: transparent; color: var(--ask); border: 1px solid var(--line-strong); }
+.nyc-btn.ghost:hover { border-color: var(--ask); }
+.nyc-btn:disabled { opacity: .5; cursor: default; }
+.nyc-msg { font-size: 13px; color: var(--muted); line-height: 1.5; padding: 2px 4px; }
+.nyc-msg.warn { color: var(--danger); }
+.nyc-sum { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.nyc-stat { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; border-top-width: 3px; }
+.nyc-stat .k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nyc-stat .v { font-family: var(--serif); font-size: 26px; color: var(--ink); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nyc-stat .s { font-size: 11.5px; color: var(--subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nyc-red { border-top-color: var(--danger) !important; }
+.nyc-yellow { border-top-color: #d9b44a !important; }
+.nyc-green { border-top-color: var(--ok) !important; }
+.nyc-grey { border-top-color: var(--line-strong) !important; }
+.nyc-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.nyc-card { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; border-top-width: 3px; display: flex; flex-direction: column; min-width: 0; }
+.nyc-card.wide { grid-column: 1 / -1; }
+.nyc-ch { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px 8px; cursor: pointer; }
+.nyc-ch:focus-visible { outline: 2px solid var(--ask); outline-offset: -2px; border-radius: 12px; }
+.nyc-ct { flex: 1; min-width: 0; }
+.nyc-ct h3 { margin: 0; font: 500 14px var(--sans); color: var(--ink); }
+.nyc-ct p { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.nyc-n { font-family: var(--serif); font-size: 30px; line-height: 1; color: var(--ink); white-space: nowrap; }
+.nyc-chev { color: var(--subtle); transition: transform .15s; margin-top: 6px; }
+.nyc-card.open .nyc-chev { transform: rotate(180deg); }
+.nyc-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+.nyc-tag { font-size: 11.5px; border-radius: 999px; padding: 3px 9px; border: 1px solid var(--line-strong); color: var(--ink); white-space: nowrap; }
+.nyc-tag.red { border-color: rgba(224,122,95,.6); background: rgba(224,122,95,.12); }
+.nyc-tag.yellow { border-color: rgba(217,180,74,.6); background: rgba(217,180,74,.12); }
+.nyc-tag.green { border-color: rgba(142,163,122,.6); background: rgba(142,163,122,.12); }
+.nyc-body { display: none; border-top: 1px solid var(--line); padding: 10px 14px; max-height: 380px; overflow: auto; }
+.nyc-card.open .nyc-body { display: block; }
+.nyc-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.nyc-tbl th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); position: sticky; top: -10px; background: var(--surface); white-space: nowrap; }
+.nyc-tbl td { padding: 5px 6px; border-bottom: 1px solid rgba(61,52,44,.5); color: var(--ink); vertical-align: top; }
+.nyc-tbl td.r { color: var(--danger); }
+.nyc-tbl td.y { color: #e3c56d; }
+.nyc-tbl td.g { color: var(--ok); }
+.nyc-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 14px 10px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--subtle); margin-top: auto; }
+.nyc-foot a { color: var(--ask); text-decoration: none; }
+.nyc-foot a:hover { text-decoration: underline; }
+.nyc-foot button { font: 500 11.5px var(--sans); color: var(--ask); background: none; border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 10px; cursor: pointer; margin-left: auto; }
+.nyc-foot button:hover { border-color: var(--ask); }
+.nyc-pick { display: flex; flex-direction: column; gap: 6px; }
+.nyc-pick button { text-align: left; font: 13px var(--sans); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+.nyc-pick button:hover { border-color: var(--ask); }
+.nyc-skel { height: 12px; border-radius: 6px; background: var(--surface-2); animation: nycPulse 1.2s ease-in-out infinite; }
+@keyframes nycPulse { 50% { opacity: .45; } }
+@media (max-width: 900px) { .nyc-sum { grid-template-columns: repeat(2, minmax(0,1fr)); } .nyc-cards { grid-template-columns: 1fr; } }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -635,6 +694,7 @@ header {
           </button>
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
+        <div id="nycPanel" class="nyc" hidden></div>
         <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
       </div>
     </div>
@@ -735,7 +795,7 @@ const SECTIONS = [
   { key:'vendors', title:'Vendors & Invoices', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates.', samples:['Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
   { key:'systems', title:'Building Systems', desc:'Plumbing and electric: risers, booster pumps and pressure zones, hot water heaters, panels, apartment submeters, generators, violations and maintenance records.', samples:['All leak reports for unit 1005','Recent leak history?','How do the water booster pumps and pressure zones work?','Which apartments show unusual electric submeter use?','When was the generator last tested?'] },
   { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts.', samples:['When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
-  { key:'records', title:'Compliance & Violations', desc:'Certificates of occupancy, permits, inspection reports, violations and official building documents. Annual NYC compliance calendar.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Open permits or violations?'] },
+  { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
   { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident.', samples:['Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
 ];
@@ -1047,7 +1107,7 @@ function buildContext(question, budget) {
   const sec = byKey[mode];
   const tabDocs = (tabFiles[mode] || []).filter(f => f.status === 'ok' && f.kind === 'text').map(f => ({ name: f.name, text: f.text, where: 'Uploaded in this section' }));
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
-  const all = tabDocs.concat(libDocs);
+  const all = (mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(tabDocs, libDocs);
   const used = [];
   const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
   const fullSize = all.reduce((n, d) => n + d.text.length + 120, 0);
@@ -1456,6 +1516,436 @@ $('messages').addEventListener('click', async e => {
 function renderNav() {
   $('nav').innerHTML = SECTIONS.map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
 }
+// ===== NYC records (Compliance & Violations) — NYC Open Data through the Parallel Search connector =====
+const NYC_DS = {
+  bld:   { id: 'kj4p-ruqc', name: 'HPD Buildings' },
+  hpdv:  { id: 'wvxf-dwi5', name: 'HPD Violations' },
+  hpdc:  { id: 'ygpa-z7cr', name: 'HPD Complaints and Problems' },
+  lit:   { id: '59kj-x8nc', name: 'HPD Housing Litigations' },
+  dobv:  { id: '3h2n-5cm9', name: 'DOB Violations' },
+  ecb:   { id: '6bgk-3dad', name: 'DOB ECB Violations' },
+  safe:  { id: '855j-jady', name: 'DOB Safety Violations' },
+  elev:  { id: 'e5aq-a4j2', name: 'DOB NOW Elevator Devices' },
+  boil:  { id: '52dp-yji6', name: 'DOB NOW Boiler Safety' },
+  oath:  { id: 'jz4z-kudi', name: 'OATH Hearings (FDNY tickets)' },
+  dof:   { id: 'scjx-j6np', name: 'DOF Property Charges Balance' },
+  pluto: { id: '64uk-42ks', name: 'PLUTO' }
+};
+const NYC_ROOT = 'https://data.cityofnewyork.us/resource/';
+const nycPage = k => `https://data.cityofnewyork.us/d/${NYC_DS[k].id}`;
+const NYC_BORO = { 1: ['MANHATTAN', 'MN'], 2: ['BRONX', 'BX'], 3: ['BROOKLYN', 'BK'], 4: ['QUEENS', 'QN'], 5: ['STATEN ISLAND', 'SI'] };
+const nyc = { key: '', bld: null, res: null, loading: false, err: '', picks: null, open: {}, sid: 'rtb-' + Math.random().toString(36).slice(2) + Date.now().toString(36), server: null, summary: '' };
+
+function nycUrl(k, params) {
+  return NYC_ROOT + NYC_DS[k].id + '.json?' + Object.entries(params).map(([a, v]) => a + '=' + encodeURIComponent(String(v)).replace(/'/g, '%27')).join('&');
+}
+const sq = v => String(v).replace(/'/g, "''");
+
+async function nycServer() {
+  if (nyc.server) return nyc.server;
+  let name = 'Parallel Search';
+  try {
+    const l = await mcp.listTools();
+    const s = ((l && l.servers) || []).find(x => /parallel/i.test(x.server) && (x.tools || []).some(t => (t.name || t) === 'web_fetch'));
+    if (s) name = s.server;
+  } catch (e) {}
+  return (nyc.server = name);
+}
+function nycParseJson(t) {
+  if (t == null) return null;
+  if (typeof t !== 'string') return t;
+  t = t.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  try { return JSON.parse(t); } catch (e) {}
+  const a = t.indexOf('['), b = t.lastIndexOf(']');
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  // cut off at the end: keep complete rows only
+  if (a >= 0) { const c = t.lastIndexOf('}'); if (c > a) { try { return JSON.parse(t.slice(a, c + 1) + ']'); } catch (e) {} } }
+  const o = t.indexOf('{'), p = t.lastIndexOf('}');
+  if (o >= 0 && p > o) { try { return JSON.parse(t.slice(o, p + 1)); } catch (e) {} }
+  return null;
+}
+// Fetch up to 20 SODA urls in one connector call. Returns {url: rows | {error}}.
+async function nycFetch(urls) {
+  if (!mcp) throw Object.assign(new Error('Connectors are not available on this view. Open the page on claude.ai.'), { code: 'no_mcp' });
+  const server = await nycServer();
+  const out = {};
+  for (let i = 0; i < urls.length; i += 20) {
+    const part = urls.slice(i, i + 20);
+    const r = await mcp.callTool(server, 'web_fetch', { urls: part, full_content: true, objective: 'Return the raw JSON rows exactly as published', session_id: nyc.sid }, { cache: false });
+    let body = (r && (r.structuredContent || r.payload)) || null;
+    if (!body || !body.results) body = nycParseJson(textOf(r)) || {};
+    const results = Array.isArray(body.results) ? body.results : [];
+    const errors = Array.isArray(body.errors) ? body.errors : [];
+    part.forEach((u, j) => {
+      let hit = results.find(x => x && x.url === u);
+      if (!hit && results.length === part.length) hit = results[j];
+      const er = errors.find(x => x && x.url === u);
+      if (hit) {
+        const v = nycParseJson(hit.full_content != null ? hit.full_content : (hit.excerpts || []).join(''));
+        if (Array.isArray(v)) out[u] = v;
+        else if (v && v.error) out[u] = { error: v.message || 'Query error' };
+        else out[u] = { error: 'Could not read the data' };
+      } else out[u] = { error: er ? ('Could not reach the city site (' + (er.error_type || 'error') + ')') : 'No data returned' };
+    });
+  }
+  return out;
+}
+function nycConnMsg(e) {
+  const c = e && e.code;
+  if (c === 'server_not_connected' || c === 'server_not_found') return 'Connect the free Parallel Search connector in claude.ai Settings, Connectors. Then click Look up.';
+  if (c === 'needs_reauth') return 'Parallel Search needs to be connected again in claude.ai Settings, Connectors.';
+  if (c === 'not_granted' || c === 'consent_required') return 'Parallel Search was not allowed for this page. Click Look up and allow it.';
+  if (c === 'rate_limited') return 'Parallel Search is busy. Try again in a minute.';
+  return (e && e.message) || 'The lookup failed. Try again.';
+}
+
+// ---- address → HPD building ----
+const NYC_WORDS = { W: 'WEST', E: 'EAST', N: 'NORTH', S: 'SOUTH', ST: 'STREET', STR: 'STREET', AVE: 'AVENUE', AV: 'AVENUE', AVE_: 'AVENUE', PL: 'PLACE', BLVD: 'BOULEVARD', RD: 'ROAD', DR: 'DRIVE', PKWY: 'PARKWAY', SQ: 'SQUARE', LN: 'LANE', TER: 'TERRACE', CT: 'COURT', HWY: 'HIGHWAY', EXPY: 'EXPRESSWAY', TPKE: 'TURNPIKE', CIR: 'CIRCLE', BWAY: 'BROADWAY', 'B\'WAY': 'BROADWAY' };
+function nycParseAddress(raw) {
+  const s = String(raw || '').toUpperCase().trim();
+  if (!/[A-Z]/.test(s)) {
+    const parts = s.split(/[\s\-\/]+/).filter(Boolean), d = s.replace(/\D/g, '');
+    if (parts.length === 3 && /^[1-5]$/.test(parts[0])) return { bbl: { boro: parts[0], block: String(+parts[1]), lot: String(+parts[2]) } };
+    if (/^[1-5]\d{9}$/.test(d)) return { bbl: { boro: d[0], block: String(+d.slice(1, 6)), lot: String(+d.slice(6)) } };
+    if (/^[1-5]\d{6}$/.test(d)) return { bin: d };
+  }
+  const parts = s.split(',');
+  const rest = parts.slice(1).join(' ');
+  let boro = '';
+  const zip = (rest.match(/\b(1\d{4})\b/) || [])[1] || '';
+  if (zip) { const z = zip.slice(0, 3); boro = { '100': '1', '101': '1', '102': '1', '103': '5', '104': '2', '112': '3', '110': '4', '111': '4', '113': '4', '114': '4', '116': '4' }[z] || ''; }
+  if (/MANHATTAN|NEW YORK/.test(rest)) boro = boro || '1';
+  if (/BRONX/.test(rest)) boro = '2';
+  if (/BROOKLYN/.test(rest)) boro = '3';
+  if (/QUEENS|ASTORIA|FLUSHING|JAMAICA|JACKSON HEIGHTS|ELMHURST|FOREST HILLS|LONG ISLAND CITY|SUNNYSIDE|WOODSIDE|CORONA|REGO PARK|BAYSIDE/.test(rest)) boro = '4';
+  if (/STATEN ISLAND/.test(rest)) boro = '5';
+  let street = parts[0].replace(/[.#]/g, ' ').replace(/\s+/g, ' ').trim();
+  const m = street.match(/^(\d+[A-Z]?(?:-\d+[A-Z]?)?)\s+(.+)$/);
+  if (!m) return { error: 'Type the street number first, like "27 West 72nd Street, New York".' };
+  const house = m[1];
+  let name = m[2].replace(/\b(APT|UNIT|SUITE|FL)\b.*$/, '').trim();
+  name = name.split(' ').map(w => NYC_WORDS[w] || w.replace(/^(\d+)(ST|ND|RD|TH)$/, '$1')).join(' ');
+  return { house, street: name, boro };
+}
+function nycBblOf(b) { return String(b.boroid) + String(b.block).padStart(5, '0') + String(b.lot).padStart(4, '0'); }
+
+async function nycFindBuilding(text) {
+  const a = nycParseAddress(text);
+  if (a.error) throw new Error(a.error);
+  let where;
+  if (a.bin) where = `bin='${sq(a.bin)}'`;
+  else if (a.bbl) where = `boroid='${sq(a.bbl.boro)}' AND block='${sq(a.bbl.block)}' AND lot='${sq(a.bbl.lot)}'`;
+  else where = `housenumber='${sq(a.house)}' AND streetname='${sq(a.street)}'` + (a.boro ? ` AND boroid='${a.boro}'` : '');
+  const u1 = nycUrl('bld', { $where: where, $limit: 20 });
+  const urls = [u1];
+  let u2 = null;
+  if (a.street) {
+    const core = a.street.replace(/^(WEST|EAST|NORTH|SOUTH)\s+/, '').replace(/\s+(STREET|AVENUE|PLACE|ROAD|BOULEVARD|DRIVE)$/, '');
+    u2 = nycUrl('bld', { $where: `housenumber='${sq(a.house)}' AND streetname like '%${sq(core)}%'` + (a.boro ? ` AND boroid='${a.boro}'` : ''), $limit: 20 });
+    urls.push(u2);
+  }
+  const r = await nycFetch(urls);
+  let rows = Array.isArray(r[u1]) ? r[u1] : [];
+  if (!rows.length && u2 && Array.isArray(r[u2])) rows = r[u2];
+  if (!rows.length) {
+    const e = r[u1] && r[u1].error;
+    throw new Error(e && /reach/.test(e) ? e : 'No HPD building found for this address. Try the full address, like "27 West 72nd Street, New York", or type the BIN or BBL.');
+  }
+  const active = rows.filter(x => /active/i.test(x.recordstatus || ''));
+  const list = (active.length ? active : rows);
+  const seen = new Set(); const uniq = list.filter(x => !seen.has(x.buildingid) && seen.add(x.buildingid));
+  return uniq;
+}
+
+// ---- dates and money ----
+const nycToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+function nycDate(v) {
+  if (!v) return null; const s = String(v);
+  let d = null;
+  if (/^\d{8}$/.test(s)) d = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
+  else if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) d = new Date(+s.slice(6, 10), +s.slice(0, 2) - 1, +s.slice(3, 5));
+  else if (/^\d{4}-\d{2}-\d{2}/.test(s)) d = new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+  return d && !isNaN(d) ? d : null;
+}
+const nycFmtD = d => d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const nycD = v => nycFmtD(nycDate(v));
+const nycMoney = n => '$' + Math.round(+n || 0).toLocaleString('en-US');
+const nycNum = v => { const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.-]/g, '')); return isNaN(n) ? 0 : n; };
+const nycDays = d => Math.round((d - nycToday()) / 86400000);
+function nycDueFlag(d) { if (!d) return 'grey'; const n = nycDays(d); return n <= 60 ? 'red' : n <= 180 ? 'yellow' : 'green'; }
+
+// ---- Local Law deadlines from building facts ----
+function nycLocalLaws(f) {
+  const t = nycToday(), y = t.getFullYear(), out = [];
+  const add = (law, what, due, note, applies) => out.push({ law, what, due, note: note || '', applies: applies !== false, flag: applies === false ? 'grey' : nycDueFlag(due) });
+  // LL152 gas piping — 4-year cycle by community district
+  const cd = f.cd ? (+f.cd % 100) : 0;
+  const base = { 1: 2024, 3: 2024, 10: 2024, 2: 2025, 5: 2025, 7: 2025, 13: 2025, 18: 2025, 4: 2026, 6: 2026, 8: 2026, 9: 2026, 16: 2026, 11: 2027, 12: 2027, 14: 2027, 15: 2027, 17: 2027 }[cd];
+  if (base) { let yy = base; while (new Date(yy, 11, 31) < t) yy += 4; add('LL152', 'Gas piping inspection (GPS1 / GPS2)', new Date(yy, 11, 31), `Community district ${cd}. Cycle repeats every 4 years.`, (f.units || 0) > 2 || !f.units); }
+  else add('LL152', 'Gas piping inspection', null, 'Community district not found. Check on the DOB website.', false);
+  // LL87 energy audit — year ending in last digit of tax block
+  const blk = parseInt(f.block, 10);
+  if (f.area > 50000 && !isNaN(blk)) { let yy = y; while (yy % 10 !== blk % 10 || new Date(yy, 11, 31) < t) yy++; add('LL87', 'Energy audit and retro-commissioning', new Date(yy, 11, 31), `Tax block ends in ${blk % 10}. Due every 10 years.`); }
+  else add('LL87', 'Energy audit and retro-commissioning', null, f.area ? `Building is ${Math.round(f.area).toLocaleString()} sq ft. Only over 50,000 sq ft.` : 'Building size not found.', false);
+  // LL11 / FISP Cycle 10 — sub-cycle by last digit of block
+  if (f.floors > 6 && !isNaN(blk)) {
+    const d = blk % 10; const sub = [4, 5, 6, 9].includes(d) ? 'A' : [0, 7, 8].includes(d) ? 'B' : 'C';
+    let endY = { A: 2027, B: 2028, C: 2029 }[sub]; while (new Date(endY, 1, 21) < t) endY += 5;
+    add('LL11', 'Facade inspection (FISP)', new Date(endY, 1, 21), `Sub-cycle ${sub} (block ends in ${d}). Filing window ends ${nycFmtD(new Date(endY, 1, 21))}. Verify with DOB.`);
+  } else add('LL11', 'Facade inspection (FISP)', null, f.floors ? `${f.floors} stories. Only over 6 stories.` : 'Number of stories not found.', false);
+  // LL84 / LL97 — May 1 each year
+  if (f.area > 25000) { let d = new Date(y, 4, 1); if (d < t) d = new Date(y + 1, 4, 1); add('LL84 / LL97', 'Energy benchmarking and emissions report', d, 'Due May 1 every year.'); }
+  else add('LL84 / LL97', 'Energy benchmarking and emissions report', null, f.area ? `Building is ${Math.round(f.area).toLocaleString()} sq ft. Only over 25,000 sq ft.` : 'Building size not found.', false);
+  // LL157 gas detectors
+  { const d = new Date(2027, 0, 1); add('LL157', 'Natural gas detectors in units', d < t ? null : d, d < t ? 'Deadline has passed. Make sure detectors are installed.' : 'Install detectors in every unit with gas.'); }
+  // Annual notices
+  { let d = new Date(y, 0, 16); if (d < t) d = new Date(y + 1, 0, 16); add('LL1 / Window guards', 'Annual lead paint and window guard notice', d, 'Send to tenants in January. Collect by Feb 15.'); }
+  return out.sort((a, b) => (a.due ? a.due : 9e15) - (b.due ? b.due : 9e15));
+}
+
+// ---- load everything ----
+async function nycLoad(force) {
+  const text = $('propertyName').value.trim();
+  if (!text) { nyc.err = ''; nyc.res = null; nyc.bld = null; nyc.picks = null; nyc.key = ''; renderNyc(); return; }
+  if (!force && nyc.key === text.toUpperCase() && (nyc.res || nyc.loading)) { renderNyc(); return; }
+  nyc.key = text.toUpperCase(); nyc.loading = true; nyc.err = ''; nyc.res = null; nyc.bld = null; nyc.picks = null; renderNyc();
+  const myKey = nyc.key;
+  try {
+    const list = await nycFindBuilding(text);
+    if (myKey !== nyc.key) return;
+    if (list.length > 1) { nyc.picks = list; nyc.loading = false; renderNyc(); return; }
+    await nycLoadBuilding(list[0], myKey);
+  } catch (e) {
+    if (myKey !== nyc.key) return;
+    nyc.err = e && e.code ? nycConnMsg(e) : (e && e.message) || 'The lookup failed.'; nyc.loading = false; renderNyc();
+  }
+}
+async function nycLoadBuilding(b, myKey) {
+  myKey = myKey || nyc.key;
+  nyc.bld = b; nyc.picks = null; nyc.loading = true; renderNyc();
+  const bid = sq(b.buildingid), bin = sq(b.bin || ''), boro = NYC_BORO[b.boroid] || ['', ''];
+  const blk5 = String(b.block).padStart(5, '0'), lot5 = String(b.lot).padStart(5, '0');
+  const bbl = nycBblOf(b);
+  const t = nycToday(); const yago = new Date(t); yago.setFullYear(t.getFullYear() - 1);
+  const iso = d => d.toISOString().slice(0, 10) + 'T00:00:00';
+  const hv = `buildingid='${bid}' AND violationstatus='Open'`;
+  const Q = {
+    pluto: nycUrl('pluto', { borough: boro[1], block: String(+b.block), lot: String(+b.lot), $select: 'numfloors,bldgarea,unitsres,unitstotal,yearbuilt,cd,bldgclass,ownername', $limit: 1 }),
+    vCls: nycUrl('hpdv', { $select: 'class,count(*) as n', $where: hv, $group: 'class' }),
+    vSt: nycUrl('hpdv', { $select: 'currentstatus,count(*) as n', $where: hv, $group: 'currentstatus', $limit: 50 }),
+    vRi: nycUrl('hpdv', { $select: 'count(*) as n', $where: hv + " AND rentimpairing='Y'" }),
+    vLead: nycUrl('hpdv', { $select: 'count(*) as n', $where: hv + " AND (ordernumber in('616','617','618','619','620','621','622','623','624','625') OR upper(novdescription) like '%LEAD%')" }),
+    vApt: nycUrl('hpdv', { $select: 'apartment,count(*) as n', $where: hv, $group: 'apartment', $order: 'n DESC', $limit: 6 }),
+    vList: nycUrl('hpdv', { $select: 'violationid,apartment,story,class,novissueddate,originalcorrectbydate,currentstatus,rentimpairing,ordernumber,novdescription', $where: hv, $order: 'novissueddate DESC', $limit: 150 }),
+    cGrp: nycUrl('hpdc', { $select: 'major_category,problem_code,count(*) as n', $where: `building_id='${bid}' AND received_date>='${iso(yago)}'`, $group: 'major_category,problem_code', $limit: 300 }),
+    cList: nycUrl('hpdc', { $select: 'received_date,apartment,major_category,minor_category,problem_code,complaint_status,type', $where: `building_id='${bid}' AND received_date>='${iso(yago)}'`, $order: 'received_date DESC', $limit: 150 }),
+    lit: nycUrl('lit', { $select: 'litigationid,casetype,caseopendate,casestatus,casejudgement,respondent', $where: `buildingid='${bid}' AND casestatus='OPEN'`, $order: 'caseopendate DESC', $limit: 50 }),
+    dobv: bin ? nycUrl('dobv', { $select: 'number,issue_date,violation_type,violation_category,description,device_number', $where: `bin='${bin}' AND upper(violation_category) like '%ACTIVE%'`, $order: 'issue_date DESC', $limit: 150 }) : null,
+    ecb: bin ? nycUrl('ecb', { $select: 'ecb_violation_number,issue_date,severity,violation_description,hearing_status,hearing_date,penality_imposed,amount_paid,balance_due', $where: `bin='${bin}' AND ecb_violation_status='ACTIVE'`, $order: 'issue_date DESC', $limit: 150 }) : null,
+    safe: bin ? nycUrl('safe', { $select: 'violation_number,violation_issue_date,device_type,device_number,violation_type,violation_remarks', $where: `bin='${bin}' AND violation_status='Active'`, $order: 'violation_issue_date DESC', $limit: 150 }) : null,
+    elev: bin ? nycUrl('elev', { $select: 'device_number,device_type,equipment_type,device_status,cat1_report_year,cat1_latest_report_filed,cat5_latest_report_filed,periodic_report_year,periodic_latest_inspection', $where: `bin='${bin}' AND device_status='Active'`, $limit: 100 }) : null,
+    boil: bin ? nycUrl('boil', { $select: 'boiler_id,boiler_make,boiler_model,pressure_type,inspection_type,inspection_date,defects_exist,report_status', $where: `bin_number='${bin}'`, $limit: 400 }) : null,
+    oath: nycUrl('oath', { $select: 'ticket_number,violation_date,charge_1_code_description,hearing_status,compliance_status,hearing_date,penalty_imposed,paid_amount,balance_due', $where: `issuing_agency='FIRE DEPARTMENT OF NYC' AND violation_location_borough='${boro[0]}' AND violation_location_block_no='${blk5}' AND violation_location_lot_no='${lot5}' AND violation_date>='2018-01-01T00:00:00'`, $order: 'violation_date DESC', $limit: 150 }),
+    dof: nycUrl('dof', { $select: 'extractdt,code,taxyear,cycle,due_date,sum_liab,sum_bal', $where: `parid='${bbl}' AND sum_bal>0`, $order: 'extractdt DESC,due_date DESC', $limit: 200 }),
+    dofAsof: nycUrl('dof', { $select: 'max(extractdt) as ex,max(:updated_at) as asof' })
+  };
+  ['hpdv', 'hpdc', 'lit', 'dobv', 'ecb', 'safe', 'elev', 'boil', 'oath', 'pluto'].forEach(k => { Q['asof_' + k] = nycUrl(k, { $select: 'max(:updated_at) as asof' }); });
+  const keys = Object.keys(Q).filter(k => Q[k]);
+  let raw;
+  try { raw = await nycFetch(keys.map(k => Q[k])); }
+  catch (e) { if (myKey !== nyc.key) return; nyc.err = nycConnMsg(e); nyc.loading = false; renderNyc(); return; }
+  if (myKey !== nyc.key) return;
+  const R = {}; keys.forEach(k => { R[k] = raw[Q[k]]; });
+  const ok = v => Array.isArray(v);
+  const rows = v => ok(v) ? v : [];
+  const errOf = (...vs) => { const e = vs.find(v => v && !ok(v)); return e ? e.error : ''; };
+  const asof = k => { const v = R['asof_' + k]; return ok(v) && v[0] ? nycDate(v[0].asof) : null; };
+  const p = rows(R.pluto)[0] || {};
+  const facts = { cd: p.cd || (b.communityboard ? (+b.boroid * 100 + +b.communityboard) : ''), block: b.block, area: nycNum(p.bldgarea), floors: Math.round(nycNum(p.numfloors)) || nycNum(b.legalstories), units: nycNum(p.unitsres) || nycNum(b.legalclassa), year: p.yearbuilt, bldgclass: p.bldgclass, owner: p.ownername };
+  const res = { facts, cards: {} };
+
+  // 1. HPD violations
+  { const cls = { A: 0, B: 0, C: 0, I: 0 }; rows(R.vCls).forEach(r => { cls[r.class] = (cls[r.class] || 0) + nycNum(r.n); });
+    const open = Object.values(cls).reduce((a, n) => a + n, 0);
+    let noAccess = 0, notComplied = 0; rows(R.vSt).forEach(r => { const s = String(r.currentstatus || '').toUpperCase(); if (s.includes('NO ACCESS')) noAccess += nycNum(r.n); if (s.includes('NOT COMPLIED')) notComplied += nycNum(r.n); });
+    const ri = nycNum((rows(R.vRi)[0] || {}).n), lead = nycNum((rows(R.vLead)[0] || {}).n);
+    const apts = rows(R.vApt).filter(r => r.apartment && r.apartment !== 'BLDG').slice(0, 5);
+    const goal = Math.ceil(open * 0.75);
+    res.cards.hpdv = { open, cls, noAccess, notComplied, ri, lead, apts, goal, list: rows(R.vList), err: errOf(R.vCls, R.vList), asof: asof('hpdv') }; }
+  // 2. Complaints
+  { let total = 0, heat = 0, hot = 0; const byCat = {};
+    rows(R.cGrp).forEach(r => { const n = nycNum(r.n); total += n; const c = String(r.major_category || 'OTHER'); byCat[c] = (byCat[c] || 0) + n;
+      const pc = String(r.problem_code || '').toUpperCase();
+      if (/HEAT\/HOT WATER/.test(c.toUpperCase())) { if (/NO HEAT/.test(pc)) heat += n; if (/HOT WATER/.test(pc)) hot += n; } });
+    res.cards.hpdc = { total, heat, hot, byCat, list: rows(R.cList), err: errOf(R.cGrp, R.cList), asof: asof('hpdc') }; }
+  // 3. Litigation
+  res.cards.lit = { list: rows(R.lit), err: errOf(R.lit), asof: asof('lit') };
+  // 4. DOB violations
+  res.cards.dobv = { list: rows(R.dobv), err: bin ? errOf(R.dobv) : 'No BIN for this building.', asof: asof('dobv') };
+  // 5. ECB
+  { const l = rows(R.ecb); res.cards.ecb = { list: l, due: l.reduce((a, r) => a + nycNum(r.balance_due), 0), err: bin ? errOf(R.ecb) : 'No BIN for this building.', asof: asof('ecb') }; }
+  // 6. Safety
+  { const l = rows(R.safe); const g = {}; l.forEach(r => { const d = String(r.device_type || 'Other'); const k = /elev/i.test(d) ? 'Elevator' : /boiler/i.test(d) ? 'Boiler' : /facade/i.test(d) ? 'Facade' : /gas/i.test(d) ? 'Gas piping' : 'Other'; g[k] = (g[k] || 0) + 1; });
+    res.cards.safe = { list: l, groups: g, err: bin ? errOf(R.safe) : 'No BIN for this building.', asof: asof('safe') }; }
+  // 7. Elevators
+  { const y = t.getFullYear(); const five = new Date(t); five.setFullYear(y - 5);
+    const l = rows(R.elev).map(r => { const c5 = nycDate(r.cat5_latest_report_filed); let flag = 'green', why = 'Up to date';
+      if (!c5 || c5 < five || c5.getFullYear() <= 1960) { flag = 'red'; why = 'CAT5 older than 5 years'; }
+      else if (+r.cat1_report_year < y || (r.periodic_report_year && +r.periodic_report_year < y)) { flag = 'yellow'; why = `${y} filing missing`; }
+      return Object.assign({}, r, { _flag: flag, _why: why }); });
+    res.cards.elev = { list: l, red: l.filter(r => r._flag === 'red').length, yellow: l.filter(r => r._flag === 'yellow').length, err: bin ? errOf(R.elev) : 'No BIN for this building.', asof: asof('elev') }; }
+  // 8. Boilers
+  { const y = t.getFullYear(); const by = {};
+    rows(R.boil).forEach(r => { const d = nycDate(r.inspection_date); const k = r.boiler_id || '?'; if (!by[k] || (d && (!by[k]._d || d > by[k]._d))) by[k] = Object.assign({}, r, { _d: d }); });
+    const l = Object.values(by).map(r => Object.assign(r, { _year: r._d ? r._d.getFullYear() : '', _flag: r._d && r._d.getFullYear() >= y ? 'green' : r._d && r._d.getFullYear() === y - 1 ? 'yellow' : 'red' }));
+    res.cards.boil = { list: l, missing: l.filter(r => r._flag !== 'green').length, err: bin ? errOf(R.boil) : 'No BIN for this building.', asof: asof('boil') }; }
+  // 9. FDNY tickets
+  { const l = rows(R.oath); res.cards.oath = { list: l, due: l.reduce((a, r) => a + nycNum(r.balance_due), 0), owing: l.filter(r => nycNum(r.balance_due) > 0).length, err: errOf(R.oath), asof: asof('oath') }; }
+  // 10. DOF
+  { const a = rows(R.dofAsof)[0] || {}; const all = rows(R.dof);
+    // The dataset keeps a new snapshot every few months. Use only this building's newest snapshot.
+    const last = all.reduce((m, r) => (r.extractdt > m ? r.extractdt : m), '');
+    const ex = nycDate(last) || nycDate(a.ex) || t;
+    const snap = all.filter(r => r.extractdt === last && nycNum(r.sum_bal) > 0).map(r => { const d = nycDate(r.due_date); return Object.assign({}, r, { _past: !!(d && d < ex), _flag: d && d < ex ? 'red' : 'green' }); });
+    const l = snap.filter(r => r._past);
+    const byCode = {}; l.forEach(r => { byCode[r.code] = (byCode[r.code] || 0) + nycNum(r.sum_bal); });
+    const upcoming = snap.filter(r => !r._past).reduce((s2, r) => s2 + nycNum(r.sum_bal), 0);
+    res.cards.dof = { list: snap, past: l, due: l.reduce((s2, r) => s2 + nycNum(r.sum_bal), 0), upcoming, byCode, ex, err: errOf(R.dof), asof: nycDate(a.asof) }; }
+  // 11. Local laws
+  res.cards.ll = { list: nycLocalLaws(facts) };
+  nyc.res = res; nyc.loading = false; nyc.at = new Date();
+  nyc.summary = nycSummaryText();
+  renderNyc();
+}
+
+// ---- view ----
+const NYC_CODE = { CHG: 'Property tax', SAF: 'Other city charge (SAF)', SAC: 'Other city charge (SAC)', SAT: 'Other city charge (SAT)', NSF: 'Returned payment fee', SIF: 'Other city charge (SIF)', FSF: 'Other city charge (FSF)', FPF: 'Other city charge (FPF)' };
+function nycTbl(cols, list, cls) {
+  if (!list.length) return '<p class="nyc-msg">Nothing to show.</p>';
+  return `<table class="nyc-tbl"><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr>${cols.map(c => { const v = c[1](r); return `<td${cls ? ` class="${cls(r, c[0]) || ''}"` : ''}>${esc(v == null || v === '' ? '—' : String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+}
+const NYC_COLS = {
+  hpdv: [['Apt', r => r.apartment], ['Class', r => r.class], ['Issued', r => nycD(r.novissueddate)], ['Status', r => r.currentstatus], ['Rent impairing', r => r.rentimpairing === 'Y' ? 'Yes' : ''], ['Order', r => r.ordernumber], ['Description', r => String(r.novdescription || '').replace(/^§\s*[\d-]+\s*(ADM CODE|HMC)?:?\s*/i, '')]],
+  hpdc: [['Received', r => nycD(r.received_date)], ['Apt', r => r.apartment], ['Category', r => r.major_category], ['Problem', r => r.problem_code], ['Where', r => r.minor_category], ['Status', r => r.complaint_status]],
+  lit: [['Opened', r => nycD(r.caseopendate)], ['Case type', r => r.casetype], ['Status', r => r.casestatus], ['Judgement', r => r.casejudgement], ['Respondent', r => r.respondent]],
+  dobv: [['Number', r => r.number], ['Issued', r => nycD(r.issue_date)], ['Type', r => String(r.violation_type || '').replace(/\s{2,}.*/, '')], ['Device', r => r.device_number], ['Description', r => r.description]],
+  ecb: [['ECB #', r => r.ecb_violation_number], ['Issued', r => nycD(r.issue_date)], ['Severity', r => r.severity], ['Hearing', r => r.hearing_status], ['Penalty', r => nycMoney(r.penality_imposed)], ['Balance due', r => nycMoney(r.balance_due)], ['Description', r => r.violation_description]],
+  safe: [['Issued', r => nycD(r.violation_issue_date)], ['Device type', r => r.device_type], ['Device', r => r.device_number], ['Type', r => r.violation_type], ['Remarks', r => r.violation_remarks]],
+  elev: [['Device', r => r.device_number], ['Type', r => r.equipment_type || r.device_type], ['Last CAT1', r => nycD(r.cat1_latest_report_filed)], ['Last CAT5', r => nycD(r.cat5_latest_report_filed)], ['Last periodic', r => nycD(r.periodic_latest_inspection)], ['Flag', r => r._why]],
+  boil: [['Boiler ID', r => r.boiler_id], ['Make', r => r.boiler_make], ['Model', r => r.boiler_model], ['Pressure', r => r.pressure_type], ['Last inspection', r => nycFmtD(r._d)], ['Year', r => r._year], ['Defects', r => r.defects_exist]],
+  oath: [['Ticket', r => r.ticket_number], ['Date', r => nycD(r.violation_date)], ['Charge', r => r.charge_1_code_description], ['Hearing', r => r.hearing_status], ['Compliance', r => r.compliance_status], ['Penalty', r => nycMoney(r.penalty_imposed)], ['Balance due', r => nycMoney(r.balance_due)]],
+  dof: [['Charge', r => NYC_CODE[r.code] || r.code], ['Tax year', r => r.taxyear], ['Due date', r => nycD(r.due_date)], ['Billed', r => nycMoney(r.sum_liab)], ['Balance', r => nycMoney(r.sum_bal)], ['Status', r => r._past ? 'Past due' : 'Not due yet']],
+  ll: [['Law', r => r.law], ['What', r => r.what], ['Next due', r => r.applies ? nycFmtD(r.due) : 'Does not apply'], ['Days left', r => r.due && r.applies ? nycDays(r.due) : ''], ['Note', r => r.note]]
+};
+const flagCls = r => r && r._flag ? ({ red: 'r', yellow: 'y', green: 'g' })[r._flag] : '';
+function nycCard(k, o) {
+  const open = !!nyc.open[k];
+  const tags = (o.tags || []).filter(Boolean).map(t => `<span class="nyc-tag ${t[1] || ''}">${esc(t[0])}</span>`).join('');
+  const src = k === 'll' ? `<span>Worked out from HPD and PLUTO data. Check dates with DOB.</span>` : `<span>Data as of ${o.asof ? nycFmtD(o.asof) : '—'}</span><a href="${nycPage(k)}" target="_blank" rel="noopener">Source: ${esc(NYC_DS[k].name)}</a>`;
+  return `<div class="nyc-card nyc-${o.flag || 'grey'}${open ? ' open' : ''}${o.wide ? ' wide' : ''}" data-k="${k}">
+    <div class="nyc-ch" role="button" tabindex="0" aria-expanded="${open}"><div class="nyc-ct"><h3>${esc(o.title)}</h3><p>${esc(o.sub || '')}</p></div><div class="nyc-n">${esc(String(o.n))}</div>
+    <svg class="nyc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+    ${tags ? `<div class="nyc-tags">${tags}</div>` : ''}
+    <div class="nyc-body">${o.err ? `<p class="nyc-msg warn">${esc(o.err)}</p>` : ''}${o.extra || ''}${nycTbl(NYC_COLS[k], o.list || [], o.cls)}${o.more ? `<p class="nyc-msg">${esc(o.more)}</p>` : ''}</div>
+    <div class="nyc-foot">${src}<button type="button" data-xl="${k}">Download to Excel</button></div></div>`;
+}
+function renderNyc() {
+  const el = $('nycPanel'); if (!el) return;
+  el.hidden = mode !== 'records'; if (el.hidden) return;
+  const addr = $('propertyName').value.trim();
+  const b = nyc.bld;
+  const head = `<div class="nyc-head"><div class="nyc-bld"><b>${esc(b ? `${b.housenumber} ${b.streetname}, ${(NYC_BORO[b.boroid] || [''])[0]}` : (addr || 'NYC building records'))}</b>
+    <span>${b ? esc(`BIN ${b.bin || '—'} · Block ${b.block} · Lot ${b.lot} · HPD ID ${b.buildingid}${nyc.res && nyc.res.facts.floors ? ` · ${nyc.res.facts.floors} stories` : ''}${nyc.res && nyc.res.facts.units ? ` · ${nyc.res.facts.units} units` : ''}${nyc.res && nyc.res.facts.year ? ` · built ${nyc.res.facts.year}` : ''}`) : 'Live records from NYC Open Data for the building address at the top.'}</span></div>
+    <div class="nyc-btns"><button class="nyc-btn" id="nycGo" type="button"${nyc.loading ? ' disabled' : ''}>${nyc.loading ? 'Looking up…' : nyc.res ? 'Refresh' : 'Look up'}</button></div></div>`;
+  let body = '';
+  if (!addr) body = `<p class="nyc-msg">Type the building address at the top (for example "27 West 72nd Street, New York"). You can also type a BIN or BBL.</p>`;
+  else if (nyc.err) body = `<p class="nyc-msg warn">${esc(nyc.err)}</p>`;
+  else if (nyc.picks) body = `<p class="nyc-msg">More than one building matches. Pick one:</p><div class="nyc-pick">${nyc.picks.map((p, i) => `<button type="button" data-pick="${i}">${esc(`${p.housenumber} ${p.streetname}, ${(NYC_BORO[p.boroid] || [''])[0]} — BIN ${p.bin || '—'}, Block ${p.block}, Lot ${p.lot}`)}</button>`).join('')}</div>`;
+  else if (nyc.loading) body = `<div class="nyc-sum">${'<div class="nyc-stat nyc-grey"><div class="nyc-skel" style="width:60%"></div><div class="nyc-skel" style="height:22px"></div></div>'.repeat(5)}</div><p class="nyc-msg">Getting records from 11 city datasets. This takes about 20 seconds.</p>`;
+  else if (!nyc.res) body = `<p class="nyc-msg">Click Look up to load the city records for this building.</p>`;
+  else body = nycBody(nyc.res);
+  el.innerHTML = head + body;
+}
+function nycBody(r) {
+  const c = r.cards, y = new Date().getFullYear();
+  const dobActive = c.dobv.list.length + c.ecb.list.length;
+  const fines = c.ecb.due + c.oath.due + c.dof.due;
+  const next = c.ll.list.find(x => x.applies && x.due);
+  const stat = (k, v, s, f) => `<div class="nyc-stat nyc-${f}"><span class="k">${esc(k)}</span><span class="v">${esc(String(v))}</span><span class="s">${esc(s)}</span></div>`;
+  const sum = `<div class="nyc-sum">
+    ${stat('Open HPD', c.hpdv.open, `Goal: clear ${c.hpdv.goal} (75%)`, c.hpdv.open ? (c.hpdv.cls.C ? 'red' : 'yellow') : 'green')}
+    ${stat('Class C', c.hpdv.cls.C || 0, 'Immediately hazardous', c.hpdv.cls.C ? 'red' : 'green')}
+    ${stat('DOB active', dobActive, `${c.dobv.list.length} DOB · ${c.ecb.list.length} ECB`, dobActive ? 'yellow' : 'green')}
+    ${stat('Fines owed', nycMoney(fines), 'ECB + FDNY + DOF', fines > 0 ? 'red' : 'green')}
+    ${stat('Next deadline', next ? nycFmtD(next.due) : '—', next ? next.law + ' · ' + nycDays(next.due) + ' days' : 'None found', next ? next.flag : 'grey')}</div>`;
+  const v = c.hpdv;
+  const cards = [
+    nycCard('hpdv', { title: 'HPD violations (open)', n: v.open, flag: v.cls.C ? 'red' : v.open ? 'yellow' : 'green', sub: v.open ? `Goal: clear ${v.goal} of ${v.open} (75%).` : 'No open HPD violations.', err: v.err, asof: v.asof,
+      tags: [[`A: ${v.cls.A || 0}`], [`B: ${v.cls.B || 0}`, v.cls.B ? 'yellow' : ''], [`C: ${v.cls.C || 0}`, v.cls.C ? 'red' : ''], v.noAccess ? [`No access: ${v.noAccess}`, 'yellow'] : null, v.notComplied ? [`Not complied: ${v.notComplied}`, 'red'] : null, v.ri ? [`Rent impairing: ${v.ri}`, 'red'] : null, v.lead ? [`Lead paint: ${v.lead}`, 'red'] : null],
+      extra: v.apts.length ? `<p class="nyc-msg"><b>Units with the most violations:</b> ${v.apts.map(a => esc(`${a.apartment} (${a.n})`)).join(', ')}</p>` : '', list: v.list, more: v.list.length >= 150 ? 'Showing the newest 150.' : '' }),
+    nycCard('hpdc', { title: 'HPD complaints (last 12 months)', n: c.hpdc.total, flag: c.hpdc.heat + c.hpdc.hot ? 'yellow' : 'green', sub: Object.entries(c.hpdc.byCat).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => `${e[0].toLowerCase()} ${e[1]}`).join(', ') || 'No complaints in the last 12 months.', err: c.hpdc.err, asof: c.hpdc.asof,
+      tags: [[`No heat: ${c.hpdc.heat}`, c.hpdc.heat ? 'yellow' : ''], [`No hot water: ${c.hpdc.hot}`, c.hpdc.hot ? 'yellow' : '']], list: c.hpdc.list, more: c.hpdc.list.length >= 150 ? 'Showing the newest 150.' : '' }),
+    nycCard('lit', { title: 'Housing Court cases (open)', n: c.lit.list.length, flag: c.lit.list.length ? 'red' : 'green', sub: c.lit.list.length ? `Oldest open: ${nycD(c.lit.list[c.lit.list.length - 1].caseopendate)}` : 'No open HPD cases.', err: c.lit.err, asof: c.lit.asof, list: c.lit.list }),
+    nycCard('dobv', { title: 'DOB violations (active)', n: c.dobv.list.length, flag: c.dobv.list.length ? 'yellow' : 'green', sub: c.dobv.list.length ? 'Each one needs a certificate of correction.' : 'No active DOB violations.', err: c.dobv.err, asof: c.dobv.asof, list: c.dobv.list }),
+    nycCard('ecb', { title: 'DOB / ECB violations (active)', n: c.ecb.list.length, flag: c.ecb.due > 0 ? 'red' : c.ecb.list.length ? 'yellow' : 'green', sub: c.ecb.list.length ? `Balance due: ${nycMoney(c.ecb.due)}` : 'No active ECB violations.', err: c.ecb.err, asof: c.ecb.asof, tags: c.ecb.due > 0 ? [[`Owed ${nycMoney(c.ecb.due)}`, 'red']] : [], list: c.ecb.list }),
+    nycCard('safe', { title: 'DOB safety violations (active)', n: c.safe.list.length, flag: c.safe.list.length ? 'red' : 'green', sub: c.safe.list.length ? 'Missed filings for elevators, boilers, facade, gas and more.' : 'No active safety violations.', err: c.safe.err, asof: c.safe.asof,
+      tags: ['Elevator', 'Boiler', 'Facade', 'Gas piping', 'Other'].map(k => c.safe.groups[k] ? [`${k}: ${c.safe.groups[k]}`, 'red'] : null), list: c.safe.list }),
+    nycCard('elev', { title: 'Elevators', n: c.elev.list.length, flag: c.elev.red ? 'red' : c.elev.yellow ? 'yellow' : c.elev.list.length ? 'green' : 'grey', sub: c.elev.list.length ? (c.elev.red ? `${c.elev.red} device(s) with CAT5 older than 5 years.` : c.elev.yellow ? `${c.elev.yellow} device(s) missing the ${y} filing.` : 'All active devices are up to date.') : 'No active devices found.', err: c.elev.err, asof: c.elev.asof,
+      tags: [c.elev.red ? [`Red: ${c.elev.red}`, 'red'] : null, c.elev.yellow ? [`Yellow: ${c.elev.yellow}`, 'yellow'] : null], list: c.elev.list, cls: flagCls }),
+    nycCard('boil', { title: 'Boilers', n: c.boil.list.length, flag: c.boil.missing ? (c.boil.list.some(r => r._flag === 'red') ? 'red' : 'yellow') : c.boil.list.length ? 'green' : 'grey', sub: c.boil.list.length ? (c.boil.missing ? `${c.boil.missing} boiler(s) with no ${y} inspection on file.` : `All boilers have a ${y} inspection.`) : 'No boiler filings found.', err: c.boil.err, asof: c.boil.asof, list: c.boil.list, cls: flagCls }),
+    nycCard('oath', { title: 'FDNY tickets (since 2018)', n: c.oath.list.length, flag: c.oath.due > 0 ? 'red' : c.oath.list.length ? 'yellow' : 'green', sub: c.oath.list.length ? `Balance due: ${nycMoney(c.oath.due)}` : 'No FDNY tickets since 2018.', err: c.oath.err, asof: c.oath.asof, tags: c.oath.owing ? [[`${c.oath.owing} with a balance`, 'red']] : [], list: c.oath.list }),
+    nycCard('dof', { title: 'DOF charges past due', n: nycMoney(c.dof.due), flag: c.dof.due > 0 ? 'red' : 'green', sub: c.dof.past.length ? Object.entries(c.dof.byCode).map(e => `${NYC_CODE[e[0]] || e[0]}: ${nycMoney(e[1])}`).join(', ') : 'Nothing past due.' + (c.dof.upcoming ? ` ${nycMoney(c.dof.upcoming)} billed, not due yet.` : ''), err: c.dof.err, asof: c.dof.asof, cls: flagCls,
+      extra: `<p class="nyc-msg">DOF updates this data a few times a year. Last update: ${nycFmtD(c.dof.ex)}. Payments made after that date are not shown.</p>`, list: c.dof.list }),
+    nycCard('ll', { title: 'Local Law deadlines', n: c.ll.list.filter(x => x.applies && x.flag === 'red').length + ' soon', flag: c.ll.list.some(x => x.applies && x.flag === 'red') ? 'red' : c.ll.list.some(x => x.applies && x.flag === 'yellow') ? 'yellow' : 'green', wide: true,
+      sub: 'Red = due within 60 days or past due. Yellow = within 6 months.', tags: c.ll.list.filter(x => x.applies && x.due).map(x => [`${x.law}: ${nycFmtD(x.due)}`, x.flag]), list: c.ll.list, cls: x => ({ red: 'r', yellow: 'y', green: 'g' })[x.flag] || '' })
+  ];
+  return sum + `<div class="nyc-cards">${cards.join('')}</div><p class="nyc-msg">Records come from NYC Open Data and can be a few days behind the city websites. Check HPD Online and DOB NOW before you act.</p>`;
+}
+function nycSummaryText() {
+  const r = nyc.res, b = nyc.bld; if (!r || !b) return '';
+  const c = r.cards;
+  const L = [`NYC Open Data records for ${b.housenumber} ${b.streetname}, ${(NYC_BORO[b.boroid] || [''])[0]} (BIN ${b.bin}, block ${b.block}, lot ${b.lot}, HPD building ID ${b.buildingid}). Pulled ${new Date().toLocaleString('en-US')}.`,
+    `Building: ${r.facts.floors || '?'} stories, ${r.facts.units || '?'} residential units, ${r.facts.area ? Math.round(r.facts.area) + ' sq ft' : 'size unknown'}, built ${r.facts.year || '?'}, community district ${r.facts.cd || '?'}.`,
+    `HPD open violations: ${c.hpdv.open} (A ${c.hpdv.cls.A || 0}, B ${c.hpdv.cls.B || 0}, C ${c.hpdv.cls.C || 0}). No access ${c.hpdv.noAccess}, not complied ${c.hpdv.notComplied}, rent impairing ${c.hpdv.ri}, lead paint ${c.hpdv.lead}. 75% goal: clear ${c.hpdv.goal}. Units with most: ${c.hpdv.apts.map(a => a.apartment + ' (' + a.n + ')').join(', ') || 'none'}.`,
+    `HPD complaints last 12 months: ${c.hpdc.total} (no heat ${c.hpdc.heat}, no hot water ${c.hpdc.hot}).`,
+    `Open HPD housing court cases: ${c.lit.list.length}${c.lit.list.length ? ' — ' + c.lit.list.map(x => `${x.casetype} opened ${nycD(x.caseopendate)}`).join('; ') : ''}.`,
+    `DOB active violations: ${c.dobv.list.length}. ECB active: ${c.ecb.list.length}, balance due ${nycMoney(c.ecb.due)}. DOB safety active: ${c.safe.list.length} (${Object.entries(c.safe.groups).map(e => e[0] + ' ' + e[1]).join(', ') || 'none'}).`,
+    `Elevators: ${c.elev.list.map(e => `${e.device_number} last CAT1 ${nycD(e.cat1_latest_report_filed)}, last CAT5 ${nycD(e.cat5_latest_report_filed)}, last periodic ${nycD(e.periodic_latest_inspection)} — ${e._why}`).join('; ') || 'none found'}.`,
+    `Boilers: ${c.boil.list.map(e => `${e.boiler_id} ${e.boiler_make || ''} last inspection ${nycFmtD(e._d)}`).join('; ') || 'none found'}.`,
+    `FDNY tickets since 2018: ${c.oath.list.length}, balance due ${nycMoney(c.oath.due)}. DOF charges past due (as of ${nycFmtD(c.dof.ex)}): ${nycMoney(c.dof.due)}.`,
+    `Local Law deadlines: ${c.ll.list.map(x => `${x.law} ${x.what}: ${x.applies ? nycFmtD(x.due) : 'does not apply'} (${x.note})`).join('; ')}.`];
+  const top = c.hpdv.list.slice(0, 40).map(x => `- ${x.class} apt ${x.apartment || 'bldg'} issued ${nycD(x.novissueddate)} ${x.currentstatus}: ${String(x.novdescription || '').slice(0, 160)}`);
+  return L.join('\n') + (top.length ? '\nNewest open HPD violations:\n' + top.join('\n') : '');
+}
+async function nycExcel(k) {
+  const r = nyc.res; if (!r) return;
+  const card = r.cards[k]; const cols = NYC_COLS[k];
+  try {
+    await loadScript(LIBS.xlsx);
+    const aoa = [cols.map(c => c[0])].concat((card.list || []).map(x => cols.map(c => { const v = c[1](x); return v == null ? '' : v; })));
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = cols.map(c => ({ wch: /Description|Remarks|Note|Respondent/.test(c[0]) ? 70 : 16 }));
+    XLSX.utils.book_append_sheet(wb, ws, (k === 'll' ? 'Local Laws' : NYC_DS[k].name).slice(0, 31));
+    const b = nyc.bld;
+    const info = XLSX.utils.aoa_to_sheet([['Building', `${b.housenumber} ${b.streetname}`], ['BIN', b.bin], ['Block', b.block], ['Lot', b.lot], ['Source', k === 'll' ? 'Worked out from HPD and PLUTO data' : nycPage(k)], ['Data as of', card.asof ? nycFmtD(card.asof) : ''], ['Downloaded', new Date().toLocaleString('en-US')]]);
+    XLSX.utils.book_append_sheet(wb, info, 'About');
+    const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    const name = `${b.housenumber} ${b.streetname} - ${k === 'll' ? 'Local Laws' : NYC_DS[k].name}.xlsx`.replace(/[\\/:*?"<>|]/g, '');
+    if (downloads) await downloads.save({ filename: name, data: new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) });
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data])); a.download = name; a.click(); }
+  } catch (e) { showFootWarn('Could not make the Excel file: ' + ((e && e.message) || 'error')); }
+}
+$('nycPanel').addEventListener('click', e => {
+  if (e.target.closest('#nycGo')) { nycLoad(true); return; }
+  const pk = e.target.closest('[data-pick]'); if (pk) { nycLoadBuilding(nyc.picks[+pk.dataset.pick]); return; }
+  const xl = e.target.closest('[data-xl]'); if (xl) { nycExcel(xl.dataset.xl); return; }
+  if (e.target.closest('a')) return;
+  const h = e.target.closest('.nyc-ch'); if (h) { const k = h.parentElement.dataset.k; nyc.open[k] = !nyc.open[k]; h.parentElement.classList.toggle('open', nyc.open[k]); h.setAttribute('aria-expanded', nyc.open[k]); }
+});
+$('nycPanel').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('nyc-ch')) { e.preventDefault(); e.target.click(); } });
+$('propertyName').addEventListener('change', () => { if (mode === 'records') nycLoad(false); else { nyc.key = ''; nyc.res = null; nyc.bld = null; nyc.summary = ''; } });
+// ===== end NYC records =====
+
 function setMode(key) {
   if (busy && controller) controller.abort();
   mode = key; const s = byKey[key];
@@ -1465,6 +1955,7 @@ function setMode(key) {
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
+  renderNyc(); if (key === 'records' && $('propertyName').value.trim() && mcp) nycLoad(false);
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
@@ -1475,6 +1966,7 @@ $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 const CONN = [
   { server: 'Microsoft 365', label: 'Microsoft 365', sub: 'Outlook, Calendar, Teams, SharePoint' },
   { server: 'Slack', label: 'Slack', sub: 'Messages and threads' },
+  { server: 'Parallel Search', label: 'Parallel Search', sub: 'NYC Open Data: HPD, DOB, FDNY, DOF records' },
   { label: 'Yardi Virtuoso', sub: 'Leases, payables, receivables', manual: 'Planned' }
 ];
 const CONN_TEXT = { on: 'Connected', ask: 'Allow on first use', reauth: 'Sign in again', off: 'Not connected' };
@@ -1848,6 +2340,7 @@ setLibStatus('Loading your library…');
   else { $('footNote').textContent = 'Claude is not available on this view. Sign in to claude.ai to ask questions.'; $('footNote').classList.add('warn'); }
   setMailBtn();
   renderConnections();
+  if (mode === 'records') { renderNyc(); nycLoad(false); }
   let id = null;
   if (userCap) {
     try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
