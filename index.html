@@ -557,6 +557,54 @@ header {
 .bld-add:disabled { opacity: .45; cursor: default; }
 .bld-note { padding: 6px 8px 2px; font-size: 11.5px; color: var(--subtle); }
 @media (max-width: 700px) { .prop-btn .lbl { display: none; } }
+/* ---- Calendar tab ---- */
+.cal { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.cal[hidden] { display: none; }
+.cal-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px 12px; }
+.cal-nav { display: flex; align-items: center; gap: 6px; }
+.cal-nav b { font-family: var(--serif); font-weight: 400; font-size: 24px; color: var(--ink); min-width: 190px; text-align: center; }
+.cal-ib { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; font-size: 16px; }
+.cal-ib:hover { border-color: var(--ask); }
+.cal-sel { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 500 13px var(--sans); padding: 0 8px; max-width: 260px; }
+.cal-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.cal-chip { font: 500 12px var(--sans); border-radius: 999px; padding: 5px 10px; border: 1px solid var(--line-strong); background: none; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.cal-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.cal-chip.on { color: var(--ink); background: var(--surface-2); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.cal-dow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle); padding: 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.cal-day { min-height: 92px; border-right: 1px solid rgba(61,52,44,.55); border-bottom: 1px solid rgba(61,52,44,.55); padding: 5px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cal-day:nth-child(7n) { border-right: 0; }
+.cal-day:hover { background: var(--surface-2); }
+.cal-day.out { opacity: .38; }
+.cal-day.sel { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ask); }
+.cal-day .n { font-size: 12px; color: var(--muted); font-weight: 600; }
+.cal-day.today .n { color: var(--on-ask); background: var(--ask); border-radius: 999px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.cal-ev { font-size: 11px; line-height: 1.25; border-radius: 5px; padding: 2px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid; background: rgba(255,255,255,.03); color: var(--ink); }
+.cal-ev.nyc { border-color: var(--rust); }
+.cal-ev.holiday { border-color: var(--ok); }
+.cal-ev.bld { border-color: var(--ask); }
+.cal-ev.ll { border-color: var(--danger); }
+.cal-more { font-size: 11px; color: var(--subtle); padding-left: 4px; }
+.cal-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; }
+.cal-box { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cal-box h3 { margin: 0; font: 500 14px var(--sans); color: var(--ink); }
+.cal-box p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.cal-list { display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow: auto; }
+.cal-row { display: grid; grid-template-columns: 86px minmax(0, 1fr) auto; gap: 8px; align-items: start; font-size: 12.5px; padding: 6px 4px; border-bottom: 1px solid rgba(61,52,44,.5); }
+.cal-row .d { color: var(--muted); white-space: nowrap; }
+.cal-row .t { color: var(--ink); }
+.cal-row .t small { display: block; color: var(--subtle); font-size: 11.5px; margin-top: 2px; }
+.cal-row .x { background: none; border: 0; color: var(--subtle); cursor: pointer; font-size: 15px; padding: 0 4px; }
+.cal-row .x:hover { color: var(--danger); }
+.cal-row.red .d { color: var(--danger); }
+.cal-form { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 6px; }
+.cal-form input, .cal-form select { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 8px; min-width: 0; color-scheme: dark; }
+.cal-form .full { grid-column: 1 / -1; }
+.cal-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cal-found { display: flex; flex-direction: column; gap: 4px; }
+.cal-found label { display: grid; grid-template-columns: 18px 86px minmax(0, 1fr); gap: 6px; font-size: 12.5px; color: var(--ink); align-items: start; }
+.cal-found label span:nth-child(2) { color: var(--muted); }
+@media (max-width: 900px) { .cal-cols { grid-template-columns: 1fr; } .cal-day { min-height: 64px; } .cal-ev { font-size: 10px; } }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -727,6 +775,7 @@ header {
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
         <div id="nycPanel" class="nyc" hidden></div>
+        <div id="calPanel" class="cal" hidden></div>
         <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
       </div>
     </div>
@@ -802,6 +851,7 @@ header {
 <script>
 /* ---------- Sections ---------- */
 const ICONS = {
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h2M14 14h2M8 17.5h2"/>',
   desk: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5a2 2 0 012-2h3a2 2 0 012 2V7M3 12.5h18M10.5 12.5v1.5h3v-1.5"/>',
   lease: '<path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9v10.5a1 1 0 001 1h11a1 1 0 001-1V9"/><circle cx="12" cy="13" r="2"/><path d="M12 15v3.5M12 17h1.5"/>',
   applications: '<rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 13l2.5 2.5 4.5-5"/>',
@@ -819,8 +869,8 @@ const ICONS = {
 };
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
+  { key:'calendar', title:'Calendar', desc:'NYC deadlines, holidays and your building dates in one calendar, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
-  { key:'applications', title:'Rental Applications', desc:'Application forms, required documents and the application process. Upload OnSite application reports (Excel or PDF) here or to the Library until an OnSite API or AI connector is available. The ToolBox checks if an application is complete. It does not approve or reject applicants.', samples:['Has the applicant for unit 1005 sent all documents?','What documents are required?','What is the application fee and process?','Is $4,800 a fair asking rent for a 1-bedroom here? Check Zillow.'] },
   { key:'arrears', title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
   { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?'] },
   { key:'budgeting', title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
@@ -1139,7 +1189,7 @@ function buildContext(question, budget) {
   const sec = byKey[mode];
   const tabDocs = (tabFiles[mode] || []).filter(f => f.status === 'ok' && f.kind === 'text').map(f => ({ name: f.name, text: f.text, where: 'Uploaded in this section' }));
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
-  const all = (mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(tabDocs, libDocs);
+  const all = (mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
   const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
   const fullSize = all.reduce((n, d) => n + d.text.length + 120, 0);
@@ -1899,6 +1949,7 @@ async function nycLoadBuilding(b, myKey) {
   // 11. Local laws
   res.cards.ll = { list: nycLocalLaws(facts) };
   nyc.res = res; nyc.loading = false; nyc.at = new Date();
+  try { const sb = buildings.find(x => bldKey(x.addr) === bldKey($('propertyName').value)); if (sb) { sb.facts = { cd: facts.cd, block: facts.block, area: facts.area, floors: facts.floors, units: facts.units }; bldPut(sb).catch(() => {}); } } catch (e) {}
   nyc.summary = nycSummaryText();
   renderNyc();
 }
@@ -2133,6 +2184,7 @@ function setMode(key) {
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
   renderNyc(); if (key === 'records' && $('propertyName').value.trim() && mcp) nycLoad(false);
+  if (typeof renderCal === 'function') { try { renderCal(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
@@ -2193,7 +2245,7 @@ async function loadBuildings() {
 async function bldPut(b) {
   if (bldStore !== 'db') return;
   await db.doc(`bldg/${myId}`).set({ uid: myId, at: Date.now() });
-  await db.doc(`bldg/${myId}/items/${bldId(b.addr)}`).set(b);
+  const { factsTried, ...rec } = b; await db.doc(`bldg/${myId}/items/${bldId(b.addr)}`).set(rec);
 }
 async function saveBuilding() {
   const addr = $('propertyName').value.trim();
@@ -2213,6 +2265,7 @@ function pickBuilding(addr) {
   openBldMenu(false); renderBuildings();
 }
 function renderBuildings() {
+  if (typeof renderCal === 'function' && mode === 'calendar') setTimeout(() => { try { renderCal(); } catch (e) {} }, 0);
   const cur = bldKey($('propertyName').value);
   const saved = !!cur && buildings.some(b => bldKey(b.addr) === cur);
   $('bldSave').classList.toggle('saved', saved);
@@ -2241,6 +2294,218 @@ document.addEventListener('click', e => { if (!$('bldMenu').hidden && !e.target.
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bldMenu').hidden) openBldMenu(false); });
 $('propertyName').addEventListener('input', renderBuildings);
 $('propertyName').addEventListener('change', renderBuildings);
+
+
+/* ---------- Calendar tab: NYC deadlines, holidays, building dates ---------- */
+const cal = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: '', bld: '__all', show: { nyc: true, holiday: true, bld: true }, items: [], store: 'local', found: null, finding: false, facts: {}, factsBusy: false };
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const parseYmd = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+const nthDow = (y, m, dow, n) => { const d = new Date(y, m, 1); const add = (dow - d.getDay() + 7) % 7; return new Date(y, m, 1 + add + (n - 1) * 7); };
+const lastDow = (y, m, dow) => { const d = new Date(y, m + 1, 0); return new Date(y, m, d.getDate() - ((d.getDay() - dow + 7) % 7)); };
+function calHolidays(y) {
+  const h = [[new Date(y, 0, 1), 'New Year’s Day'], [nthDow(y, 0, 1, 3), 'Martin Luther King Jr. Day'], [new Date(y, 1, 12), 'Lincoln’s Birthday (NY State)'], [nthDow(y, 1, 1, 3), 'Presidents’ Day'],
+    [lastDow(y, 4, 1), 'Memorial Day'], [new Date(y, 5, 19), 'Juneteenth'], [new Date(y, 6, 4), 'Independence Day'], [nthDow(y, 8, 1, 1), 'Labor Day'], [nthDow(y, 9, 1, 2), 'Columbus Day / Indigenous Peoples’ Day'],
+    [(() => { const d = nthDow(y, 10, 1, 1); d.setDate(d.getDate() + 1); return d; })(), 'Election Day (NY State)'], [new Date(y, 10, 11), 'Veterans Day'], [nthDow(y, 10, 4, 4), 'Thanksgiving'], [new Date(y, 11, 25), 'Christmas Day']];
+  return h.map(([d, t]) => ({ date: ymd(d), title: t, kind: 'holiday', note: 'Check your staff union contract for building staff holidays.' }));
+}
+function calNycAnnual(y) {
+  const e = (m, d, t, note) => ({ date: ymd(new Date(y, m, d)), title: t, kind: 'nyc', note: note || '' });
+  return [
+    e(0, 1, 'Property tax due (Jan 1 bill)', 'Smaller properties have a grace period to Jan 15.'),
+    e(0, 1, 'Send annual lead paint and window guard notice', 'Deliver between Jan 1 and Jan 16.'),
+    e(0, 15, 'Water tank inspection results due to DOHMH', 'For last year’s inspection. Post results in the building.'),
+    e(0, 16, 'Deadline: annual lead paint and window guard notice', 'Tenants return the notice by Feb 15.'),
+    e(1, 15, 'Collect annual lead / window guard notices', 'Inspect units that did not answer.'),
+    e(3, 1, 'Property tax due (quarterly payers)', 'Grace period to Apr 15.'),
+    e(4, 1, 'LL84 benchmarking and LL97 emissions report due', 'Buildings over 25,000 sq ft. Extensions can be filed.'),
+    e(4, 31, 'Heat season ends', 'Heat season runs Oct 1 to May 31.'),
+    e(6, 1, 'Property tax due (Jul 1 bill)', 'Smaller properties have a grace period to Jul 15.'),
+    e(6, 31, 'DHCR annual rent registration due', 'Rent-stabilized apartments, as of April 1.'),
+    e(8, 1, 'HPD property registration due', 'Renew every year. Unregistered buildings cannot bring nonpayment cases.'),
+    e(9, 1, 'Heat season starts', 'Day 6am–10pm: 68°F inside if under 55°F outside. Night: 62°F.'),
+    e(9, 1, 'Property tax due (quarterly payers)', 'Grace period to Oct 15.'),
+    e(9, 1, 'New Rent Guidelines Board rates start', 'For rent-stabilized leases starting on or after Oct 1.'),
+    e(9, 31, 'LL33 energy grade posted at entrance', 'Buildings over 25,000 sq ft.'),
+    e(10, 1, 'Cooling tower annual certification due', 'Only if the building has a cooling tower.'),
+    e(11, 1, 'Bed bug annual report opens', 'File between Dec 1 and Dec 31.'),
+    e(11, 31, 'Bed bug annual report due to HPD', 'Covers Nov 1 to Oct 31.'),
+    e(11, 31, 'Elevator CAT1 test and periodic inspection due', 'File reports in DOB NOW.'),
+    e(11, 31, 'Boiler annual inspection due', 'File the report in DOB NOW within 14 days of the inspection.')
+  ];
+}
+// Building-specific Local Law dates, from the saved building facts
+function calBuildingLaws(addr, f) {
+  if (!f) return [];
+  return nycLocalLaws(f).filter(x => x.applies && x.due && !/^LL1 \/|^LL84/.test(x.law)).map(x => ({ date: ymd(x.due), title: `${x.law}: ${x.what}`, kind: 'll', bld: addr, note: x.note }));
+}
+function calExpand(from, to) {
+  const out = [], f = ymd(from), t = ymd(to);
+  for (let y = from.getFullYear(); y <= to.getFullYear(); y++) {
+    if (cal.show.holiday) out.push(...calHolidays(y));
+    if (cal.show.nyc) out.push(...calNycAnnual(y));
+  }
+  const blds = cal.bld === '__all' ? buildings.map(b => b.addr) : [cal.bld];
+  if (cal.show.nyc) blds.forEach(a => { const b = buildings.find(x => bldKey(x.addr) === bldKey(a)); out.push(...calBuildingLaws(a, (b && b.facts) || cal.facts[bldKey(a)])); });
+  if (cal.show.bld) cal.items.forEach(it => {
+    if (cal.bld !== '__all' && it.bld && bldKey(it.bld) !== bldKey(cal.bld)) return;
+    const d0 = parseYmd(it.date); if (!d0) return;
+    const push = d => out.push(Object.assign({}, it, { date: ymd(d), kind: 'bld' }));
+    if (it.repeat === 'yearly') { for (let y = from.getFullYear(); y <= to.getFullYear(); y++) { const d = new Date(y, d0.getMonth(), d0.getDate()); if (d >= d0) push(d); } }
+    else if (it.repeat === 'monthly') { for (let d = new Date(from.getFullYear(), from.getMonth(), d0.getDate()); d <= to; d = new Date(d.getFullYear(), d.getMonth() + 1, d0.getDate())) if (d >= d0) push(d); }
+    else push(d0);
+  });
+  return out.filter(e => e.date >= f && e.date <= t).sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind));
+}
+// ---- storage: one list per person, like My Buildings ----
+async function calLoad() {
+  let local = []; try { local = JSON.parse(localStorage.getItem('rb-cal') || '[]') || []; } catch (e) {}
+  if (db && myId) {
+    try { cal.items = (await db.collection(`cal/${myId}/items`).get()).docs.map(d => d.data()).filter(x => x && x.date); cal.store = 'db';
+      for (const it of local) if (!cal.items.some(x => x.id === it.id)) { cal.items.push(it); try { await calPut(it); } catch (e) {} } }
+    catch (e) { cal.items = local; }
+  } else cal.items = local;
+  try { localStorage.setItem('rb-cal', JSON.stringify(cal.items)); } catch (e) {}
+  renderCal();
+}
+async function calPut(it) { if (cal.store !== 'db') return; await db.doc(`cal/${myId}`).set({ uid: myId, at: Date.now() }); await db.doc(`cal/${myId}/items/${it.id}`).set(it); }
+async function calAdd(list) {
+  for (const it of list) { cal.items.push(it); try { await calPut(it); } catch (e) {} }
+  try { localStorage.setItem('rb-cal', JSON.stringify(cal.items)); } catch (e) {}
+  renderCal();
+}
+async function calRemove(id) {
+  cal.items = cal.items.filter(x => x.id !== id);
+  try { localStorage.setItem('rb-cal', JSON.stringify(cal.items)); } catch (e) {}
+  if (cal.store === 'db') { try { await db.doc(`cal/${myId}/items/${id}`).delete(); } catch (e) {} }
+  renderCal();
+}
+// ---- building facts for Local Law dates (looked up once per saved building) ----
+async function calEnsureFacts() {
+  if (cal.factsBusy || !mcp) return;
+  const need = buildings.filter(b => !b.facts && !cal.facts[bldKey(b.addr)] && !b.factsTried).slice(0, 12);
+  if (!need.length) return;
+  cal.factsBusy = true; renderCal();
+  try {
+    for (const b of need) {
+      b.factsTried = true;
+      try {
+        const list = await nycFindBuilding(b.addr); const h = list[0]; if (!h) continue;
+        const boro = NYC_BORO[h.boroid] || ['', ''];
+        const u = nycUrl('pluto', { borough: boro[1], block: String(+h.block), lot: String(+h.lot), $select: 'numfloors,bldgarea,unitsres,cd', $limit: 1 });
+        const r = await nycFetch([u]); const p = (Array.isArray(r[u]) && r[u][0]) || {};
+        const facts = { cd: p.cd || (h.communityboard ? (+h.boroid * 100 + +h.communityboard) : ''), block: h.block, area: nycNum(p.bldgarea), floors: Math.round(nycNum(p.numfloors)) || nycNum(h.legalstories), units: nycNum(p.unitsres) || nycNum(h.legalclassa) };
+        cal.facts[bldKey(b.addr)] = facts; b.facts = facts;
+        try { await bldPut(b); } catch (e) {}
+        renderCal();
+      } catch (e) {}
+    }
+  } finally { cal.factsBusy = false; renderCal(); }
+}
+// ---- find dates in an uploaded contract ----
+async function calFindDates() {
+  const files = (tabFiles.calendar || []).filter(f => f.status === 'ok' && f.kind === 'text');
+  if (!files.length) { cal.found = { err: 'Upload a contract, lease or schedule first (drop it on the box above), then click Find dates.' }; renderCal(); return; }
+  if (!sample) { cal.found = { err: 'Claude is not available here. Open this page on claude.ai.' }; renderCal(); return; }
+  cal.finding = true; cal.found = null; renderCal();
+  try {
+    const text = files.map(f => `### ${f.name}\n${f.text}`).join('\n\n').slice(0, 60000);
+    const out = await sample.json(`Find every due date, deadline, renewal, expiration, notice date, inspection date and recurring payment date in the documents below. Today is ${ymd(new Date())}. Return JSON: an array (at most 40) of objects with keys "date" (YYYY-MM-DD; for a recurring date give the next one on or after today), "title" (short, plain words, under 80 characters, e.g. "Elevator contract renews" or "Notice to cancel boiler contract due"), "repeat" ("none", "monthly" or "yearly"), "note" (one short sentence: the rule from the document, e.g. "60 days notice before renewal"), "source" (the file name). If a date depends on another date (e.g. 60 days before expiration), work it out. Skip dates in the past unless they repeat. Return [] if there are none.\n\n${text}`, { modelTier: 'default', cache: false });
+    const items = (Array.isArray(out) ? out : []).filter(x => x && parseYmd(x.date) && x.title).slice(0, 40);
+    cal.found = { items: items.map(x => ({ id: uid(), date: String(x.date).slice(0, 10), title: String(x.title).slice(0, 120), repeat: ['monthly', 'yearly'].includes(x.repeat) ? x.repeat : 'none', note: String(x.note || '').slice(0, 200), src: String(x.source || files[0].name).slice(0, 120) })) };
+    if (!items.length) cal.found.err = 'No dates were found in the uploaded files.';
+  } catch (e) { cal.found = { err: 'Could not read the dates. Try again.' }; }
+  cal.finding = false; renderCal();
+}
+function calIcs() {
+  const from = new Date(); from.setHours(0, 0, 0, 0); const to = new Date(from); to.setFullYear(to.getFullYear() + 1);
+  const evs = calExpand(from, to);
+  const esc2 = s => String(s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//The Rental ToolBox//Calendar//EN', 'CALSCALE:GREGORIAN'];
+  evs.forEach((e, i) => { const d = e.date.replace(/-/g, ''); const n = ymd(new Date(parseYmd(e.date).getTime() + 86400000)).replace(/-/g, '');
+    lines.push('BEGIN:VEVENT', `UID:rtb-${d}-${i}@rentaltoolbox`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${n}`, `SUMMARY:${esc2((e.bld ? e.bld + ' — ' : '') + e.title)}`, `DESCRIPTION:${esc2(e.note || '')}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'); });
+  lines.push('END:VCALENDAR');
+  const name = `Rental ToolBox calendar ${cal.bld === '__all' ? 'all buildings' : cal.bld}.ics`.replace(/[\\/:*?"<>|]/g, '');
+  const data = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+  if (downloads) downloads.save({ filename: name, data }).catch(() => {}); else { const a = document.createElement('a'); a.href = URL.createObjectURL(data); a.download = name; a.click(); }
+}
+// ---- view ----
+const CAL_KIND = { nyc: 'NYC deadline', ll: 'Building Local Law', holiday: 'Holiday', bld: 'Building date' };
+function calBldOptions(selected, withAll) {
+  const cur = $('propertyName').value.trim();
+  const list = buildings.map(b => b.addr); if (cur && !list.some(a => bldKey(a) === bldKey(cur))) list.unshift(cur);
+  return (withAll ? `<option value="__all"${selected === '__all' ? ' selected' : ''}>All my buildings (${buildings.length})</option>` : `<option value="">No building (general)</option>`) +
+    list.map(a => `<option value="${esc(a)}"${bldKey(selected) === bldKey(a) ? ' selected' : ''}>${esc(a)}</option>`).join('');
+}
+function renderCal() {
+  const el = $('calPanel'); if (!el) return;
+  el.hidden = mode !== 'calendar'; if (el.hidden) return;
+  const first = new Date(cal.y, cal.m, 1), start = new Date(cal.y, cal.m, 1 - first.getDay()), end = new Date(start); end.setDate(end.getDate() + 41);
+  const evs = calExpand(start, end); const by = {}; evs.forEach(e => (by[e.date] = by[e.date] || []).push(e));
+  const today = ymd(new Date());
+  const title = first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  let grid = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i); const k = ymd(d); const list = by[k] || [];
+    grid += `<div class="cal-day${d.getMonth() !== cal.m ? ' out' : ''}${k === today ? ' today' : ''}${k === cal.sel ? ' sel' : ''}" data-day="${k}"><span class="n">${d.getDate()}</span>${list.slice(0, 3).map(e => `<div class="cal-ev ${e.kind}" title="${esc((e.bld ? e.bld + ' — ' : '') + e.title)}">${esc(e.title)}</div>`).join('')}${list.length > 3 ? `<span class="cal-more">+${list.length - 3} more</span>` : ''}</div>`;
+  }
+  const row = e => { const d = parseYmd(e.date); const days = Math.round((d - new Date(new Date().toDateString())) / 86400000);
+    return `<div class="cal-row${e.kind !== 'holiday' && days >= 0 && days <= 14 ? ' red' : ''}"><span class="d">${esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}${d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : ''}</span><span class="t">${esc(e.title)}<small>${esc([CAL_KIND[e.kind], e.bld, e.repeat && e.repeat !== 'none' ? 'repeats ' + e.repeat : '', e.note, e.src ? 'from ' + e.src : ''].filter(Boolean).join(' · '))}</small></span>${e.kind === 'bld' && e.id ? `<button class="x" type="button" data-del="${esc(e.id)}" title="Remove">×</button>` : '<span></span>'}</div>`; };
+  const selList = cal.sel ? (by[cal.sel] || []) : null;
+  const from = new Date(new Date().toDateString()), to = new Date(from); to.setDate(to.getDate() + 60);
+  const upcoming = calExpand(from, to).filter(e => e.kind !== 'holiday' || true);
+  const files = (tabFiles.calendar || []).filter(f => f.status === 'ok');
+  const missing = buildings.filter(b => !b.facts && !cal.facts[bldKey(b.addr)]).length;
+  el.innerHTML = `<div class="cal-bar"><div class="cal-nav"><button class="cal-ib" type="button" data-nav="-1" aria-label="Previous month">‹</button><b>${esc(title)}</b><button class="cal-ib" type="button" data-nav="1" aria-label="Next month">›</button><button class="nyc-btn ghost" type="button" data-nav="0">Today</button></div>
+    <select class="cal-sel" id="calBld" aria-label="Building">${calBldOptions(cal.bld, true)}</select>
+    <div class="cal-chips">${[['nyc', 'NYC deadlines', 'var(--rust)'], ['holiday', 'Holidays', 'var(--ok)'], ['bld', 'Building dates', 'var(--ask)']].map(([k, t, c]) => `<button class="cal-chip${cal.show[k] ? ' on' : ''}" type="button" data-show="${k}"><i style="background:${c}"></i>${t}</button>`).join('')}</div>
+    <button class="nyc-btn ghost" type="button" id="calIcs" title="Download the next 12 months to import into Outlook">Download for Outlook (.ics)</button></div>
+    ${missing && cal.show.nyc ? `<p class="nyc-msg">${cal.factsBusy ? 'Looking up Local Law dates for your saved buildings…' : `${missing} saved building(s) still need a lookup for their own Local Law dates.`}</p>` : ''}
+    ${!buildings.length ? '<p class="nyc-msg">Save your buildings with ★ Save at the top to see each building’s own Local Law dates here.</p>' : ''}
+    <div class="cal-grid">${grid}</div>
+    <div class="cal-cols">
+      <div class="cal-box"><h3>${selList ? esc(parseYmd(cal.sel).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })) : 'Next 60 days'}</h3><div class="cal-list">${(selList || upcoming).map(row).join('') || '<p>Nothing on this day.</p>'}</div></div>
+      <div class="cal-box"><h3>Add dates from a contract</h3>
+        <p>Upload a contract, lease, service agreement or schedule in the box above${files.length ? ` (${files.length} uploaded)` : ''}. Pick the building, then click Find dates. Claude finds the due dates and you choose which to add.</p>
+        <div class="cal-form"><select class="full" id="calFindBld">${calBldOptions($('propertyName').value.trim(), false)}</select></div>
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="calFind"${cal.finding ? ' disabled' : ''}>${cal.finding ? 'Reading…' : 'Find dates'}</button></div>
+        ${cal.found && cal.found.err ? `<p class="nyc-msg warn">${esc(cal.found.err)}</p>` : ''}
+        ${cal.found && cal.found.items && cal.found.items.length ? `<div class="cal-found">${cal.found.items.map((x, i) => `<label><input type="checkbox" data-pick="${i}" checked><span>${esc(parseYmd(x.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</span><span>${esc(x.title)}${x.repeat !== 'none' ? ` <em>(${esc(x.repeat)})</em>` : ''}<br><small style="color:var(--subtle)">${esc(x.note)}</small></span></label>`).join('')}</div><div class="cal-btns"><button class="nyc-btn" type="button" id="calAddFound">Add selected to calendar</button><button class="nyc-btn ghost" type="button" id="calClearFound">Cancel</button></div>` : ''}
+        <h3 style="margin-top:6px">Add a date</h3>
+        <div class="cal-form"><input type="date" id="calDate" value="${esc(cal.sel || today)}"><input type="text" id="calTitle" placeholder="What is due? e.g. Boiler contract renews" maxlength="120">
+        <select id="calRepeat"><option value="none">Does not repeat</option><option value="monthly">Every month</option><option value="yearly">Every year</option></select><select id="calAddBld">${calBldOptions($('propertyName').value.trim(), false)}</select></div>
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="calAddOne">Add date</button><span class="nyc-msg" style="padding:0">${cal.store === 'db' ? 'Saved to your claude.ai account.' : 'Saved on this computer.'}</span></div>
+      </div>
+    </div>
+    <p class="nyc-msg">NYC dates are the usual yearly deadlines. Some depend on the building (size, elevators, cooling tower). Check with the agency before you act.</p>`;
+  if (mode === 'calendar' && cal.show.nyc) calEnsureFacts();
+}
+function calSummaryText() {
+  const from = new Date(new Date().toDateString()), to = new Date(from); to.setDate(to.getDate() + 120);
+  const save = { bld: cal.bld, show: cal.show }; cal.bld = '__all'; cal.show = { nyc: true, holiday: true, bld: true };
+  const evs = calExpand(from, to); cal.bld = save.bld; cal.show = save.show;
+  return `Calendar for the next 120 days (today is ${ymd(new Date())}). Saved buildings: ${buildings.map(b => b.addr).join('; ') || 'none'}.\n` + evs.map(e => `- ${e.date} [${CAL_KIND[e.kind]}] ${e.bld ? e.bld + ': ' : ''}${e.title}${e.note ? ' — ' + e.note : ''}`).join('\n');
+}
+$('calPanel').addEventListener('click', e => {
+  const nav = e.target.closest('[data-nav]'); if (nav) { const v = +nav.dataset.nav; if (!v) { const t = new Date(); cal.y = t.getFullYear(); cal.m = t.getMonth(); cal.sel = ''; } else { const d = new Date(cal.y, cal.m + v, 1); cal.y = d.getFullYear(); cal.m = d.getMonth(); } renderCal(); return; }
+  const sh = e.target.closest('[data-show]'); if (sh) { cal.show[sh.dataset.show] = !cal.show[sh.dataset.show]; renderCal(); return; }
+  const day = e.target.closest('[data-day]'); if (day) { cal.sel = cal.sel === day.dataset.day ? '' : day.dataset.day; renderCal(); return; }
+  const del = e.target.closest('[data-del]'); if (del) { calRemove(del.dataset.del); return; }
+  if (e.target.closest('#calIcs')) { calIcs(); return; }
+  if (e.target.closest('#calFind')) { calFindDates(); return; }
+  if (e.target.closest('#calClearFound')) { cal.found = null; renderCal(); return; }
+  if (e.target.closest('#calAddFound')) {
+    const bld = $('calFindBld').value; const picks = [...el$('#calPanel [data-pick]')].filter(c => c.checked).map(c => cal.found.items[+c.dataset.pick]);
+    calAdd(picks.map(x => Object.assign(x, { bld, at: Date.now() }))); cal.found = null; return;
+  }
+  if (e.target.closest('#calAddOne')) {
+    const date = $('calDate').value, title = $('calTitle').value.trim();
+    if (!date || !title) { showFootWarn('Pick a date and type what is due.'); return; }
+    calAdd([{ id: uid(), date, title: title.slice(0, 120), repeat: $('calRepeat').value, bld: $('calAddBld').value, note: '', at: Date.now() }]);
+  }
+});
+const el$ = s => document.querySelectorAll(s);
+$('calPanel').addEventListener('change', e => { if (e.target.id === 'calBld') { cal.bld = e.target.value; renderCal(); } });
 
 /* ---------- Composer ---------- */
 function setRoarTip(working) {
@@ -2581,7 +2846,7 @@ setLibStatus('Loading your library…');
 (async () => {
   if (!window.claude || !window.claude.use) {
     setLibStatus('Open this page on claude.ai to read documents with Claude.', true);
-    loadBuildings();
+    loadBuildings().then(calLoad);
     showFootWarn('Open this page on claude.ai to ask Claude.');
     renderConnections();
     return;
@@ -2598,8 +2863,8 @@ setLibStatus('Loading your library…');
     try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
   }
   if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
-  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } try { startTasks(); } catch (e) { renderTasks(); } loadBuildings(); await loadLibrary(); }
-  else { loadBuildings(); renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
+  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } try { startTasks(); } catch (e) { renderTasks(); } loadBuildings().then(calLoad); await loadLibrary(); }
+  else { loadBuildings().then(calLoad); renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
   render();
 })();
 </script>
