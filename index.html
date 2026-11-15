@@ -869,7 +869,7 @@ const ICONS = {
 };
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
-  { key:'calendar', title:'Deadlines & Holidays Calendar', desc:'A calendar of important NYC deadlines, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
+  { key:'calendar', title:'Important Dates & Holidays Calendar', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
   { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?'] },
@@ -2430,7 +2430,7 @@ function calIcs() {
   if (downloads) downloads.save({ filename: name, data }).catch(() => {}); else { const a = document.createElement('a'); a.href = URL.createObjectURL(data); a.download = name; a.click(); }
 }
 // ---- view ----
-const CAL_KIND = { nyc: 'NYC deadline', ll: 'Building Local Law', holiday: 'Holiday', bld: 'Building date' };
+const CAL_KIND = { nyc: 'NYC date', ll: 'Building Local Law', holiday: 'Holiday', bld: 'Building date' };
 function calBldOptions(selected, withAll) {
   const cur = $('propertyName').value.trim();
   const list = buildings.map(b => b.addr); if (cur && !list.some(a => bldKey(a) === bldKey(cur))) list.unshift(cur);
@@ -2458,7 +2458,7 @@ function renderCal() {
   const missing = buildings.filter(b => !b.facts && !cal.facts[bldKey(b.addr)]).length;
   el.innerHTML = `<div class="cal-bar"><div class="cal-nav"><button class="cal-ib" type="button" data-nav="-1" aria-label="Previous month">‹</button><b>${esc(title)}</b><button class="cal-ib" type="button" data-nav="1" aria-label="Next month">›</button><button class="nyc-btn ghost" type="button" data-nav="0">Today</button></div>
     <select class="cal-sel" id="calBld" aria-label="Building">${calBldOptions(cal.bld, true)}</select>
-    <div class="cal-chips">${[['nyc', 'NYC deadlines', 'var(--rust)'], ['holiday', 'Holidays', 'var(--ok)'], ['bld', 'Building dates', 'var(--ask)']].map(([k, t, c]) => `<button class="cal-chip${cal.show[k] ? ' on' : ''}" type="button" data-show="${k}"><i style="background:${c}"></i>${t}</button>`).join('')}</div>
+    <div class="cal-chips">${[['nyc', 'NYC dates', 'var(--rust)'], ['holiday', 'Holidays', 'var(--ok)'], ['bld', 'Building dates', 'var(--ask)']].map(([k, t, c]) => `<button class="cal-chip${cal.show[k] ? ' on' : ''}" type="button" data-show="${k}"><i style="background:${c}"></i>${t}</button>`).join('')}</div>
     <button class="nyc-btn ghost" type="button" id="calIcs" title="Download the next 12 months to import into Outlook">Download for Outlook (.ics)</button></div>
     ${missing && cal.show.nyc ? `<p class="nyc-msg">${cal.factsBusy ? 'Looking up Local Law dates for your saved buildings…' : `${missing} saved building(s) still need a lookup for their own Local Law dates.`}</p>` : ''}
     ${!buildings.length ? '<p class="nyc-msg">Save your buildings with ★ Save at the top to see each building’s own Local Law dates here.</p>' : ''}
