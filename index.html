@@ -610,6 +610,13 @@ header {
 .cal-found label { display: grid; grid-template-columns: 18px 86px minmax(0, 1fr); gap: 6px; font-size: 12.5px; color: var(--ink); align-items: start; }
 .cal-found label span:nth-child(2) { color: var(--muted); }
 @media (max-width: 900px) { .cal-cols { grid-template-columns: 1fr; } .cal-day { min-height: 64px; } .cal-ev { font-size: 10px; } }
+.bld-bulk { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.bld-bulk textarea { width: 100%; box-sizing: border-box; resize: vertical; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 8px; color: var(--ink); font: 13px/1.45 var(--sans); padding: 8px 10px; outline: none; }
+.bld-bulk textarea:focus { border-color: var(--ask); }
+.bld-bulk-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bld-bulk-msg { font-size: 12px; color: var(--ok); padding: 2px 4px; }
+.bld-add.ghost2 { border-style: solid; border-color: var(--line); color: var(--muted); margin-top: 0; }
+.bld-add.ghost2:hover { color: var(--ask); border-color: var(--ask); }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -2228,7 +2235,7 @@ $('connRefresh').addEventListener('click', () => { slackTools = null; zillowTool
 
 
 /* ---------- My Buildings (saved addresses, one list per person) ---------- */
-let buildings = [], bldStore = 'local';
+let buildings = [], bldStore = 'local', bldBulkOpen = false, bldBulkDraft = '', bldBulkMsg = '';
 const bldKey = a => String(a || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 const bldId = a => bldKey(a).replace(/ /g, '-').slice(0, 80) || 'x';
 function bldLocalSave() { try { localStorage.setItem('rb-buildings', JSON.stringify(buildings)); } catch (e) {} }
@@ -2260,6 +2267,22 @@ async function saveBuilding() {
   buildings.push(b); buildings.sort((x, y) => x.addr.localeCompare(y.addr)); bldLocalSave(); renderBuildings();
   try { await bldPut(b); } catch (e) { showFootWarn('Saved on this computer only. Could not save to your account.'); }
 }
+async function saveManyBuildings(text) {
+  // one address per line; cells copied from Excel (tabs) are joined with commas
+  const lines = String(text || '').split(/\r?\n/).map(l => l.split('\t').map(c => c.trim()).filter(Boolean).join(', ').replace(/\s+/g, ' ').trim()).filter(l => l.length > 4 && /\d/.test(l)).map(l => l.slice(0, 120));
+  if (!lines.length) { bldBulkMsg = 'Paste at least one address (with a street number).'; renderBuildings(); return; }
+  let added = 0, skipped = 0;
+  for (const addr of lines) {
+    if (buildings.some(b => bldKey(b.addr) === bldKey(addr))) { skipped++; continue; }
+    const b = { addr, at: Date.now() + added };
+    buildings.push(b); added++;
+    try { await bldPut(b); } catch (e) {}
+  }
+  buildings.sort((x, y) => x.addr.localeCompare(y.addr)); bldLocalSave();
+  bldBulkOpen = false; bldBulkDraft = '';
+  bldBulkMsg = `Added ${added} building${added === 1 ? '' : 's'}.` + (skipped ? ` ${skipped} already saved.` : '');
+  renderBuildings();
+}
 async function removeBuilding(addr) {
   buildings = buildings.filter(b => bldKey(b.addr) !== bldKey(addr)); bldLocalSave(); renderBuildings();
   if (bldStore === 'db') { try { await db.doc(`bldg/${myId}/items/${bldId(addr)}`).delete(); } catch (e) {} }
@@ -2282,6 +2305,8 @@ function renderBuildings() {
   m.innerHTML = `<div class="bld-head"><span>My Buildings</span><span>${buildings.length} saved</span></div>
     <div class="bld-list">${buildings.length ? buildings.map(b => `<div class="bld-item${bldKey(b.addr) === cur ? ' cur' : ''}"><button class="bld-pick" type="button" data-addr="${esc(b.addr)}">${esc(b.addr)}${bldKey(b.addr) === cur ? '<small>current</small>' : ''}</button><button class="bld-del" type="button" data-del="${esc(b.addr)}" title="Remove from My Buildings" aria-label="Remove ${esc(b.addr)}">×</button></div>`).join('') : '<div class="bld-empty">No saved buildings yet. Type an address at the top, then click Save.</div>'}</div>
     <button class="bld-add" type="button" id="bldAdd"${!cur || saved ? ' disabled' : ''}>${!cur ? '+ Type an address to save it' : saved ? '✓ This building is saved' : '+ Save “' + esc($('propertyName').value.trim()) + '”'}</button>
+    <div class="bld-bulk">${bldBulkOpen ? `<textarea id="bldBulkText" rows="6" placeholder="Paste addresses, one per line. Example:&#10;27 West 72nd Street, New York, NY&#10;215 West 95th Street, New York, NY&#10;333 East 80th Street, New York, NY">${esc(bldBulkDraft)}</textarea>
+      <div class="bld-bulk-btns"><button class="nyc-btn" type="button" id="bldBulkSave">Add all</button><button class="nyc-btn ghost" type="button" id="bldBulkCancel">Cancel</button><span class="bld-bulk-msg">${esc(bldBulkMsg)}</span></div>` : `<button class="bld-add ghost2" type="button" id="bldBulkOpen">+ Add many buildings at once</button>${bldBulkMsg ? `<div class="bld-bulk-msg">${esc(bldBulkMsg)}</div>` : ''}`}</div>
     <div class="bld-note">${bldStore === 'db' ? 'Saved to your claude.ai account. Each person has their own list.' : 'Saved on this computer. Sign in to claude.ai to keep it on every device.'}</div>`;
 }
 function openBldMenu(on) {
@@ -2289,11 +2314,15 @@ function openBldMenu(on) {
 }
 $('bldSave').addEventListener('click', saveBuilding);
 $('bldOpen').addEventListener('click', e => { e.stopPropagation(); openBldMenu($('bldMenu').hidden); });
+$('bldMenu').addEventListener('input', e => { if (e.target.id === 'bldBulkText') bldBulkDraft = e.target.value; });
 $('bldMenu').addEventListener('click', e => {
   e.stopPropagation();
   const p = e.target.closest('[data-addr]'); if (p) { pickBuilding(p.dataset.addr); return; }
   const d = e.target.closest('[data-del]'); if (d) { removeBuilding(d.dataset.del); return; }
   if (e.target.closest('#bldAdd')) saveBuilding();
+  if (e.target.closest('#bldBulkOpen')) { bldBulkOpen = true; bldBulkMsg = ''; renderBuildings(); setTimeout(() => { const t = $('bldBulkText'); if (t) t.focus(); }, 0); }
+  if (e.target.closest('#bldBulkCancel')) { bldBulkOpen = false; bldBulkDraft = ''; renderBuildings(); }
+  if (e.target.closest('#bldBulkSave')) saveManyBuildings($('bldBulkText').value);
 });
 document.addEventListener('click', e => { if (!$('bldMenu').hidden && !e.target.closest('#propWrap')) openBldMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bldMenu').hidden) openBldMenu(false); });
