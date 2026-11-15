@@ -1610,10 +1610,14 @@ const NYC_DS = {
   boil:  { id: '52dp-yji6', name: 'DOB NOW Boiler Safety' },
   oath:  { id: 'jz4z-kudi', name: 'OATH Hearings (FDNY tickets)' },
   dof:   { id: 'scjx-j6np', name: 'DOF Property Charges Balance' },
-  pluto: { id: '64uk-42ks', name: 'PLUTO' }
+  pluto: { id: '64uk-42ks', name: 'PLUTO' },
+  acris: { id: 'bnx9-e6tj', name: 'ACRIS Real Property' },
+  acrisL: { id: '8h5j-fqxa', name: 'ACRIS Legals' },
+  acrisP: { id: '636b-3b5g', name: 'ACRIS Parties' },
+  acrisT: { id: '7isb-wh4c', name: 'ACRIS Document Types' }
 };
 const NYC_ROOT = 'https://data.cityofnewyork.us/resource/';
-const nycPage = k => `https://data.cityofnewyork.us/d/${NYC_DS[k].id}`;
+const nycPage = k => k === 'acris' ? 'https://a836-acris.nyc.gov/DS/DocumentSearch/BBL' : `https://data.cityofnewyork.us/d/${NYC_DS[k].id}`;
 const NYC_BORO = { 1: ['MANHATTAN', 'MN'], 2: ['BRONX', 'BX'], 3: ['BROOKLYN', 'BK'], 4: ['QUEENS', 'QN'], 5: ['STATEN ISLAND', 'SI'] };
 const nyc = { key: '', bld: null, res: null, loading: false, err: '', picks: null, open: {}, sid: 'rtb-' + Math.random().toString(36).slice(2) + Date.now().toString(36), server: null, summary: '' };
 
@@ -1899,11 +1903,84 @@ async function nycLoadBuilding(b, myKey) {
   renderNyc();
 }
 
+
+// ---- ACRIS (deeds, mortgages, liens) — loads when the card is opened ----
+const ACRIS_LIEN = ['FL', 'FTL', 'NTXL', 'CNFL', 'AMFL', 'LOCC', 'JUDG', 'TLS', 'ATL', 'AMTL', 'VAC', 'CODP', 'LIS'];
+const ACRIS_RELEASE = ['RFL', 'RFTL', 'DTL', 'TOLCC', 'RTXL', 'WFL', 'DPFTL', 'PRFL', 'PWFL'];
+const ACRIS_MTG = ['MTGE', 'AGMT', 'M&CON', 'CMTG', 'SMTG', 'SPRD', 'CORRM', 'ASPM', 'MMTG'];
+const ACRIS_SAT = ['SAT', 'PSAT', 'REL', 'PREL'];
+const acrisKind = t => ACRIS_LIEN.includes(t) ? 'lien' : ACRIS_RELEASE.includes(t) ? 'release' : ACRIS_MTG.includes(t) ? 'mortgage' : ACRIS_SAT.includes(t) ? 'satisfaction' : /^DEED|^CORRD|^CONDEED|^IDED|^REIT|^TODD/.test(t) ? 'deed' : 'other';
+const acrisLink = id => /^FT_/.test(id) ? '' : `https://a836-acris.nyc.gov/DS/DocumentSearch/DocumentDetail?doc_id=${encodeURIComponent(id)}`;
+function acrisCore(street) {
+  const w = String(street || '').toUpperCase().replace(/\b(\d+)(ST|ND|RD|TH)\b/g, '$1').split(/\s+/).filter(x => x && !/^(WEST|EAST|NORTH|SOUTH|W|E|N|S|STREET|ST|AVENUE|AVE|PLACE|PL|ROAD|RD|BOULEVARD|BLVD|DRIVE|DR|LANE|PARKWAY|TERRACE|COURT)$/.test(x));
+  return w.join(' ');
+}
+async function nycLoadAcris() {
+  const b = nyc.bld, r = nyc.res; if (!b || !r || r.acris && r.acris.loading) return;
+  const myKey = nyc.key;
+  r.acris = { loading: true }; renderNyc();
+  try {
+    const core = acrisCore(b.streetname);
+    const where = `borough='${sq(b.boroid)}' AND block='${sq(+b.block)}' AND (street_number='${sq(b.housenumber)}' OR lot='${sq(+b.lot)}') AND document_id>'2' AND document_id<'A'`;
+    const uL = nycUrl('acrisL', { $select: 'document_id,lot,unit,street_name', $where: where, $order: 'document_id DESC', $limit: 1200 });
+    const uT = nycUrl('acrisT', { $select: 'doc__type,doc__type_description', $limit: 400 });
+    const uA = nycUrl('acris', { $select: 'max(:updated_at) as asof' });
+    const r1 = await nycFetch([uL, uT, uA]);
+    if (myKey !== nyc.key) return;
+    if (!Array.isArray(r1[uL])) throw new Error(r1[uL] && r1[uL].error || 'Could not read ACRIS.');
+    const names = {}; (Array.isArray(r1[uT]) ? r1[uT] : []).forEach(x => { names[x.doc__type] = x.doc__type_description; });
+    const norm = v => String(v || '').toUpperCase().replace(/\b(\d+)(ST|ND|RD|TH)\b/g, '$1').replace(/\s+/g, ' ');
+    const docs = {};
+    r1[uL].forEach(x => {
+      if (String(+x.lot) !== String(+b.lot) && core && !(' ' + norm(x.street_name) + ' ').includes(' ' + core + ' ')) return;
+      const d = docs[x.document_id] = docs[x.document_id] || { id: x.document_id, units: new Set(), lots: new Set() };
+      if (x.unit) d.units.add(x.unit); d.lots.add(x.lot);
+    });
+    const ids = Object.keys(docs);
+    // condo (billing lot 7501-7599): unit lots are 1001+, so a record is for the building if it is on the billing lot,
+    // on a low (pre-condo) lot, or covers many lots. In a rental building every record is for the building.
+    const condo = +b.lot >= 7501 && +b.lot <= 7599;
+    const isBld = d => !condo || d.lots.size > 3 || [...d.lots].some(l => +l === +b.lot || +l < 1000);
+    const bIds = ids.filter(i => isBld(docs[i])), uIds = ids.filter(i => !isBld(docs[i]));
+    const yAgo = new Date(); yAgo.setFullYear(yAgo.getFullYear() - 1);
+    const inList = g => `document_id in(${g.map(i => `'${sq(i)}'`).join(',')})`;
+    const sel = 'document_id,doc_type,document_date,recorded_datetime,document_amt';
+    const mUrls = [];
+    for (let i = 0; i < bIds.length; i += 90) mUrls.push(nycUrl('acris', { $select: sel, $where: inList(bIds.slice(i, i + 90)), $limit: 200 }));
+    // unit records: only liens, releases and last year's sales
+    const keep = ACRIS_LIEN.concat(ACRIS_RELEASE).map(t => `'${sq(t)}'`).join(',');
+    for (let i = 0; i < uIds.length; i += 90) mUrls.push(nycUrl('acris', { $select: sel, $where: `${inList(uIds.slice(i, i + 90))} AND (doc_type in(${keep}) OR (doc_type like 'DEED%' AND recorded_datetime>='${yAgo.toISOString().slice(0, 10)}T00:00:00'))`, $limit: 200 }));
+    const r2 = mUrls.length ? await nycFetch(mUrls) : {};
+    if (myKey !== nyc.key) return;
+    mUrls.forEach(u => (Array.isArray(r2[u]) ? r2[u] : []).forEach(m => { const d = docs[m.document_id]; if (d) Object.assign(d, { type: m.doc_type, date: m.recorded_datetime || m.document_date, amt: nycNum(m.document_amt) }); }));
+    let list = Object.values(docs).filter(d => d.type).map(d => Object.assign(d, { kind: acrisKind(d.type), desc: names[d.type] || d.type, unit: [...d.units].slice(0, 3).join(', ') + (d.units.size > 3 ? ` +${d.units.size - 3}` : '') || (isBld(d) ? '' : 'lot ' + [...d.lots][0]), building: isBld(d) }));
+    // keep what a manager needs: building-level records, plus every lien and release (also on units)
+    const key = list.filter(d => d.building || d.kind === 'lien' || d.kind === 'release').sort((a, c) => String(c.date).localeCompare(String(a.date)));
+    const yago = new Date(); yago.setFullYear(yago.getFullYear() - 1);
+    const unitSales = list.filter(d => !d.building && d.kind === 'deed' && nycDate(d.date) >= yago).length;
+    const pIds = key.slice(0, 160).map(d => d.id);
+    const pUrls = []; for (let i = 0; i < pIds.length; i += 80) pUrls.push(nycUrl('acrisP', { $select: 'document_id,party_type,name', $where: `document_id in(${pIds.slice(i, i + 80).map(x => `'${sq(x)}'`).join(',')})`, $limit: 1500 }));
+    const r3 = pUrls.length ? await nycFetch(pUrls) : {};
+    if (myKey !== nyc.key) return;
+    const parties = {}; pUrls.forEach(u => (Array.isArray(r3[u]) ? r3[u] : []).forEach(p => { const e = parties[p.document_id] = parties[p.document_id] || { 1: [], 2: [] }; if (e[p.party_type] && e[p.party_type].length < 3 && !e[p.party_type].includes(p.name)) e[p.party_type].push(p.name); }));
+    key.forEach(d => { const e = parties[d.id] || { 1: [], 2: [] }; d.from = e[1].join('; '); d.to = e[2].join('; '); d._flag = d.kind === 'lien' ? 'red' : d.kind === 'release' || d.kind === 'satisfaction' ? 'green' : ''; });
+    const liens = key.filter(d => d.kind === 'lien');
+    const tenAgo = new Date(); tenAgo.setFullYear(tenAgo.getFullYear() - 10);
+    const recentLiens = liens.filter(d => nycDate(d.date) >= tenAgo);
+    const lastDeed = key.find(d => d.kind === 'deed' && d.building);
+    const lastMtg = key.find(d => d.kind === 'mortgage' && d.building);
+    const oldest = ids.length ? ids[ids.length - 1].slice(0, 4) : '';
+    r.acris = { list: key, total: ids.length, since: oldest, liens: liens.length, recentLiens: recentLiens.length, lastDeed, lastMtg, unitSales, asof: Array.isArray(r1[uA]) && r1[uA][0] ? nycDate(r1[uA][0].asof) : null, capped: r1[uL].length >= 1200 };
+    nyc.summary = nycSummaryText();
+  } catch (e) { r.acris = { err: e && e.code ? nycConnMsg(e) : (e && e.message) || 'Could not load ACRIS.' }; }
+  if (myKey === nyc.key) renderNyc();
+}
+
 // ---- view ----
 const NYC_CODE = { CHG: 'Property tax', SAF: 'Other city charge (SAF)', SAC: 'Other city charge (SAC)', SAT: 'Other city charge (SAT)', NSF: 'Returned payment fee', SIF: 'Other city charge (SIF)', FSF: 'Other city charge (FSF)', FPF: 'Other city charge (FPF)' };
 function nycTbl(cols, list, cls) {
   if (!list.length) return '<p class="nyc-msg">Nothing to show.</p>';
-  return `<table class="nyc-tbl"><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr>${cols.map(c => { const v = c[1](r); return `<td${cls ? ` class="${cls(r, c[0]) || ''}"` : ''}>${esc(v == null || v === '' ? '—' : String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  return `<table class="nyc-tbl"><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr>${cols.map(c => { const v = c[1](r); const td = `<td${cls ? ` class="${cls(r, c[0]) || ''}"` : ''}>`; return /^https:\/\//.test(String(v || '')) ? `${td}<a href="${esc(v)}" target="_blank" rel="noopener">Open</a></td>` : `${td}${esc(v == null || v === '' ? '—' : String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
 }
 const NYC_COLS = {
   hpdv: [['Apt', r => r.apartment], ['Class', r => r.class], ['Issued', r => nycD(r.novissueddate)], ['Status', r => r.currentstatus], ['Rent impairing', r => r.rentimpairing === 'Y' ? 'Yes' : ''], ['Order', r => r.ordernumber], ['Description', r => String(r.novdescription || '').replace(/^§\s*[\d-]+\s*(ADM CODE|HMC)?:?\s*/i, '')]],
@@ -1916,9 +1993,25 @@ const NYC_COLS = {
   boil: [['Boiler ID', r => r.boiler_id], ['Make', r => r.boiler_make], ['Model', r => r.boiler_model], ['Pressure', r => r.pressure_type], ['Last inspection', r => nycFmtD(r._d)], ['Year', r => r._year], ['Defects', r => r.defects_exist]],
   oath: [['Ticket', r => r.ticket_number], ['Date', r => nycD(r.violation_date)], ['Charge', r => r.charge_1_code_description], ['Hearing', r => r.hearing_status], ['Compliance', r => r.compliance_status], ['Penalty', r => nycMoney(r.penalty_imposed)], ['Balance due', r => nycMoney(r.balance_due)]],
   dof: [['Charge', r => NYC_CODE[r.code] || r.code], ['Tax year', r => r.taxyear], ['Due date', r => nycD(r.due_date)], ['Billed', r => nycMoney(r.sum_liab)], ['Balance', r => nycMoney(r.sum_bal)], ['Status', r => r._past ? 'Past due' : 'Not due yet']],
+  acris: [['Recorded', r => nycD(r.date)], ['Document', r => r.desc], ['Amount', r => r.amt ? nycMoney(r.amt) : ''], ['Unit', r => r.unit], ['From (party 1)', r => r.from], ['To (party 2)', r => r.to], ['ACRIS link', r => acrisLink(r.id)]],
   ll: [['Law', r => r.law], ['What', r => r.what], ['Next due', r => r.applies ? nycFmtD(r.due) : 'Does not apply'], ['Days left', r => r.due && r.applies ? nycDays(r.due) : ''], ['Note', r => r.note]]
 };
 const flagCls = r => r && r._flag ? ({ red: 'r', yellow: 'y', green: 'g' })[r._flag] : '';
+function nycAcrisCard() {
+  const a = nyc.res.acris;
+  if (!a || a.loading || a.err) return nycCard('acris', { title: 'Property records (ACRIS)', n: a && a.loading ? '…' : '—', flag: 'grey', wide: true,
+    sub: a && a.loading ? 'Loading deeds, mortgages and liens… This takes about 30 seconds.' : 'Deeds, mortgages, liens and judgments recorded with the City Register.', err: a && a.err,
+    extra: a && a.loading ? '' : '<button class="nyc-btn" type="button" data-acris="1" style="margin-bottom:8px">Load ACRIS records</button>', list: [], asof: null });
+  const tags = [
+    a.recentLiens ? [`Liens / judgments (10 yrs): ${a.recentLiens}`, 'red'] : [`No liens in 10 years`, 'green'],
+    a.lastDeed ? [`Last deed: ${nycD(a.lastDeed.date)}`] : null,
+    a.lastMtg ? [`Last mortgage: ${nycD(a.lastMtg.date)}${a.lastMtg.amt ? ' · ' + nycMoney(a.lastMtg.amt) : ''}`] : null,
+    a.unitSales ? [`Unit sales (12 mo): ${a.unitSales}`] : null];
+  return nycCard('acris', { title: 'Property records (ACRIS)', n: a.list.length, flag: a.recentLiens ? 'red' : 'green', wide: true,
+    sub: `${a.total.toLocaleString()} records found since ${a.since}${a.capped ? ' (newest 1,200 checked)' : ''}. Showing building records and all liens.`,
+    tags, list: a.list, cls: flagCls, asof: a.asof,
+    extra: '<p class="nyc-msg">Click a row link to open the document on ACRIS. Mechanic’s liens are filed with the County Clerk, not ACRIS.</p>' });
+}
 function nycCard(k, o) {
   const open = !!nyc.open[k];
   const tags = (o.tags || []).filter(Boolean).map(t => `<span class="nyc-tag ${t[1] || ''}">${esc(t[0])}</span>`).join('');
@@ -1977,6 +2070,7 @@ function nycBody(r) {
     nycCard('oath', { title: 'FDNY tickets (since 2018)', n: c.oath.list.length, flag: c.oath.due > 0 ? 'red' : c.oath.list.length ? 'yellow' : 'green', sub: c.oath.list.length ? `Balance due: ${nycMoney(c.oath.due)}` : 'No FDNY tickets since 2018.', err: c.oath.err, asof: c.oath.asof, tags: c.oath.owing ? [[`${c.oath.owing} with a balance`, 'red']] : [], list: c.oath.list }),
     nycCard('dof', { title: 'DOF charges past due', n: nycMoney(c.dof.due), flag: c.dof.due > 0 ? 'red' : 'green', sub: c.dof.past.length ? Object.entries(c.dof.byCode).map(e => `${NYC_CODE[e[0]] || e[0]}: ${nycMoney(e[1])}`).join(', ') : 'Nothing past due.' + (c.dof.upcoming ? ` ${nycMoney(c.dof.upcoming)} billed, not due yet.` : ''), err: c.dof.err, asof: c.dof.asof, cls: flagCls,
       extra: `<p class="nyc-msg">DOF updates this data a few times a year. Last update: ${nycFmtD(c.dof.ex)}. Payments made after that date are not shown.</p>`, list: c.dof.list }),
+    nycAcrisCard(),
     nycCard('ll', { title: 'Local Law deadlines', n: c.ll.list.filter(x => x.applies && x.flag === 'red').length + ' soon', flag: c.ll.list.some(x => x.applies && x.flag === 'red') ? 'red' : c.ll.list.some(x => x.applies && x.flag === 'yellow') ? 'yellow' : 'green', wide: true,
       sub: 'Red = due within 60 days or past due. Yellow = within 6 months.', tags: c.ll.list.filter(x => x.applies && x.due).map(x => [`${x.law}: ${nycFmtD(x.due)}`, x.flag]), list: c.ll.list, cls: x => ({ red: 'r', yellow: 'y', green: 'g' })[x.flag] || '' })
   ];
@@ -1995,12 +2089,13 @@ function nycSummaryText() {
     `Boilers: ${c.boil.list.map(e => `${e.boiler_id} ${e.boiler_make || ''} last inspection ${nycFmtD(e._d)}`).join('; ') || 'none found'}.`,
     `FDNY tickets since 2018: ${c.oath.list.length}, balance due ${nycMoney(c.oath.due)}. DOF charges past due (as of ${nycFmtD(c.dof.ex)}): ${nycMoney(c.dof.due)}.`,
     `Local Law deadlines: ${c.ll.list.map(x => `${x.law} ${x.what}: ${x.applies ? nycFmtD(x.due) : 'does not apply'} (${x.note})`).join('; ')}.`];
+  const a = r.acris; if (a && a.list) L.push(`ACRIS property records: ${a.total} found since ${a.since}. Liens or judgments in last 10 years: ${a.recentLiens}. Last building deed ${a.lastDeed ? nycD(a.lastDeed.date) : 'not found'}. Last building mortgage ${a.lastMtg ? nycD(a.lastMtg.date) + ' ' + (a.lastMtg.amt ? nycMoney(a.lastMtg.amt) : '') : 'not found'}. Unit sales in last 12 months: ${a.unitSales}. Key records: ` + a.list.slice(0, 30).map(d => `${nycD(d.date)} ${d.desc}${d.amt ? ' ' + nycMoney(d.amt) : ''}${d.unit ? ' unit ' + d.unit : ''}${d.from ? ' from ' + d.from : ''}${d.to ? ' to ' + d.to : ''}`).join('; '));
   const top = c.hpdv.list.slice(0, 40).map(x => `- ${x.class} apt ${x.apartment || 'bldg'} issued ${nycD(x.novissueddate)} ${x.currentstatus}: ${String(x.novdescription || '').slice(0, 160)}`);
   return L.join('\n') + (top.length ? '\nNewest open HPD violations:\n' + top.join('\n') : '');
 }
 async function nycExcel(k) {
   const r = nyc.res; if (!r) return;
-  const card = r.cards[k]; const cols = NYC_COLS[k];
+  const card = k === 'acris' ? (r.acris || { list: [] }) : r.cards[k]; const cols = NYC_COLS[k];
   try {
     await loadScript(LIBS.xlsx);
     const aoa = [cols.map(c => c[0])].concat((card.list || []).map(x => cols.map(c => { const v = c[1](x); return v == null ? '' : v; })));
@@ -2018,10 +2113,11 @@ async function nycExcel(k) {
 }
 $('nycPanel').addEventListener('click', e => {
   if (e.target.closest('#nycGo')) { nycLoad(true); return; }
+  if (e.target.closest('[data-acris]')) { nycLoadAcris(); return; }
   const pk = e.target.closest('[data-pick]'); if (pk) { nycLoadBuilding(nyc.picks[+pk.dataset.pick]); return; }
   const xl = e.target.closest('[data-xl]'); if (xl) { nycExcel(xl.dataset.xl); return; }
   if (e.target.closest('a')) return;
-  const h = e.target.closest('.nyc-ch'); if (h) { const k = h.parentElement.dataset.k; nyc.open[k] = !nyc.open[k]; h.parentElement.classList.toggle('open', nyc.open[k]); h.setAttribute('aria-expanded', nyc.open[k]); }
+  const h = e.target.closest('.nyc-ch'); if (h) { const k = h.parentElement.dataset.k; nyc.open[k] = !nyc.open[k]; if (k === 'acris' && nyc.open[k] && nyc.res && !nyc.res.acris) nycLoadAcris(); h.parentElement.classList.toggle('open', nyc.open[k]); h.setAttribute('aria-expanded', nyc.open[k]); }
 });
 $('nycPanel').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('nyc-ch')) { e.preventDefault(); e.target.click(); } });
 $('propertyName').addEventListener('change', () => { if (mode === 'records') nycLoad(false); else { nyc.key = ''; nyc.res = null; nyc.bld = null; nyc.summary = ''; } });
