@@ -631,6 +631,15 @@ header {
 .nyc-caladd { font: 600 11px var(--sans); color: var(--ask); background: rgba(196,160,126,.1); border: 1px solid rgba(196,160,126,.5); border-radius: 999px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
 .nyc-caladd:hover { background: rgba(196,160,126,.22); border-color: var(--ask); }
 .nyc-incal { font-size: 11px; color: var(--ok); white-space: nowrap; font-weight: 600; margin-right: 6px; }
+.disc-back { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.disc-back[hidden] { display: none; }
+.disc { position: relative; max-width: 640px; max-height: 85vh; overflow: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 16px; padding: 24px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.6); text-align: left; }
+.disc h2 { margin: 0 0 12px; font: 400 30px var(--serif); color: var(--ink); }
+.disc p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+.disc p b { color: var(--ink); font-weight: 600; }
+.disc .disc-foot { font-size: 11.5px; color: var(--subtle); margin-top: 16px; }
+.disc-x { position: absolute; top: 12px; right: 14px; background: none; border: 0; color: var(--subtle); font-size: 24px; cursor: pointer; line-height: 1; }
+.disc-x:hover { color: var(--ink); }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -845,7 +854,20 @@ header {
         </div>
         <input type="file" id="tabInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
         <div class="samples" id="samples"></div>
-        <div class="copyright">© 2026 Artur Pepaj. All rights reserved. <span class="dot-sep">·</span> <a class="donate-link" href="https://paypal.me/ArturPepaj" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3 1.7-1.8 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg> Support The Rental ToolBox</a></div>
+        <div class="copyright">© 2026 Artur Pepaj. All rights reserved. <span class="dot-sep">·</span> <a class="donate-link" href="#" id="discOpen">Disclaimer</a> <span class="dot-sep">·</span> <a class="donate-link" href="https://paypal.me/ArturPepaj" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3 1.7-1.8 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg> Support The Rental ToolBox</a></div>
+        <div class="disc-back" id="discBack" hidden>
+          <div class="disc" role="dialog" aria-modal="true" aria-labelledby="discTitle">
+            <button class="disc-x" type="button" id="discClose" aria-label="Close">×</button>
+            <h2 id="discTitle">Disclaimer</h2>
+            <p><b>Information only.</b> The Rental ToolBox gives general information to help with property management work. It is not legal, financial, tax, accounting, engineering, insurance or other professional advice. Always check with a qualified professional (for example, an attorney or accountant) before you act.</p>
+            <p><b>AI can be wrong.</b> Answers are made by artificial intelligence (Claude). They can be incomplete, out of date or wrong. Always check the source document, the agency website or the original record. Notes marked "GUESS – not confirmed" are not facts.</p>
+            <p><b>City and public data.</b> Building records, violations, charges, deadlines and market rents come from public sources such as NYC Open Data, ACRIS, DOF, Zillow and RentReboot. This data can be late, incomplete or wrong. Deadlines in the calendar are the usual yearly dates and may not apply to every building. Confirm with HPD, DOB, DOF, FDNY, DHCR and other agencies before you rely on them.</p>
+            <p><b>No affiliation.</b> This site is an independent project. It is not made by, endorsed by or connected to the City or State of New York, any city agency, Anthropic, Yardi, AppFolio, Microsoft, Zillow, RentReboot, DocuSign, Parallel or any employer. All names and trademarks belong to their owners.</p>
+            <p><b>Your data and connections.</b> You choose what to upload and which accounts to connect. Connected apps use your own login and permissions. Do not upload information you are not allowed to share. Files in the shared Library can be seen by other users of the site.</p>
+            <p><b>No warranty. Use at your own risk.</b> The site is provided "as is", without any warranty. To the extent the law allows, the author is not responsible for any loss, damage, fine, penalty or missed deadline that comes from using it.</p>
+            <p class="disc-foot">© 2026 Artur Pepaj. All rights reserved.</p>
+          </div>
+        </div>
         <div class="foot-note" id="footNote">Answers can be wrong. Check the source document.</div>
       </div>
     </div>
@@ -2709,7 +2731,10 @@ document.querySelectorAll('.menu-section, .menu-sub-section').forEach(b => b.add
   e.stopPropagation(); b.classList.toggle('open');
   const sub = b.nextElementSibling; if (sub) sub.classList.toggle('open');
 }));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAll(); $('discBack').hidden = true; } });
+$('discOpen').addEventListener('click', e => { e.preventDefault(); $('discBack').hidden = false; $('discClose').focus(); });
+$('discClose').addEventListener('click', () => { $('discBack').hidden = true; });
+$('discBack').addEventListener('click', e => { if (e.target.id === 'discBack') $('discBack').hidden = true; });
 
 /* ---------- Open Tasks (shared, live) ---------- */
 let tasks = [];            // [{id, title, unit, due, owner, section, done, createdBy, createdAt, doneAt}]
