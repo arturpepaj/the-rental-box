@@ -628,6 +628,9 @@ header {
 .side-donate span { display: flex; flex-direction: column; gap: 2px; }
 .side-donate b { font-size: 13px; color: var(--ink); font-weight: 600; }
 .side-donate small { font-size: 11.5px; color: var(--muted); }
+.nyc-caladd { font: 600 11px var(--sans); color: var(--ask); background: rgba(196,160,126,.1); border: 1px solid rgba(196,160,126,.5); border-radius: 999px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+.nyc-caladd:hover { background: rgba(196,160,126,.22); border-color: var(--ask); }
+.nyc-incal { font-size: 11px; color: var(--ok); white-space: nowrap; font-weight: 600; margin-right: 6px; }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -2112,21 +2115,29 @@ async function nycLoadAcris() {
 
 // ---- view ----
 const NYC_CODE = { CHG: 'Property tax', SAF: 'Other city charge (SAF)', SAC: 'Other city charge (SAC)', SAT: 'Other city charge (SAT)', NSF: 'Returned payment fee', SIF: 'Other city charge (SIF)', FSF: 'Other city charge (FSF)', FPF: 'Other city charge (FPF)' };
+// "+ Calendar" button for a future date found in the city records
+function nycBldAddr() { const cur = $('propertyName').value.trim(); const sb = (typeof buildings !== 'undefined' ? buildings : []).find(b => bldKey(b.addr) === bldKey(cur)); return sb ? sb.addr : cur; }
+function nycCalBtn(dateVal, title, note) {
+  const d = nycDate(dateVal); if (!d || d < nycToday()) return '';
+  const date = ymd(d), bld = nycBldAddr();
+  if ((cal.items || []).some(x => x.date === date && x.title === title && bldKey(x.bld) === bldKey(bld))) return { html: '<span class="nyc-incal">In calendar ✓</span>', text: 'In calendar' };
+  return { html: `<button type="button" class="nyc-caladd" data-caladd="${esc(JSON.stringify({ date, title, note }))}">+ Calendar</button>`, text: '' };
+}
 function nycTbl(cols, list, cls) {
   if (!list.length) return '<p class="nyc-msg">Nothing to show.</p>';
-  return `<table class="nyc-tbl"><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr>${cols.map(c => { const v = c[1](r); const td = `<td${cls ? ` class="${cls(r, c[0]) || ''}"` : ''}>`; return /^https:\/\//.test(String(v || '')) ? `${td}<a href="${esc(v)}" target="_blank" rel="noopener">Open</a></td>` : `${td}${esc(v == null || v === '' ? '—' : String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+  return `<table class="nyc-tbl"><thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr>${cols.map(c => { const v = c[1](r); const td = `<td${cls ? ` class="${cls(r, c[0]) || ''}"` : ''}>`; if (v && typeof v === 'object' && v.html != null) return `${td}${v.html}</td>`; return /^https:\/\//.test(String(v || '')) ? `${td}<a href="${esc(v)}" target="_blank" rel="noopener">Open</a></td>` : `${td}${esc(v == null || v === '' ? '—' : String(v))}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
 }
 const NYC_COLS = {
-  hpdv: [['Apt', r => r.apartment], ['Class', r => r.class], ['Issued', r => nycD(r.novissueddate)], ['Status', r => r.currentstatus], ['Rent impairing', r => r.rentimpairing === 'Y' ? 'Yes' : ''], ['Order', r => r.ordernumber], ['Description', r => String(r.novdescription || '').replace(/^§\s*[\d-]+\s*(ADM CODE|HMC)?:?\s*/i, '')]],
+  hpdv: [['Calendar', r => nycCalBtn(r.originalcorrectbydate, `Correct HPD violation (Class ${r.class || '?'}) apt ${r.apartment || 'building'}`, `HPD violation ${r.violationid || ''}: ${String(r.novdescription || '').replace(/^§\s*[\d-]+\s*(ADM CODE|HMC)?:?\s*/i, '').slice(0, 140)}`)], ['Apt', r => r.apartment], ['Class', r => r.class], ['Issued', r => nycD(r.novissueddate)], ['Status', r => r.currentstatus], ['Rent impairing', r => r.rentimpairing === 'Y' ? 'Yes' : ''], ['Order', r => r.ordernumber], ['Description', r => String(r.novdescription || '').replace(/^§\s*[\d-]+\s*(ADM CODE|HMC)?:?\s*/i, '')]],
   hpdc: [['Received', r => nycD(r.received_date)], ['Apt', r => r.apartment], ['Category', r => r.major_category], ['Problem', r => r.problem_code], ['Where', r => r.minor_category], ['Status', r => r.complaint_status]],
   lit: [['Opened', r => nycD(r.caseopendate)], ['Case type', r => r.casetype], ['Status', r => r.casestatus], ['Judgement', r => r.casejudgement], ['Respondent', r => r.respondent]],
   dobv: [['Number', r => r.number], ['Issued', r => nycD(r.issue_date)], ['Type', r => String(r.violation_type || '').replace(/\s{2,}.*/, '')], ['Device', r => r.device_number], ['Description', r => r.description]],
-  ecb: [['ECB #', r => r.ecb_violation_number], ['Issued', r => nycD(r.issue_date)], ['Severity', r => r.severity], ['Hearing', r => r.hearing_status], ['Penalty', r => nycMoney(r.penality_imposed)], ['Balance due', r => nycMoney(r.balance_due)], ['Description', r => r.violation_description]],
+  ecb: [['Calendar', r => nycCalBtn(r.hearing_date, `ECB hearing: violation ${r.ecb_violation_number}`, `${r.severity || ''}. ${String(r.violation_description || '').slice(0, 140)}`)], ['ECB #', r => r.ecb_violation_number], ['Hearing date', r => nycD(r.hearing_date)], ['Issued', r => nycD(r.issue_date)], ['Severity', r => r.severity], ['Hearing', r => r.hearing_status], ['Penalty', r => nycMoney(r.penality_imposed)], ['Balance due', r => nycMoney(r.balance_due)], ['Description', r => r.violation_description]],
   safe: [['Issued', r => nycD(r.violation_issue_date)], ['Device type', r => r.device_type], ['Device', r => r.device_number], ['Type', r => r.violation_type], ['Remarks', r => r.violation_remarks]],
   elev: [['Device', r => r.device_number], ['Type', r => r.equipment_type || r.device_type], ['Last CAT1', r => nycD(r.cat1_latest_report_filed)], ['Last CAT5', r => nycD(r.cat5_latest_report_filed)], ['Last periodic', r => nycD(r.periodic_latest_inspection)], ['Flag', r => r._why]],
   boil: [['Boiler ID', r => r.boiler_id], ['Make', r => r.boiler_make], ['Model', r => r.boiler_model], ['Pressure', r => r.pressure_type], ['Last inspection', r => nycFmtD(r._d)], ['Year', r => r._year], ['Defects', r => r.defects_exist]],
-  oath: [['Ticket', r => r.ticket_number], ['Date', r => nycD(r.violation_date)], ['Charge', r => r.charge_1_code_description], ['Hearing', r => r.hearing_status], ['Compliance', r => r.compliance_status], ['Penalty', r => nycMoney(r.penalty_imposed)], ['Balance due', r => nycMoney(r.balance_due)]],
-  dof: [['Charge', r => NYC_CODE[r.code] || r.code], ['Tax year', r => r.taxyear], ['Due date', r => nycD(r.due_date)], ['Billed', r => nycMoney(r.sum_liab)], ['Balance', r => nycMoney(r.sum_bal)], ['Status', r => r._past ? 'Past due' : 'Not due yet']],
+  oath: [['Calendar', r => nycCalBtn(r.hearing_date, `FDNY ticket hearing: ${r.ticket_number}`, `${r.charge_1_code_description || ''}. Balance ${nycMoney(r.balance_due)}.`)], ['Ticket', r => r.ticket_number], ['Hearing date', r => nycD(r.hearing_date)], ['Date', r => nycD(r.violation_date)], ['Charge', r => r.charge_1_code_description], ['Hearing', r => r.hearing_status], ['Compliance', r => r.compliance_status], ['Penalty', r => nycMoney(r.penalty_imposed)], ['Balance due', r => nycMoney(r.balance_due)]],
+  dof: [['Calendar', r => r._past ? '' : nycCalBtn(r.due_date, `DOF charge due: ${NYC_CODE[r.code] || r.code}`, `Balance ${nycMoney(r.sum_bal)}, tax year ${r.taxyear || ''}.`)], ['Charge', r => NYC_CODE[r.code] || r.code], ['Tax year', r => r.taxyear], ['Due date', r => nycD(r.due_date)], ['Billed', r => nycMoney(r.sum_liab)], ['Balance', r => nycMoney(r.sum_bal)], ['Status', r => r._past ? 'Past due' : 'Not due yet']],
   acris: [['Recorded', r => nycD(r.date)], ['Document', r => r.desc], ['Amount', r => r.amt ? nycMoney(r.amt) : ''], ['Unit', r => r.unit], ['From (party 1)', r => r.from], ['To (party 2)', r => r.to], ['ACRIS link', r => acrisLink(r.id)]],
   ll: [['Law', r => r.law], ['What', r => r.what], ['Next due', r => r.applies ? nycFmtD(r.due) : 'Does not apply'], ['Days left', r => r.due && r.applies ? nycDays(r.due) : ''], ['Note', r => r.note]]
 };
@@ -2205,7 +2216,7 @@ function nycBody(r) {
     nycCard('dof', { title: 'DOF charges past due', n: nycMoney(c.dof.due), flag: c.dof.due > 0 ? 'red' : 'green', sub: c.dof.past.length ? Object.entries(c.dof.byCode).map(e => `${NYC_CODE[e[0]] || e[0]}: ${nycMoney(e[1])}`).join(', ') : 'Nothing past due.' + (c.dof.upcoming ? ` ${nycMoney(c.dof.upcoming)} billed, not due yet.` : ''), err: c.dof.err, asof: c.dof.asof, cls: flagCls,
       extra: `<p class="nyc-msg">DOF updates this data a few times a year. Last update: ${nycFmtD(c.dof.ex)}. Payments made after that date are not shown.</p>`, list: c.dof.list }),
     nycAcrisCard(),
-    nycCard('ll', { title: 'Local Law deadlines', n: c.ll.list.filter(x => x.applies && x.flag === 'red').length + ' soon', flag: c.ll.list.some(x => x.applies && x.flag === 'red') ? 'red' : c.ll.list.some(x => x.applies && x.flag === 'yellow') ? 'yellow' : 'green', wide: true,
+    nycCard('ll', { extra: (() => { const saved = buildings.some(b => bldKey(b.addr) === bldKey($('propertyName').value)); return saved ? '<p class="nyc-msg"><span class="nyc-incal">✓ In your calendar</span> These dates show in the Calendar of Important Dates and Holidays for this saved building.</p>' : '<p class="nyc-msg"><button type="button" class="nyc-btn" data-llsave="1">Add these dates to calendar</button> Saves this building to My Buildings so its Local Law dates show in the calendar.</p>'; })(), title: 'Local Law deadlines', n: c.ll.list.filter(x => x.applies && x.flag === 'red').length + ' soon', flag: c.ll.list.some(x => x.applies && x.flag === 'red') ? 'red' : c.ll.list.some(x => x.applies && x.flag === 'yellow') ? 'yellow' : 'green', wide: true,
       sub: 'Red = due within 60 days or past due. Yellow = within 6 months.', tags: c.ll.list.filter(x => x.applies && x.due).map(x => [`${x.law}: ${nycFmtD(x.due)}`, x.flag]), list: c.ll.list, cls: x => ({ red: 'r', yellow: 'y', green: 'g' })[x.flag] || '' })
   ];
   return sum + `<div class="nyc-cards">${cards.join('')}</div><p class="nyc-msg">Records come from NYC Open Data and can be a few days behind the city websites. Check HPD Online and DOB NOW before you act.</p>`;
@@ -2229,7 +2240,7 @@ function nycSummaryText() {
 }
 async function nycExcel(k) {
   const r = nyc.res; if (!r) return;
-  const card = k === 'acris' ? (r.acris || { list: [] }) : r.cards[k]; const cols = NYC_COLS[k];
+  const card = k === 'acris' ? (r.acris || { list: [] }) : r.cards[k]; const cols = NYC_COLS[k].filter(c => c[0] !== 'Calendar');
   try {
     await loadScript(LIBS.xlsx);
     const aoa = [cols.map(c => c[0])].concat((card.list || []).map(x => cols.map(c => { const v = c[1](x); return v == null ? '' : v; })));
@@ -2248,6 +2259,11 @@ async function nycExcel(k) {
 $('nycPanel').addEventListener('click', e => {
   if (e.target.closest('#nycGo')) { nycLoad(true); return; }
   if (e.target.closest('[data-acris]')) { nycLoadAcris(); return; }
+  const ca = e.target.closest('[data-caladd]');
+  if (ca) { let it; try { it = JSON.parse(ca.dataset.caladd); } catch (err) { return; }
+    calAdd([{ id: uid(), date: it.date, title: it.title, note: it.note || '', repeat: 'none', bld: nycBldAddr(), src: 'NYC records', at: Date.now() }]).then(renderNyc);
+    ca.outerHTML = '<span class="nyc-incal">Added ✓</span>'; return; }
+  if (e.target.closest('[data-llsave]')) { (async () => { await saveBuilding(); const sb = buildings.find(b => bldKey(b.addr) === bldKey($('propertyName').value)); if (sb && nyc.res) { const f = nyc.res.facts; sb.facts = { cd: f.cd, block: f.block, area: f.area, floors: f.floors, units: f.units }; try { await bldPut(sb); } catch (err) {} bldLocalSave(); } renderNyc(); })(); return; }
   const pk = e.target.closest('[data-pick]'); if (pk) { nycLoadBuilding(nyc.picks[+pk.dataset.pick]); return; }
   const xl = e.target.closest('[data-xl]'); if (xl) { nycExcel(xl.dataset.xl); return; }
   if (e.target.closest('a')) return;
