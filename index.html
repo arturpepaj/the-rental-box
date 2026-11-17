@@ -921,7 +921,7 @@ const SECTIONS = [
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
-  { key:'legal', title:'Legal Check', desc:'Leases and riders, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?'] },
+  { key:'legal', title:'Legal Check', desc:'Leases and riders, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Can the elevator vendor charge us this extra fee under the contract?'] },
   { key:'budgeting', yardi:true, title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month. Notes come only from invoices, emails, Teams, SharePoint or notes. Guesses are marked. Download to Excel under the report.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
   { key:'vendors', yardi:true, title:'Vendors & Invoices', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates.', samples:['Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
   { key:'systems', title:'Building Systems', desc:'Plumbing and electric: risers, booster pumps and pressure zones, hot water heaters, panels, apartment submeters, generators, violations and maintenance records.', samples:['All leak reports for unit 1005','Recent leak history?','How do the water booster pumps and pressure zones work?','Which apartments show unusual electric submeter use?','When was the generator last tested?'] },
@@ -1484,6 +1484,43 @@ function slackSampleTools(bot) {
       catch (e) { const c = e && e.code; throw new Error(c === 'server_not_connected' || c === 'server_not_found' ? 'Slack is not connected yet.' : c === 'needs_reauth' ? 'Slack needs to be signed in again.' : (e && e.message) || 'Slack search failed.'); }
     } }));
 }
+// ---- Legal Check: Legal Data Hunter (laws, court decisions) and LegalZoom (attorney help) ----
+const LEGAL_WANTED = [
+  ['Legal Data Hunter', 'search', 'legal_search', 'Searching laws and court decisions…'],
+  ['Legal Data Hunter', 'get_document', 'legal_read_document', 'Reading the law or decision…'],
+  ['Legal Data Hunter', 'resolve_reference', 'legal_find_citation', 'Looking up the citation…'],
+  ['LegalZoom', 'get_consultation_topics', 'legalzoom_topics', 'Checking LegalZoom topics…'],
+  ['LegalZoom', 'check-attorney-consultation-entitlements', 'legalzoom_my_plan', 'Checking your LegalZoom plan…'],
+  ['LegalZoom', 'get_attorney_availability', 'legalzoom_attorney_availability', 'Checking LegalZoom attorney availability…']
+];
+let legalTools = null;
+async function getLegalTools() {
+  if (legalTools) return legalTools;
+  legalTools = [];
+  if (!mcp) return legalTools;
+  for (const [server, tool, name, status] of LEGAL_WANTED) {
+    let d; try { d = await mcp.describeTool(server, tool); } catch (e) { d = e; }
+    if (!d || d.code || !d.inputSchema || typeof d.inputSchema !== 'object') continue;
+    legalTools.push({ server, tool, name, status, description: String(d.description || tool).slice(0, 6000), inputSchema: d.inputSchema });
+  }
+  return legalTools;
+}
+function legalSampleTools(bot) {
+  return (legalTools || []).map(t => ({ name: t.name, description: t.description, inputSchema: t.inputSchema,
+    async execute(input, ctx) {
+      bot.status = t.status; renderLast();
+      try { return textOf(await mcp.callTool(t.server, t.tool, input, { signal: ctx.signal, cache: false })).slice(0, 24000); }
+      catch (e) { const c = e && e.code; throw new Error(c === 'server_not_connected' || c === 'server_not_found' ? `${t.server} is not connected.` : c === 'needs_reauth' ? `${t.server} needs to be signed in again.` : (e && e.message) || `${t.server} request failed.`); }
+    } }));
+}
+function legalNote() {
+  const servers = [...new Set((legalTools || []).map(t => t.server))];
+  if (!servers.length) return '\n\nLegal research tools are not connected, so you cannot look up laws or court decisions. Say so if the question needs them.';
+  return `\n\nLegal research tools you can use: ${servers.join(' and ')}.` +
+    (servers.includes('Legal Data Hunter') ? ' Use Legal Data Hunter (legal_search, legal_read_document, legal_find_citation) to find New York and US laws, codes and court decisions that support or weaken the user\'s position on the contract or lease. Search with country "US" and plain-language queries, read the key document, and quote the exact section. Cite each law or case with the link the tool returns. Never invent a case, statute or link. Say which points help the user and which points the other side could use.' : '') +
+    (servers.includes('LegalZoom') ? ' Use LegalZoom (legalzoom_topics, legalzoom_my_plan, legalzoom_attorney_availability) when the user needs a real attorney: check their plan and when an attorney is available, then tell them to book the review on LegalZoom. You cannot book or send documents from here.' : '') +
+    ' This is legal information to help the user prepare, not legal advice. For anything important, tell them to confirm with their attorney.';
+}
 let zillowTools = null;
 async function getZillowTools() {
   if (zillowTools) return zillowTools;
@@ -1572,10 +1609,17 @@ async function send(textOverride, extraTask, roar) {
       $('mailBtn').querySelector('.oracle-label').textContent = 'Stop';
       setRoarTip(true);
       await getSlackTools(); await getZillowTools();
-      const tools = emailTools(bot).concat(zillowSampleTools(bot), slackSampleTools(bot));
+      if (key === 'legal') { await getLegalTools(); messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', legalNote() + '\n\nQuestion: '); }
+      const tools = key === 'legal' ? legalSampleTools(bot).concat(emailTools(bot), zillowSampleTools(bot), slackSampleTools(bot)) : emailTools(bot).concat(zillowSampleTools(bot), slackSampleTools(bot));
       opts.tools = tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length);
       if (!zillowTools.length) messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', '\n- Zillow is not connected, so market rents cannot be checked.\n\nQuestion: ');
       if (!slackTools.length) messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', '\n- Slack is not connected yet, so it cannot be searched.\n\nQuestion: ');
+    }
+    if (!useEmail && key === 'legal' && mcp) {
+      await getLegalTools();
+      messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', legalNote() + '\n\nQuestion: ');
+      const lt = legalSampleTools(bot);
+      if (lt.length) opts.tools = lt.slice(0, (limits && limits.tools && limits.tools.maxCount) || lt.length);
     }
     const r = await sample(messages, opts);
     bot.content = r.text; bot.pending = false;
@@ -2346,7 +2390,7 @@ async function renderConnections() {
     return `<div class="conn-row"><span class="conn-dot" data-s="${st}"></span><span class="conn-name">${esc(c.label)}<small>${esc(c.sub)}</small></span><span class="conn-state" data-s="${st}">${esc(txt)}</span></div>`;
   }).join('');
 }
-$('connRefresh').addEventListener('click', () => { slackTools = null; zillowTools = null; renderConnections(); });
+$('connRefresh').addEventListener('click', () => { slackTools = null; zillowTools = null; legalTools = null; renderConnections(); });
 
 
 /* ---------- My Buildings (saved addresses, one list per person) ---------- */
