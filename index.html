@@ -1,4 +1,4 @@
-<title>The Rentals ToolBox</title>
+<title>ToolBox for Rentals</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -744,7 +744,7 @@ header {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
   </button>
   <div class="header-center">
-    <div class="brand">THE RENTALS <span class="brand-tool">TOOL</span>BOX</div>
+    <div class="brand"><span class="brand-tool">TOOL</span>BOX FOR RENTALS</div>
     <div class="prop-wrap" id="propWrap">
     <label class="property-field" for="propertyName">
       <input class="property-name" id="propertyName" value="" placeholder="Type your building address" aria-label="Building address" maxlength="120" autocomplete="off">
@@ -854,12 +854,12 @@ header {
         </div>
         <input type="file" id="tabInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
         <div class="samples" id="samples"></div>
-        <div class="copyright">© 2026 Artur Pepaj. All rights reserved. <span class="dot-sep">·</span> <a class="donate-link" href="#" id="discOpen">Disclaimer</a> <span class="dot-sep">·</span> <a class="donate-link" href="https://paypal.me/ArturPepaj" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3 1.7-1.8 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg> Support The Rentals ToolBox</a></div>
+        <div class="copyright">© 2026 Artur Pepaj. All rights reserved. <span class="dot-sep">·</span> <a class="donate-link" href="#" id="discOpen">Disclaimer</a> <span class="dot-sep">·</span> <a class="donate-link" href="https://paypal.me/ArturPepaj" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 5.3 3 1.7-1.8 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg> Support ToolBox for Rentals</a></div>
         <div class="disc-back" id="discBack" hidden>
           <div class="disc" role="dialog" aria-modal="true" aria-labelledby="discTitle">
             <button class="disc-x" type="button" id="discClose" aria-label="Close">×</button>
             <h2 id="discTitle">Disclaimer</h2>
-            <p><b>Information only.</b> The Rentals ToolBox gives general information to help with property management work. It is not legal, financial, tax, accounting, engineering, insurance or other professional advice. Always check with a qualified professional (for example, an attorney or accountant) before you act.</p>
+            <p><b>Information only.</b> ToolBox for Rentals gives general information to help with property management work. It is not legal, financial, tax, accounting, engineering, insurance or other professional advice. Always check with a qualified professional (for example, an attorney or accountant) before you act.</p>
             <p><b>AI can be wrong.</b> Answers are made by artificial intelligence (Claude). They can be incomplete, out of date or wrong. Always check the source document, the agency website or the original record. Notes marked "GUESS – not confirmed" are not facts.</p>
             <p><b>City and public data.</b> Building records, violations, charges, deadlines and market rents come from public sources such as NYC Open Data, ACRIS, DOF, Zillow and RentReboot. This data can be late, incomplete or wrong. Deadlines in the calendar are the usual yearly dates and may not apply to every building. Confirm with HPD, DOB, DOF, FDNY, DHCR and other agencies before you rely on them.</p>
             <p><b>No affiliation.</b> This site is an independent project. It is not made by, endorsed by or connected to the City or State of New York, any city agency, Anthropic, Yardi, AppFolio, Microsoft, Zillow, RentReboot, DocuSign, Parallel or any employer. All names and trademarks belong to their owners.</p>
@@ -1294,7 +1294,7 @@ Variance note rules (very important):
 function instructions(context, withEmail) {
   const sec = byKey[mode];
   const bld = $('propertyName').value.trim();
-  return `You are The Rentals ToolBox, an assistant for a residential property manager in New York.
+  return `You are ToolBox for Rentals, an assistant for a residential property manager in New York.
 Building: ${bld || 'not given'}. Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 Current section: ${sec.title}. ${sec.desc}
 
@@ -1695,7 +1695,7 @@ async function answerToExcel(m, q) {
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
   const text = String(m.content).replace(/\*\*/g, '').split('\n').filter(l => !/^\s*\|/.test(l));
-  const info = [['The Rentals ToolBox — ' + byKey[mode].title], ['Building', $('propertyName').value.trim() || 'not given'], ['Date', new Date().toLocaleString('en-US')], ['Question', q || ''], [], ...text.map(l => [l])];
+  const info = [['ToolBox for Rentals — ' + byKey[mode].title], ['Building', $('propertyName').value.trim() || 'not given'], ['Date', new Date().toLocaleString('en-US')], ['Question', q || ''], [], ...text.map(l => [l])];
   const ws2 = XLSX.utils.aoa_to_sheet(info); ws2['!cols'] = [{ wch: 18 }, { wch: 90 }];
   XLSX.utils.book_append_sheet(wb, ws2, 'Report text');
   const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
@@ -1727,7 +1727,7 @@ $('messages').addEventListener('click', async e => {
     const day = new Date();
     const short = qText.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50) || 'Answer';
     const name = `Answer · ${byKey[mode].title} · ${short} · ${day.toLocaleDateString('en-US')}.txt`;
-    const text = `Saved answer from The Rentals ToolBox\nSection: ${byKey[mode].title}\nBuilding: ${$('propertyName').value.trim() || 'not given'}\nDate: ${day.toLocaleString('en-US')}\n\nQuestion:\n${qText}\n\nAnswer:\n${m.content}\n${m.used && m.used.length ? '\nDocuments checked: ' + m.used.join(', ') + '\n' : ''}`;
+    const text = `Saved answer from ToolBox for Rentals\nSection: ${byKey[mode].title}\nBuilding: ${$('propertyName').value.trim() || 'not given'}\nDate: ${day.toLocaleString('en-US')}\n\nQuestion:\n${qText}\n\nAnswer:\n${m.content}\n${m.used && m.used.length ? '\nDocuments checked: ' + m.used.join(', ') + '\n' : ''}`;
     const d = { id: uid(), name, size: text.length, added: Date.now(), text, status: 'busy', note: 'Saving…' };
     library.unshift(d); renderLibrary();
     b.disabled = true; b.textContent = 'Saving…';
@@ -1746,8 +1746,8 @@ $('messages').addEventListener('click', async e => {
     setTimeout(() => { b.disabled = false; b.textContent = 'Make tasks from this'; }, 3000);
   } else if (b.dataset.act === 'save' && downloads) {
     const q = (threads[mode] || [])[+b.dataset.i - 1];
-    const data = `The Rentals ToolBox — ${byKey[mode].title}\n${$('propertyName').value}\n${new Date().toLocaleString()}\n\nQuestion:\n${q ? q.content : ''}\n\nAnswer:\n${m.content}\n`;
-    try { await downloads.save({ filename: `rentals-toolbox-${mode}-answer.txt`, data }); } catch (err) { /* viewer declined */ }
+    const data = `ToolBox for Rentals — ${byKey[mode].title}\n${$('propertyName').value}\n${new Date().toLocaleString()}\n\nQuestion:\n${q ? q.content : ''}\n\nAnswer:\n${m.content}\n`;
+    try { await downloads.save({ filename: `toolbox-for-rentals-${mode}-answer.txt`, data }); } catch (err) { /* viewer declined */ }
   }
 });
 
@@ -2570,11 +2570,11 @@ function calIcs() {
   const evs = calExpand(from, to);
   const esc2 = s => String(s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//The Rentals ToolBox//Calendar//EN', 'CALSCALE:GREGORIAN'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ToolBox for Rentals//Calendar//EN', 'CALSCALE:GREGORIAN'];
   evs.forEach((e, i) => { const d = e.date.replace(/-/g, ''); const n = ymd(new Date(parseYmd(e.date).getTime() + 86400000)).replace(/-/g, '');
-    lines.push('BEGIN:VEVENT', `UID:rtb-${d}-${i}@rentalstoolbox`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${n}`, `SUMMARY:${esc2((e.bld ? e.bld + ' — ' : '') + e.title)}`, `DESCRIPTION:${esc2(e.note || '')}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'); });
+    lines.push('BEGIN:VEVENT', `UID:rtb-${d}-${i}@toolboxforrentals`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${n}`, `SUMMARY:${esc2((e.bld ? e.bld + ' — ' : '') + e.title)}`, `DESCRIPTION:${esc2(e.note || '')}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'); });
   lines.push('END:VCALENDAR');
-  const name = `Rentals ToolBox calendar ${cal.bld === '__all' ? 'all buildings' : cal.bld}.ics`.replace(/[\\/:*?"<>|]/g, '');
+  const name = `ToolBox for Rentals calendar ${cal.bld === '__all' ? 'all buildings' : cal.bld}.ics`.replace(/[\\/:*?"<>|]/g, '');
   const data = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
   if (downloads) downloads.save({ filename: name, data }).catch(() => {}); else { const a = document.createElement('a'); a.href = URL.createObjectURL(data); a.download = name; a.click(); }
 }
