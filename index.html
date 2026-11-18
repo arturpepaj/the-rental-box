@@ -645,6 +645,10 @@ header {
 .emg[hidden] { display: none; }
 .tab-drop[hidden], .tab-note[hidden] { display: none !important; }
 .inb-card { gap: 6px; }
+.inb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.inb-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.inb-colh { margin: 0; font: 400 20px var(--serif); color: var(--ink); }
+@media (max-width: 900px) { .inb-cols { grid-template-columns: 1fr; } }
 .inb-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
 .inb-from { font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inb-date { white-space: nowrap; }
@@ -953,7 +957,7 @@ const ICONS = {
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
-  { key:'inbox', title:'Inbox Replies', desc:'Your last 10 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
+  { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
@@ -1278,7 +1282,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
-  if (mode === 'inbox' && typeof inb !== 'undefined' && inb.items && inb.items.length) extra.push({ name: 'Last 10 Outlook emails', text: inb.items.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.preview}`).join('\n'), where: 'Outlook' });
+  if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
   const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
@@ -2482,6 +2486,7 @@ $('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
 /* ---------- Connections status ---------- */
 const CONN = [
   { server: 'Microsoft 365', label: 'Microsoft 365', sub: 'Outlook, Calendar, Teams, SharePoint' },
+  { server: 'Gmail', label: 'Gmail', sub: 'Inbox Replies for Gmail (read only)' },
   { server: 'Slack', label: 'Slack', sub: 'Messages and threads' },
   { server: 'Parallel Search', label: 'Parallel Search', sub: 'NYC Open Data: HPD, DOB, FDNY, DOF records' },
   { server: 'Zillow', label: 'Zillow', sub: 'Market rents and nearby rentals' },
@@ -3316,39 +3321,85 @@ function updateClock() {
 }
 setInterval(updateClock, 30000); updateClock();
 
-/* ---------- Inbox Replies ---------- */
-const inb = { items: null, loading: false, msg: '', drafts: {}, hints: {} };
+/* ---------- Inbox Replies (Outlook and Gmail) ---------- */
+const GM = 'Gmail';
+const inb = { loading: false, loaded: false, src: { outlook: { items: [], msg: '', ok: false }, gmail: { items: [], msg: '', ok: false } }, drafts: {}, hints: {} };
 function inbDate(d) { const t = new Date(d); return isNaN(t) ? '' : t.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
-async function inbLoad() {
-  if (!mcp) { inb.msg = 'Open this page on claude.ai and connect Microsoft 365 to see your emails.'; inb.items = []; renderInbox(); return; }
-  inb.loading = true; inb.msg = ''; inb.drafts = {}; renderInbox();
+function inbOff(e) { const c = e && e.code; return c === 'server_not_connected' || c === 'server_not_found' || c === 'not_in_manifest'; }
+function jsonBlocks(r) {
+  if (r && r.payload && typeof r.payload === 'object') return [r.payload];
+  const out = [];
+  for (const b of ((r && r.content) || [])) if (b && b.type === 'text') { try { out.push(JSON.parse(b.text)); } catch (e) {} }
+  return out;
+}
+async function inbLoadOutlook() {
+  const S = inb.src.outlook; S.items = []; S.msg = ''; S.ok = false;
   try {
     const r = await mcp.callTool(MS, 'outlook_email_search', { order: 'newest', limit: 10 }, { cache: false });
     let j = {}; try { j = JSON.parse(compactSearch(r)); } catch (e) {}
-    inb.items = (j.emails || []).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 10);
-    if (!inb.items.length) inb.msg = 'No emails found in your Inbox.';
-  } catch (e) { inb.items = inb.items || []; inb.msg = mcpMsg(e); }
-  inb.loading = false; renderInbox();
+    S.items = (j.emails || []).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 10).map(m => Object.assign({ src: 'outlook' }, m));
+    S.ok = true; if (!S.items.length) S.msg = 'No emails found in your Outlook Inbox.';
+  } catch (e) { S.msg = inbOff(e) ? '' : mcpMsg(e); S.off = inbOff(e); }
 }
-function inbReadTool(onStatus) {
-  return { name: 'read_attachment', description: 'Read an attachment of this email (or a file it links to) using a mail:/// or file:/// uri listed in the email. Read every attachment that matters before writing the reply.',
+async function inbLoadGmail() {
+  const S = inb.src.gmail; S.items = []; S.msg = ''; S.ok = false;
+  try {
+    const r = await mcp.callTool(GM, 'search_threads', { query: 'in:inbox', pageSize: 10, view: 'THREAD_VIEW_SUMMARY' }, { cache: false });
+    let threads = [];
+    for (const j of jsonBlocks(r)) threads = threads.concat(Array.isArray(j) ? j : (j.threads || []));
+    S.items = threads.slice(0, 10).map(t => { const m = (t.messages || [])[t.messages ? t.messages.length - 1 : 0] || {};
+      const sd = m.sender; const from = typeof sd === 'string' ? sd : sd ? [sd.displayName || sd.name, sd.email || sd.emailAddress].filter(Boolean).join(' <') + (sd.email || sd.emailAddress ? '>' : '') : '';
+      return { src: 'gmail', threadId: t.id, msgId: m.id || '', from, subject: m.subject || '', date: m.date || '', preview: String(m.snippet || '').slice(0, 220), link: t.viewUrl || m.viewUrl || '', hasAttachments: false }; });
+    S.ok = true; if (!S.items.length) S.msg = 'No emails found in your Gmail Inbox.';
+  } catch (e) { S.msg = inbOff(e) ? '' : (e && e.code === 'needs_reauth' ? 'Gmail needs to be signed in again.' : (e && e.message) || 'Gmail could not be loaded.'); S.off = inbOff(e); }
+}
+async function inbLoad() {
+  if (!mcp) { inb.loaded = true; inb.src.outlook.msg = 'Open this page on claude.ai and connect Microsoft 365 or Gmail to see your emails.'; renderInbox(); return; }
+  inb.loading = true; inb.drafts = {}; renderInbox();
+  await Promise.all([inbLoadOutlook(), inbLoadGmail()]);
+  inb.loading = false; inb.loaded = true; renderInbox();
+}
+async function inbGmailAttachment(input, ctx) {
+  const args = { messageId: String(input.messageId || '') };
+  for (const k of ['attachmentId', 'filename', 'mimeType']) if (input[k]) args[k] = String(input[k]);
+  if (input.attachmentIndex != null) args.attachmentIndex = Number(input.attachmentIndex);
+  const r = await mcp.callTool(GM, 'download_gmail_attachment', args, { signal: ctx && ctx.signal, cache: false });
+  let text = textOf(r);
+  for (const b of ((r && r.content) || [])) {
+    const res = b && (b.resource || b);
+    const blob = res && (res.blob || (b.type === 'image' ? b.data : null));
+    const mime = (res && (res.mimeType || b.mimeType)) || args.mimeType || '';
+    if (res && res.text) text += '\n' + res.text;
+    else if (blob && /pdf/i.test(mime + args.filename)) {
+      try { const bytes = Uint8Array.from(atob(blob), c => c.charCodeAt(0)); const f = new File([bytes], args.filename || 'attachment.pdf', { type: 'application/pdf' }); const out = await readPdf(f); text += '\n' + (out.text || out); } catch (e) { text += '\n[The PDF could not be read here.]'; }
+    } else if (blob) text += `\n[Attachment ${args.filename || ''} (${mime || 'file'}) could not be read here. Tell the manager to open it.]`;
+  }
+  return String(text || '[Empty attachment]').slice(0, 20000);
+}
+function inbTools(item, onStatus) {
+  if (item.src === 'gmail') return [{ name: 'read_attachment', description: 'Read a Gmail attachment. Give messageId and the attachmentId, filename and mimeType that the thread lists for it. Read every attachment that matters before writing the reply.',
+    inputSchema: { type: 'object', properties: { messageId: { type: 'string' }, attachmentId: { type: 'string' }, filename: { type: 'string' }, mimeType: { type: 'string' }, attachmentIndex: { type: 'number' } }, required: ['messageId'] },
+    async execute(input, ctx) { onStatus('Reading an attachment…'); try { return await inbGmailAttachment(input, ctx); } catch (e) { throw new Error(inbOff(e) ? 'Gmail attachments are not available.' : (e && e.message) || 'Could not read the attachment.'); } } }];
+  return [{ name: 'read_attachment', description: 'Read an attachment of this email (or a file it links to) using a mail:/// or file:/// uri listed in the email. Read every attachment that matters before writing the reply.',
     inputSchema: { type: 'object', properties: { uri: { type: 'string' } }, required: ['uri'] },
     async execute(input, ctx) { const u = String(input.uri || ''); if (!/^(mail|file):\/\/\//.test(u)) throw new Error('Use a mail:/// or file:/// uri from the email.');
       onStatus('Reading an attachment…');
       try { return textOf(await mcp.callTool(MS, 'read_resource', { uri: u }, { signal: ctx && ctx.signal, cache: false })).slice(0, 20000); }
-      catch (e) { throw new Error(mcpMsg(e)); } } };
+      catch (e) { throw new Error(mcpMsg(e)); } } }];
 }
-async function inbSuggest(i) {
-  const m = inb.items[i]; if (!m) return;
-  if (!sample) { inb.drafts[i] = { status: 'Claude is not available on this view.' }; renderInbox(); return; }
-  const d = inb.drafts[i] = { status: 'Reading the email…', text: '', note: '', busy: true }; renderInbox();
+async function inbSuggest(key) {
+  const [src, idx] = key.split(':'); const m = inb.src[src].items[+idx]; if (!m) return;
+  if (!sample) { inb.drafts[key] = { status: 'Claude is not available on this view.' }; renderInbox(); return; }
+  const d = inb.drafts[key] = { status: 'Reading the email…', text: '', note: '', busy: true }; renderInbox();
   const set = s => { d.status = s; renderInbox(); };
   try {
-    const full = textOf(await mcp.callTool(MS, 'read_resource', { uri: m.uri }, { cache: false })).slice(0, 24000);
+    const full = src === 'gmail'
+      ? textOf(await mcp.callTool(GM, 'get_thread', { threadId: m.threadId, messageFormat: 'PLAIN_TEXT' }, { cache: false })).slice(-24000)
+      : textOf(await mcp.callTool(MS, 'read_resource', { uri: m.uri }, { cache: false })).slice(0, 24000);
     set('Writing a reply…');
     const bld = $('propertyName').value.trim();
-    const hint = (inb.hints[i] || '').trim();
-    const prompt = `You help a NYC residential property manager answer email. Write a suggested reply to the email below.
+    const hint = (inb.hints[key] || '').trim();
+    const prompt = `You help a NYC residential property manager answer email. Write a suggested reply to the ${src === 'gmail' ? 'latest message in the Gmail thread' : 'email'} below.
 ${bld ? 'Current building: ' + bld + '.\n' : ''}${hint ? 'What the manager wants to say: ' + hint + '\n' : ''}
 Rules:
 - First, if the email has attachments, read the ones that matter with read_attachment. Base the reply on the email and its attachments.
@@ -3361,11 +3412,11 @@ Rules:
 - Never invent facts, dates, prices or promises. If the manager must fill something in, write it in [brackets], like [day and time].
 - After the reply, write a line with only --- and then one short note for the manager: what to check before sending, and say if an attachment could only be partly read. If nothing, write "Nothing to check."
 
-Email:
+${src === 'gmail' ? 'Gmail thread' : 'Email'}:
 ${full}`;
-    const r = await sample([{ role: 'user', content: prompt }], { tools: [inbReadTool(set)], modelTier: 'default', cache: false });
+    const r = await sample([{ role: 'user', content: prompt }], { tools: inbTools(m, set), modelTier: 'default', cache: false });
     const parts = String(r.text || '').split(/\n-{3,}\s*\n/);
-    d.text = parts[0].trim(); d.note = (parts.slice(1).join(' ').trim()); d.status = '';
+    d.text = parts[0].trim(); d.note = parts.slice(1).join(' ').trim(); d.status = '';
   } catch (e) { d.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (mcpMsg(e) || 'Could not write a reply. Try again.'); }
   d.busy = false; renderInbox();
 }
@@ -3374,29 +3425,43 @@ function inbCopy(text, btn) {
   const fallback = () => { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) {} t.remove(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
 }
-function renderInbox() {
-  const el = $('inbPanel'); if (!el) return;
-  el.hidden = mode !== 'inbox'; if (el.hidden) return;
-  if (inb.items === null && !inb.loading) { setTimeout(inbLoad, 0); }
-  const items = inb.items || [];
-  el.innerHTML = `<div class="emg-head"><b>Last 10 emails</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
-    <p class="nyc-msg">Click “Suggest a reply”. Claude reads the email and its attachments and writes a plain text reply. Copy it into Outlook. Nothing is sent for you.</p>
-    <p class="nyc-msg warn"><b>Important:</b> always double check every reply before you send it. AI can make mistakes. It is your responsibility to fully understand the reply and agree with everything it says.</p>
-    ${inb.msg ? `<p class="nyc-msg warn">${esc(inb.msg)}</p>` : ''}
-    ${items.map((m, i) => { const d = inb.drafts[i] || {}; return `<div class="cal-box inb-card">
+function inbCard(m, key) {
+  const d = inb.drafts[key] || {}; const app = m.src === 'gmail' ? 'Gmail' : 'Outlook';
+  return `<div class="cal-box inb-card">
       <div class="inb-top"><span class="inb-from">${esc(m.from || 'Unknown sender')}</span><span class="inb-date">${esc(inbDate(m.date))}</span></div>
       <div class="inb-subj">${m.hasAttachments ? '📎 ' : ''}${esc(m.subject || '(no subject)')}</div>
       <p>${esc(m.preview || '')}</p>
-      <input class="inb-hint" data-hint="${i}" placeholder="Optional: what to say, e.g. yes, the plumber can come Tuesday" value="${esc(inb.hints[i] || '')}">
-      <div class="cal-btns"><button class="nyc-btn" type="button" data-suggest="${i}"${d.busy ? ' disabled' : ''}>${d.text ? 'Try again' : 'Suggest a reply'}</button>${m.link ? `<a class="nyc-btn ghost" href="${esc(m.link)}" target="_blank" rel="noopener">Open in Outlook</a>` : ''}${d.status ? `<span class="nyc-msg" style="padding:0">${esc(d.status)}</span>` : ''}</div>
-      ${d.text ? `<textarea class="inb-draft" data-draft="${i}" rows="${Math.min(16, d.text.split('\n').length + 2)}">${esc(d.text)}</textarea>
+      <input class="inb-hint" data-hint="${key}" placeholder="Optional: what to say, e.g. yes, the plumber can come Tuesday" value="${esc(inb.hints[key] || '')}">
+      <div class="cal-btns"><button class="nyc-btn" type="button" data-suggest="${key}"${d.busy ? ' disabled' : ''}>${d.text ? 'Try again' : 'Suggest a reply'}</button>${m.link ? `<a class="nyc-btn ghost" href="${esc(m.link)}" target="_blank" rel="noopener">Open in ${app}</a>` : ''}${d.status ? `<span class="nyc-msg" style="padding:0">${esc(d.status)}</span>` : ''}</div>
+      ${d.text ? `<textarea class="inb-draft" data-draft="${key}" rows="${Math.min(16, d.text.split('\n').length + 2)}">${esc(d.text)}</textarea>
         <p class="nyc-msg warn" style="padding:0">Double check this reply. You are responsible for fully understanding it before you send it.</p>
-        <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${i}">Copy</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>` : ''}
-    </div>`; }).join('')}`;
+        <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${key}">Copy</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>` : ''}
+    </div>`;
+}
+function inbColumn(src, title) {
+  const S = inb.src[src];
+  return `<div class="inb-col">${title ? `<h3 class="inb-colh">${title}</h3>` : ''}${S.msg ? `<p class="nyc-msg warn">${esc(S.msg)}</p>` : ''}${S.items.map((m, i) => inbCard(m, src + ':' + i)).join('')}</div>`;
+}
+function renderInbox() {
+  const el = $('inbPanel'); if (!el) return;
+  el.hidden = mode !== 'inbox'; if (el.hidden) return;
+  if (!inb.loaded && !inb.loading) setTimeout(inbLoad, 0);
+  const O = inb.src.outlook, G = inb.src.gmail;
+  const both = O.ok && G.ok;
+  let body;
+  if (inb.loading) body = '';
+  else if (both) body = `<div class="inb-cols">${inbColumn('outlook', 'Outlook')}${inbColumn('gmail', 'Gmail')}</div>`;
+  else if (G.ok) body = inbColumn('gmail', '') + (O.msg ? `<p class="nyc-msg warn">Outlook: ${esc(O.msg)}</p>` : '');
+  else body = inbColumn('outlook', '') + (G.msg ? `<p class="nyc-msg warn">Gmail: ${esc(G.msg)}</p>` : '');
+  if (!inb.loading && inb.loaded && !O.ok && !G.ok && !O.msg) body = `<p class="nyc-msg warn">Connect Microsoft 365 (Outlook) or Gmail in claude.ai Settings, Connectors, then press Refresh.</p>`;
+  el.innerHTML = `<div class="emg-head"><b>Last 10 emails${both ? ' — Outlook and Gmail' : G.ok ? ' — Gmail' : ''}</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
+    <p class="nyc-msg">Click “Suggest a reply”. Claude reads the email and its attachments and writes a plain text reply. Copy it into ${both ? 'Outlook or Gmail' : G.ok ? 'Gmail' : 'Outlook'}. Nothing is sent for you.</p>
+    <p class="nyc-msg warn"><b>Important:</b> always double check every reply before you send it. AI can make mistakes. It is your responsibility to fully understand the reply and agree with everything it says.</p>
+    ${body}`;
 }
 $('inbPanel').addEventListener('click', e => {
   if (e.target.closest('#inbRefresh')) { inbLoad(); return; }
-  const s = e.target.closest('[data-suggest]'); if (s) { inbSuggest(+s.dataset.suggest); return; }
+  const s = e.target.closest('[data-suggest]'); if (s) { inbSuggest(s.dataset.suggest); return; }
   const c = e.target.closest('[data-copy]'); if (c) { const t = $('inbPanel').querySelector(`[data-draft="${c.dataset.copy}"]`); inbCopy(t ? t.value : '', c); }
 });
 $('inbPanel').addEventListener('input', e => {
