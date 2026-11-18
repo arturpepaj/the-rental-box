@@ -1558,14 +1558,25 @@ function compactWeb(r) {
 }
 async function mechWeb(tool, args, signal) {
   const server = await nycServer();
-  return compactWeb(await mcp.callTool(server, tool, Object.assign({ session_id: nyc.sid }, args), { signal, cache: false }));
+  let r;
+  try { r = await mcp.callTool(server, tool, Object.assign({ session_id: nyc.sid }, args), { signal, cache: false }); }
+  catch (e) { const c = e && e.code; if (c === 'server_not_connected' || c === 'server_not_found' || c === 'not_in_manifest') mechReady = null;
+    throw new Error(c === 'server_not_connected' || c === 'server_not_found' ? 'Parallel Search is not connected. Connect it in claude.ai Settings, Connectors.' : c === 'needs_reauth' ? 'Parallel Search needs to be signed in again.' : (e && e.message) || 'The code search failed. Try again.'); }
+  return compactWeb(r);
 }
 let mechReady = null;
 async function getMechTools() {
-  if (mechReady !== null) return mechReady;
+  if (mechReady === true) return mechReady;
   mechReady = false;
   if (!mcp) return mechReady;
-  try { const server = await nycServer(); const d = await mcp.describeTool(server, 'web_search'); mechReady = !!(d && !d.code); } catch (e) { mechReady = false; }
+  // Only treat it as not connected when the runtime clearly says so. Any other answer: try the tool and report real errors.
+  const off = c => c === 'server_not_connected' || c === 'server_not_found' || c === 'not_in_manifest';
+  const server = await nycServer();
+  let d = null;
+  try { d = typeof mcp.describeTool === 'function' ? await mcp.describeTool(server, 'web_search') : null; } catch (e) { d = e; }
+  if (d && off(d.code)) {
+    try { const l = await mcp.listTools(); mechReady = ((l && l.servers) || []).some(x => /parallel/i.test(x.server) && (x.tools || []).some(t => (t.name || t) === 'web_search')); } catch (e) { mechReady = false; }
+  } else mechReady = true;
   return mechReady;
 }
 function mechSampleTools(bot, focus) {
