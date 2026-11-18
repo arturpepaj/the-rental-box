@@ -953,7 +953,7 @@ const ICONS = {
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
-  { key:'inbox', title:'Inbox Replies', desc:'Your last 5 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 5 emails'] },
+  { key:'inbox', title:'Inbox Replies', desc:'Your last 10 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
@@ -1278,7 +1278,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
-  if (mode === 'inbox' && typeof inb !== 'undefined' && inb.items && inb.items.length) extra.push({ name: 'Last 5 Outlook emails', text: inb.items.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.preview}`).join('\n'), where: 'Outlook' });
+  if (mode === 'inbox' && typeof inb !== 'undefined' && inb.items && inb.items.length) extra.push({ name: 'Last 10 Outlook emails', text: inb.items.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.preview}`).join('\n'), where: 'Outlook' });
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
   const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
@@ -3323,9 +3323,9 @@ async function inbLoad() {
   if (!mcp) { inb.msg = 'Open this page on claude.ai and connect Microsoft 365 to see your emails.'; inb.items = []; renderInbox(); return; }
   inb.loading = true; inb.msg = ''; inb.drafts = {}; renderInbox();
   try {
-    const r = await mcp.callTool(MS, 'outlook_email_search', { order: 'newest', limit: 5 }, { cache: false });
+    const r = await mcp.callTool(MS, 'outlook_email_search', { order: 'newest', limit: 10 }, { cache: false });
     let j = {}; try { j = JSON.parse(compactSearch(r)); } catch (e) {}
-    inb.items = (j.emails || []).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5);
+    inb.items = (j.emails || []).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 10);
     if (!inb.items.length) inb.msg = 'No emails found in your Inbox.';
   } catch (e) { inb.items = inb.items || []; inb.msg = mcpMsg(e); }
   inb.loading = false; renderInbox();
@@ -3379,7 +3379,7 @@ function renderInbox() {
   el.hidden = mode !== 'inbox'; if (el.hidden) return;
   if (inb.items === null && !inb.loading) { setTimeout(inbLoad, 0); }
   const items = inb.items || [];
-  el.innerHTML = `<div class="emg-head"><b>Last 5 emails</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
+  el.innerHTML = `<div class="emg-head"><b>Last 10 emails</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
     <p class="nyc-msg">Click “Suggest a reply”. Claude reads the email and its attachments and writes a plain text reply. Copy it into Outlook. Nothing is sent for you.</p>
     <p class="nyc-msg warn"><b>Important:</b> always double check every reply before you send it. AI can make mistakes. It is your responsibility to fully understand the reply and agree with everything it says.</p>
     ${inb.msg ? `<p class="nyc-msg warn">${esc(inb.msg)}</p>` : ''}
