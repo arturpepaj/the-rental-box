@@ -356,7 +356,7 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(4, minmax(0, 1fr)) var(--taskw); gap: 1px;
+  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -444,13 +444,14 @@ header {
     padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
   .tasks.open { transform: translateX(0); }
-  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)); }
   .tasks-toggle { display: grid; }
   .tasks-close { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
-  .bottom-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .nav-btn { font-size: 10px; padding: 6px 2px; overflow-wrap: anywhere; }
   .library {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
     border-right: 0; border-left: 1px solid var(--line);
@@ -464,7 +465,7 @@ header {
 }
 @media (max-width: 640px) {
   .header-time { display: none; }
-  .bottom-nav { grid-template-columns: repeat(4, 1fr); }
+  .bottom-nav { grid-template-columns: repeat(4, 1fr); grid-template-rows: none; grid-auto-flow: row; }
   .nav-btn { min-height: 52px; padding: 6px 2px; font-size: 9.5px; font-weight: 700; gap: 3px; overflow-wrap: anywhere; hyphens: auto; }
   .nav-btn svg { width: 16px; height: 16px; }
 }
@@ -952,7 +953,7 @@ const ICONS = {
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
-  { key:'inbox', title:'Inbox Replies', desc:'Your last 5 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you.', samples:['Which of my last emails need an answer today?','Summarize my last 5 emails'] },
+  { key:'inbox', title:'Inbox Replies', desc:'Your last 5 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 5 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
@@ -3380,6 +3381,7 @@ function renderInbox() {
   const items = inb.items || [];
   el.innerHTML = `<div class="emg-head"><b>Last 5 emails</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
     <p class="nyc-msg">Click “Suggest a reply”. Claude reads the email and its attachments and writes a plain text reply. Copy it into Outlook. Nothing is sent for you.</p>
+    <p class="nyc-msg warn"><b>Important:</b> always double check every reply before you send it. AI can make mistakes. It is your responsibility to fully understand the reply and agree with everything it says.</p>
     ${inb.msg ? `<p class="nyc-msg warn">${esc(inb.msg)}</p>` : ''}
     ${items.map((m, i) => { const d = inb.drafts[i] || {}; return `<div class="cal-box inb-card">
       <div class="inb-top"><span class="inb-from">${esc(m.from || 'Unknown sender')}</span><span class="inb-date">${esc(inbDate(m.date))}</span></div>
@@ -3388,6 +3390,7 @@ function renderInbox() {
       <input class="inb-hint" data-hint="${i}" placeholder="Optional: what to say, e.g. yes, the plumber can come Tuesday" value="${esc(inb.hints[i] || '')}">
       <div class="cal-btns"><button class="nyc-btn" type="button" data-suggest="${i}"${d.busy ? ' disabled' : ''}>${d.text ? 'Try again' : 'Suggest a reply'}</button>${m.link ? `<a class="nyc-btn ghost" href="${esc(m.link)}" target="_blank" rel="noopener">Open in Outlook</a>` : ''}${d.status ? `<span class="nyc-msg" style="padding:0">${esc(d.status)}</span>` : ''}</div>
       ${d.text ? `<textarea class="inb-draft" data-draft="${i}" rows="${Math.min(16, d.text.split('\n').length + 2)}">${esc(d.text)}</textarea>
+        <p class="nyc-msg warn" style="padding:0">Double check this reply. You are responsible for fully understanding it before you send it.</p>
         <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${i}">Copy</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>` : ''}
     </div>`; }).join('')}`;
 }
