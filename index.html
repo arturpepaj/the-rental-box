@@ -647,7 +647,15 @@ header {
 .inb-card { gap: 6px; }
 .inb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .inb-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.inb-colh { margin: 0; font: 400 20px var(--serif); color: var(--ink); }
+.inb-colh { margin: 0; font: 400 20px var(--serif); color: #fff; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; background: var(--inb-c); position: sticky; top: 0; z-index: 2; }
+.inb-colh small { margin-left: auto; font: 500 12px var(--sans); opacity: .85; }
+.inb-dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+.inb-outlook { --inb-c: #0F6CBD; --inb-t: rgba(15,108,189,.10); }
+.inb-gmail { --inb-c: #C5221F; --inb-t: rgba(234,67,53,.09); }
+.inb-card.inb-outlook, .inb-card.inb-gmail { border-left: 4px solid var(--inb-c); background: linear-gradient(var(--inb-t), var(--inb-t)), var(--surface); }
+.inb-badge { flex-shrink: 0; font: 700 10.5px var(--sans); letter-spacing: .04em; text-transform: uppercase; color: #fff; background: var(--inb-c); border-radius: 999px; padding: 2px 8px; }
+.inb-card .inb-top { align-items: center; }
+.inb-card .inb-date { margin-left: auto; }
 @media (max-width: 900px) { .inb-cols { grid-template-columns: 1fr; } }
 .inb-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
 .inb-from { font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3325,6 +3333,7 @@ setInterval(updateClock, 30000); updateClock();
 const GM = 'Gmail';
 const inb = { loading: false, loaded: false, src: { outlook: { items: [], msg: '', ok: false }, gmail: { items: [], msg: '', ok: false } }, drafts: {}, hints: {} };
 function inbDate(d) { const t = new Date(d); return isNaN(t) ? '' : t.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function inbDecode(t) { const x = document.createElement('textarea'); x.innerHTML = String(t || ''); return x.value; }
 function inbOff(e) { const c = e && e.code; return c === 'server_not_connected' || c === 'server_not_found' || c === 'not_in_manifest'; }
 function jsonBlocks(r) {
   if (r && r.payload && typeof r.payload === 'object') return [r.payload];
@@ -3349,7 +3358,7 @@ async function inbLoadGmail() {
     for (const j of jsonBlocks(r)) threads = threads.concat(Array.isArray(j) ? j : (j.threads || []));
     S.items = threads.slice(0, 10).map(t => { const m = (t.messages || [])[t.messages ? t.messages.length - 1 : 0] || {};
       const sd = m.sender; const from = typeof sd === 'string' ? sd : sd ? [sd.displayName || sd.name, sd.email || sd.emailAddress].filter(Boolean).join(' <') + (sd.email || sd.emailAddress ? '>' : '') : '';
-      return { src: 'gmail', threadId: t.id, msgId: m.id || '', from, subject: m.subject || '', date: m.date || '', preview: String(m.snippet || '').slice(0, 220), link: t.viewUrl || m.viewUrl || '', hasAttachments: false }; });
+      return { src: 'gmail', threadId: t.id, msgId: m.id || '', from, subject: inbDecode(m.subject), date: m.date || '', preview: inbDecode(m.snippet).slice(0, 220), link: t.viewUrl || m.viewUrl || '', hasAttachments: false }; });
     S.ok = true; if (!S.items.length) S.msg = 'No emails found in your Gmail Inbox.';
   } catch (e) { S.msg = inbOff(e) ? '' : (e && e.code === 'needs_reauth' ? 'Gmail needs to be signed in again.' : (e && e.message) || 'Gmail could not be loaded.'); S.off = inbOff(e); }
 }
@@ -3427,8 +3436,8 @@ function inbCopy(text, btn) {
 }
 function inbCard(m, key) {
   const d = inb.drafts[key] || {}; const app = m.src === 'gmail' ? 'Gmail' : 'Outlook';
-  return `<div class="cal-box inb-card">
-      <div class="inb-top"><span class="inb-from">${esc(m.from || 'Unknown sender')}</span><span class="inb-date">${esc(inbDate(m.date))}</span></div>
+  return `<div class="cal-box inb-card inb-${m.src}">
+      <div class="inb-top"><span class="inb-badge">${app}</span><span class="inb-from">${esc(m.from || 'Unknown sender')}</span><span class="inb-date">${esc(inbDate(m.date))}</span></div>
       <div class="inb-subj">${m.hasAttachments ? '📎 ' : ''}${esc(m.subject || '(no subject)')}</div>
       <p>${esc(m.preview || '')}</p>
       <input class="inb-hint" data-hint="${key}" placeholder="Optional: what to say, e.g. yes, the plumber can come Tuesday" value="${esc(inb.hints[key] || '')}">
@@ -3440,7 +3449,8 @@ function inbCard(m, key) {
 }
 function inbColumn(src, title) {
   const S = inb.src[src];
-  return `<div class="inb-col">${title ? `<h3 class="inb-colh">${title}</h3>` : ''}${S.msg ? `<p class="nyc-msg warn">${esc(S.msg)}</p>` : ''}${S.items.map((m, i) => inbCard(m, src + ':' + i)).join('')}</div>`;
+  const app = src === 'gmail' ? 'Gmail' : 'Outlook';
+  return `<div class="inb-col inb-${src}">${title ? `<h3 class="inb-colh"><span class="inb-dot"></span>${title}<small>${S.items.length} emails</small></h3>` : ''}${S.msg ? `<p class="nyc-msg warn">${esc(S.msg)}</p>` : ''}${S.items.map((m, i) => inbCard(m, src + ':' + i)).join('')}</div>`;
 }
 function renderInbox() {
   const el = $('inbPanel'); if (!el) return;
