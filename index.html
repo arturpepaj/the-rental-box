@@ -640,6 +640,23 @@ header {
 .disc .disc-foot { font-size: 11.5px; color: var(--subtle); margin-top: 16px; }
 .disc-x { position: absolute; top: 12px; right: 14px; background: none; border: 0; color: var(--subtle); font-size: 24px; cursor: pointer; line-height: 1; }
 .disc-x:hover { color: var(--ink); }
+.emg { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.emg[hidden] { display: none; }
+.emg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px 14px; }
+.emg-head b { font: 400 22px var(--serif); color: var(--ink); }
+.emg-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
+.emg-plan { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; border-left: 3px solid var(--danger); }
+.emg-ph { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: none; border: 0; padding: 11px 14px; cursor: pointer; color: var(--ink); font: 500 14px var(--sans); text-align: left; }
+.emg-ph small { color: var(--subtle); font-size: 11.5px; white-space: nowrap; }
+.emg-pb { display: none; padding: 0 14px 12px; }
+.emg-plan.open .emg-pb { display: block; }
+.emg-pb ol { margin: 0 0 10px; padding-left: 20px; }
+.emg-pb li { font-size: 13px; line-height: 1.5; color: var(--muted); margin-bottom: 6px; }
+.emg-form { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .8fr); gap: 5px 6px; align-items: center; }
+.emg-form label { font-size: 12px; color: var(--muted); }
+.emg-form input, #emgHelp { height: 30px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 12.5px var(--sans); padding: 0 8px; min-width: 0; }
+#emgHelp { height: auto; padding: 8px 10px; resize: vertical; width: 100%; box-sizing: border-box; line-height: 1.45; }
+@media (max-width: 900px) { .emg-plans { grid-template-columns: 1fr; } .emg-form { grid-template-columns: 1fr 1fr; } .emg-form label { grid-column: 1 / -1; } }
 </style>
 
 <div class="side-menu" id="sideMenu" aria-label="Quick Links">
@@ -812,6 +829,7 @@ header {
         </div>
         <div id="nycPanel" class="nyc" hidden></div>
         <div id="calPanel" class="cal" hidden></div>
+        <div id="emgPanel" class="emg" hidden></div>
         <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
       </div>
     </div>
@@ -928,15 +946,9 @@ const SECTIONS = [
   { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts. Send and Roar here also look up the NYC code and find manufacturer manuals and spec sheets.', samples:['What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
-  { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident, and how to recover after a fire.',
-    guide:`Building recovery after a fire. Include these steps in every answer about a fire or fire damage (after the usual life-safety steps), in this order:
-1. Call a water and fire mitigation vendor right away when the Fire Department used water to put out the fire. They remove water, dry the building and prevent mold.
-2. Call a contractor (or the mitigation vendor) to order plywood and board up the broken or removed windows.
-3. Light panel: on at least one window in every room, the plywood must have a cut-out about 2 feet x 1 feet with plexiglass installed, so daylight comes in. The mitigation contractor should do this. Check that they actually did it.
-4. Tell the vendor how many apartments you expect to be vacant, so they bring keycode locks for those doors. Do not rely on regular keys. Keycode locks make access easy for inspections (FDNY, DOB, HPD, insurance adjuster, contractors) without handing out keys.
-5. Call the American Red Cross (1-800-RED-CROSS, 1-800-733-2767) to help relocate the displaced residents.
-These are the manager's own procedure: present them as the building's steps.`,
-    samples:['What do we do after a fire?','Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
+  { key:'emergency', title:'Emergency Prep', desc:'Step-by-step plans for fire, flood, gas leak or shut-off, power outage, no heat, elevator entrapment and more. Save emergency contacts for each building and download printable checklists.',
+    guide: () => emergencyGuide(),
+    samples:['What do we do after a fire?','The gas is shut off for the whole building. What now?','Power outage checklist for this building','Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
 ];
 const byKey = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
 function deskName(first) { byKey.desk.title = first ? `${first}’s Desk` : 'Manager’s Desk'; }
@@ -1304,7 +1316,7 @@ function instructions(context, withEmail) {
   const bld = $('propertyName').value.trim();
   return `You are ToolBox for Rentals, an assistant for a residential property manager in New York.
 Building: ${bld || 'not given'}. Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
-Current section: ${sec.title}. ${sec.desc}${sec.guide ? '\n' + sec.guide : ''}
+Current section: ${sec.title}. ${sec.desc}${sec.guide ? '\n' + (typeof sec.guide === 'function' ? sec.guide() : sec.guide) : ''}
 
 How to answer:
 - Use the documents below first. After each fact taken from a document, name it in brackets, like [Elevator contract.pdf].
@@ -2417,6 +2429,7 @@ function setMode(key) {
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
   renderNyc(); if (key === 'records' && $('propertyName').value.trim() && mcp) nycLoad(false);
   if (typeof renderCal === 'function') { try { renderCal(); } catch (e) {} }
+  if (typeof renderEmg === 'function') { try { renderEmg(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
@@ -2519,6 +2532,7 @@ function pickBuilding(addr) {
 }
 function renderBuildings() {
   if (typeof renderCal === 'function' && mode === 'calendar') setTimeout(() => { try { renderCal(); } catch (e) {} }, 0);
+  if (typeof renderEmg === 'function' && mode === 'emergency') setTimeout(() => { emg.bld = ''; try { renderEmg(); } catch (e) {} }, 0);
   const cur = bldKey($('propertyName').value);
   const saved = !!cur && buildings.some(b => bldKey(b.addr) === cur);
   $('bldSave').classList.toggle('saved', saved);
@@ -2765,6 +2779,164 @@ $('calPanel').addEventListener('click', e => {
 });
 const el$ = s => document.querySelectorAll(s);
 $('calPanel').addEventListener('change', e => { if (e.target.id === 'calBld') { cal.bld = e.target.value; renderCal(); } });
+
+
+/* ---------- Emergency Prep: plans, contacts per building, residents who need help, printable checklists ---------- */
+const EMERGENCY_PLANS = [
+  { key: 'fire', title: 'Fire and after a fire', steps: [
+    'Life safety first: call 911, follow the building fire safety plan, meet FDNY at the entrance with keys and floor plans.',
+    'Call a water and fire mitigation vendor right away when the Fire Department used water to put out the fire. They remove water, dry the building and prevent mold.',
+    'Call a contractor (or the mitigation vendor) to order plywood and board up the broken or removed windows.',
+    'Light panel: on at least one window in every room, the plywood must have a cut-out about 2 feet x 1 feet with plexiglass installed, so daylight comes in. The mitigation contractor should do this. Check that they actually did it.',
+    'Tell the vendor how many apartments you expect to be vacant, so they bring keycode locks for those doors. Do not rely on regular keys. Keycode locks make access easy for inspections (FDNY, DOB, HPD, insurance adjuster, contractors).',
+    'Call the American Red Cross (1-800-RED-CROSS, 1-800-733-2767) to help relocate the displaced residents.',
+    'Call the insurance broker or carrier the same day. Take photos and video of everything before cleanup starts.',
+    'If doors, windows or the fire alarm are damaged, arrange a fire watch or security guard overnight.',
+    'Call the utility (Con Ed, or National Grid for gas in Brooklyn, Queens and Staten Island) to shut off and later restore gas and electric. Never turn the gas back on yourself.',
+    'If HPD or DOB posts a vacate order, follow it, keep a copy, and get the DOB structural inspection before anyone moves back in.',
+    'Keep the fire area untouched until the Fire Marshal releases it.',
+    'Give residents a written notice in the main languages of the building. Keep a list of displaced residents and where they are staying. Rent-stabilized tenants keep their lease rights when they return.',
+    'Check the apartments above, below and next door for water and smoke damage.'
+  ] },
+  { key: 'flood', title: 'Flood, major leak or sewer backup', steps: [
+    'Stop the water: close the nearest shut-off valve (know where the riser and main valves are). Turn off electricity to wet areas only if it is safe.',
+    'Call the plumber and the water mitigation vendor (water removal, drying, moisture readings, mold prevention).',
+    'If water reaches the elevator pit or machine room, take the elevators out of service and call the elevator company.',
+    'Take photos and video. Call the insurance broker or carrier the same day.',
+    'Check the apartments below and next to the leak. Give the affected residents a written notice.',
+    'Find the source (apartment, riser, roof, sewer). If it is an apartment, get access and document it.',
+    'Mold: in buildings with 10 or more apartments, mold over 10 square feet must be handled by a licensed mold assessor and remediator (NYC Local Law 61). Check the current rule.',
+    'Sewer backup: keep residents away from the area, call the plumber, and have the area cleaned and disinfected.'
+  ] },
+  { key: 'gas', title: 'Gas leak, gas odor or gas shut-off', steps: [
+    'Gas odor: get people out of the area. No light switches, no elevators, no phones or flames near the smell.',
+    'From outside, call 911 and the gas utility: Con Ed 1-800-75-CONED (1-800-752-6633), or National Grid 718-643-4050 in Brooklyn, Queens and Staten Island.',
+    'Let FDNY and the utility make it safe. Never turn the gas back on yourself.',
+    'Building-wide gas shut-off: expect weeks or more. A licensed master plumber must find and fix the leaks, do a pressure test, file with DOB and get the sign-off. Then the utility restores the gas.',
+    'Order hot plates for the residents (one for each apartment with a gas stove). Count the apartments first and deliver them with a written notice and safety tips. Check that the electrical service can handle them.',
+    'Give residents written updates on the repair and the expected date gas comes back. Keep a log of calls and complaints.',
+    'Tell the owner that rent-stabilized tenants may file with DHCR for a rent reduction while cooking gas is off.',
+    'After gas is restored, check the natural gas detectors required by Local Law 157.'
+  ] },
+  { key: 'power', title: 'Power outage', steps: [
+    'Check every elevator for trapped people first. Call the elevator company.',
+    'Call Con Ed (1-800-75-CONED) to report it and ask if it is only the building or the whole area.',
+    'Check that the emergency generator started, its fuel level, and what it runs (emergency lights, fire alarm, elevator, pumps).',
+    'Check on the residents who need help: oxygen or medical equipment, elderly, or trouble with stairs. Call 911 for any medical need.',
+    'Make sure hallway and stair lighting works. Keep flashlights at the front desk.',
+    'Water pumps stop without power, so upper floors may lose water. Check sump pumps if it is raining.',
+    'When power returns, check the fire alarm panel, elevators, boilers, pumps and the building management system.'
+  ] },
+  { key: 'heat', title: 'No heat or no hot water', steps: [
+    'Call the boiler or heating vendor right away. Check the fuel delivery or gas service.',
+    'NYC heat season is October 1 to May 31. Day (6am–10pm): at least 68°F inside when it is below 55°F outside. Night: at least 62°F. Hot water: at least 120°F all year.',
+    'Give residents a notice with the expected repair time. Keep a log of calls. HPD may inspect.',
+    'Send a space heater safety notice: plug heaters into the wall, no extension cords, keep away from curtains and beds.',
+    'Check on the residents who need help.',
+    'Keep the vendor reports and invoices for HPD.'
+  ] },
+  { key: 'elevator', title: 'Elevator entrapment', steps: [
+    'Talk to the people through the intercom. Tell them help is coming and ask if anyone has a medical problem.',
+    'Call the elevator company emergency line. If there is a medical problem or a long wait, call 911.',
+    'Never let staff pry the doors or pull people out.',
+    'Write down the time and the car number. Keep the car out of service until the elevator company checks it.',
+    'If all cars are down, check on residents who cannot use the stairs.'
+  ] },
+  { key: 'co', title: 'Carbon monoxide alarm', steps: [
+    'Get everyone out of the apartment or area and call 911.',
+    'Do not go back in until FDNY says it is safe.',
+    'Have the boiler, flue and stove checked by a licensed vendor before use.',
+    'Make sure every apartment has working carbon monoxide detectors as NYC law requires.'
+  ] },
+  { key: 'frozen', title: 'Frozen pipes', steps: [
+    'Close the water to the frozen line and call the plumber.',
+    'Warm the area slowly (space heater at a safe distance). Never use an open flame.',
+    'Check the heat in that area, close windows, and add insulation.',
+    'Watch for leaks when the pipe thaws.'
+  ] }
+];
+const EMG_ROLES = ['Super / resident manager', 'Plumber', 'Water and fire mitigation vendor', 'Board-up contractor', 'Elevator company', 'Boiler / heating vendor', 'Electrician', 'Locksmith', 'Security / fire watch', 'Insurance broker', 'Owner / board contact'];
+const emg = { contacts: {}, store: 'local', bld: '', plan: '', saved: '' };
+const emgId = a => bldId(a);
+async function emgLoad() {
+  let local = {}; try { local = JSON.parse(localStorage.getItem('rb-emg') || '{}') || {}; } catch (e) {}
+  emg.contacts = local;
+  if (db && myId) {
+    try { (await db.collection(`emc/${myId}/items`).get()).docs.forEach(d => { const v = d.data(); if (v && v.addr) emg.contacts[bldKey(v.addr)] = v; }); emg.store = 'db'; } catch (e) {}
+  }
+  renderEmg();
+}
+async function emgSave(addr, contacts) {
+  const rec = { addr, contacts, at: Date.now() };
+  emg.contacts[bldKey(addr)] = rec;
+  try { localStorage.setItem('rb-emg', JSON.stringify(emg.contacts)); } catch (e) {}
+  if (emg.store === 'db') { try { await db.doc(`emc/${myId}`).set({ uid: myId, at: Date.now() }); await db.doc(`emc/${myId}/items/${emgId(addr)}`).set(rec); } catch (e) { showFootWarn('Saved on this computer only.'); } }
+}
+// residents who need help: private, kept on this computer only
+const emgHelpKey = a => 'rb-emg-help-' + emgId(a);
+const emgHelp = a => { try { return localStorage.getItem(emgHelpKey(a)) || ''; } catch (e) { return ''; } };
+function emgCur() { const cur = $('propertyName').value.trim(); return emg.bld || nycBldAddr() || cur; }
+function emergencyGuide() {
+  const addr = emgCur(); const rec = addr ? emg.contacts[bldKey(addr)] : null;
+  const contacts = rec ? Object.entries(rec.contacts || {}).filter(([, v]) => v && (v.name || v.phone)).map(([k, v]) => `${k}: ${[v.name, v.phone].filter(Boolean).join(', ')}`) : [];
+  const help = addr ? emgHelp(addr).trim() : '';
+  return `The manager's emergency procedures. Use the matching plan in every emergency answer (after the usual life-safety steps), in this order, and present them as the building's own steps:\n` +
+    EMERGENCY_PLANS.map(p => `${p.title}:\n` + p.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')).join('\n\n') +
+    (contacts.length ? `\n\nEmergency contacts for ${addr} (use these real names and phone numbers in the steps):\n` + contacts.join('\n') : `\n\nNo emergency contacts are saved for this building yet. Suggest saving them in the Emergency contacts box on this tab.`) +
+    (help ? `\n\nResidents who need help in an emergency (private, use only for safety):\n${help.slice(0, 3000)}` : '');
+}
+function emgChecklistHtml(plan, addr) {
+  const rec = addr ? emg.contacts[bldKey(addr)] : null;
+  const rows = rec ? Object.entries(rec.contacts || {}).filter(([, v]) => v && (v.name || v.phone)) : [];
+  const e = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${e(plan.title)} — ${e(addr || 'Building')}</title>
+<style>body{font:15px/1.5 Arial,sans-serif;color:#111;max-width:760px;margin:30px auto;padding:0 20px}h1{font-size:26px;margin:0 0 4px}h2{font-size:17px;margin:22px 0 8px;border-bottom:2px solid #111;padding-bottom:4px}.sub{color:#555;margin:0 0 6px}ol{padding-left:22px}li{margin:0 0 8px}table{border-collapse:collapse;width:100%}td{border:1px solid #999;padding:6px 8px;vertical-align:top}td:first-child{width:38%;font-weight:bold}.box{border:2px solid #b00;padding:8px 12px;margin:14px 0;font-weight:bold}.foot{margin-top:24px;font-size:12px;color:#666}@media print{body{margin:0}}</style></head><body>
+<h1>${e(plan.title)}</h1><p class="sub">${e(addr || 'Building: ____________________')}</p><p class="sub">Printed ${e(new Date().toLocaleDateString('en-US'))}</p>
+<div class="box">Life safety first. In danger, call 911.</div>
+<h2>Steps</h2><ol>${plan.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol>
+<h2>Emergency contacts</h2><table>${(rows.length ? rows : EMG_ROLES.map(r => [r, {}])).map(([k, v]) => `<tr><td>${e(k)}</td><td>${e([v.name, v.phone].filter(Boolean).join(' — ')) || '&nbsp;'}</td></tr>`).join('')}<tr><td>Emergency</td><td>911</td></tr><tr><td>Con Ed (electric, gas in Manhattan and the Bronx)</td><td>1-800-75-CONED (1-800-752-6633)</td></tr><tr><td>National Grid gas (Brooklyn, Queens, Staten Island)</td><td>718-643-4050</td></tr><tr><td>American Red Cross</td><td>1-800-RED-CROSS (1-800-733-2767)</td></tr><tr><td>NYC 311</td><td>311</td></tr></table>
+<p class="foot">ToolBox for Rentals. Check phone numbers and rules before you rely on them.</p></body></html>`;
+}
+async function emgDownload(key) {
+  const plan = EMERGENCY_PLANS.find(p => p.key === key); if (!plan) return;
+  const addr = emgCur();
+  const html = emgChecklistHtml(plan, addr);
+  const name = `${(addr || 'Building').replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 40)} - ${plan.title} checklist.html`;
+  const blob = new Blob([html], { type: 'text/html' });
+  if (downloads) await downloads.save({ filename: name, data: blob }); else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+}
+function renderEmg() {
+  const el = $('emgPanel'); if (!el) return;
+  el.hidden = mode !== 'emergency'; if (el.hidden) return;
+  const addr = emgCur();
+  const list = buildings.map(b => b.addr); const cur = $('propertyName').value.trim();
+  if (cur && !list.some(a => bldKey(a) === bldKey(cur))) list.unshift(cur);
+  const rec = addr ? (emg.contacts[bldKey(addr)] || {}) : {};
+  const c = rec.contacts || {};
+  el.innerHTML = `<div class="emg-head"><b>Emergency plans</b><select class="cal-sel" id="emgBld" aria-label="Building">${list.length ? list.map(a => `<option value="${esc(a)}"${bldKey(a) === bldKey(addr) ? ' selected' : ''}>${esc(a)}</option>`).join('') : '<option value="">Type a building address at the top</option>'}</select></div>
+    <div class="emg-plans">${EMERGENCY_PLANS.map(p => `<div class="emg-plan${emg.plan === p.key ? ' open' : ''}" data-plan="${p.key}"><button type="button" class="emg-ph" data-toggle="${p.key}"><span>${esc(p.title)}</span><small>${p.steps.length} steps</small></button>
+      <div class="emg-pb"><ol>${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><button type="button" class="nyc-btn ghost" data-print="${p.key}">Download printable checklist</button></div></div>`).join('')}</div>
+    <div class="cal-cols">
+      <div class="cal-box"><h3>Emergency contacts${addr ? ' — ' + esc(addr) : ''}</h3><p>Saved for each building. Claude puts these names and numbers into every emergency answer and checklist.</p>
+        <div class="emg-form">${EMG_ROLES.map((r, i) => `<label>${esc(r)}</label><input data-c="${i}" data-f="name" placeholder="Name / company" value="${esc((c[r] || {}).name || '')}"><input data-c="${i}" data-f="phone" placeholder="Phone" value="${esc((c[r] || {}).phone || '')}">`).join('')}</div>
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="emgSave"${addr ? '' : ' disabled'}>Save contacts</button><span class="nyc-msg" style="padding:0">${esc(emg.saved || (emg.store === 'db' ? 'Saved to your claude.ai account.' : 'Saved on this computer.'))}</span></div></div>
+      <div class="cal-box"><h3>Residents who need help</h3><p>Residents on oxygen or medical equipment, elderly, or with trouble on stairs. <b>Private:</b> saved on this computer only, never shared, and used only in emergency answers. Ask residents before you list them.</p>
+        <textarea id="emgHelp" rows="9" placeholder="Example: 5B – uses oxygen, call daughter 917-555-0100&#10;12F – wheelchair, needs help on stairs">${esc(addr ? emgHelp(addr) : '')}</textarea>
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="emgHelpSave"${addr ? '' : ' disabled'}>Save list</button></div></div>
+    </div>`;
+}
+$('emgPanel').addEventListener('click', e => {
+  const t = e.target.closest('[data-toggle]'); if (t) { emg.plan = emg.plan === t.dataset.toggle ? '' : t.dataset.toggle; renderEmg(); return; }
+  const pr = e.target.closest('[data-print]'); if (pr) { emgDownload(pr.dataset.print).catch(() => showFootWarn('Could not make the checklist.')); return; }
+  if (e.target.closest('#emgSave')) {
+    const addr = emgCur(); if (!addr) return;
+    const contacts = {}; EMG_ROLES.forEach((r, i) => { const n = $('emgPanel').querySelector(`[data-c="${i}"][data-f="name"]`).value.trim(), ph = $('emgPanel').querySelector(`[data-c="${i}"][data-f="phone"]`).value.trim(); if (n || ph) contacts[r] = { name: n.slice(0, 120), phone: ph.slice(0, 40) }; });
+    emgSave(addr, contacts).then(() => { emg.saved = 'Saved ✓'; renderEmg(); setTimeout(() => { emg.saved = ''; }, 3000); });
+    return;
+  }
+  if (e.target.closest('#emgHelpSave')) { const addr = emgCur(); if (!addr) return; try { localStorage.setItem(emgHelpKey(addr), $('emgHelp').value.slice(0, 5000)); } catch (err) {} emg.saved = 'List saved on this computer ✓'; renderEmg(); setTimeout(() => { emg.saved = ''; }, 3000); }
+});
+$('emgPanel').addEventListener('change', e => { if (e.target.id === 'emgBld') { emg.bld = e.target.value; renderEmg(); } });
 
 /* ---------- Composer ---------- */
 function setRoarTip(working) {
@@ -3108,7 +3280,7 @@ setLibStatus('Loading your library…');
 (async () => {
   if (!window.claude || !window.claude.use) {
     setLibStatus('Open this page on claude.ai to read documents with Claude.', true);
-    loadBuildings().then(calLoad);
+    loadBuildings().then(() => { calLoad(); emgLoad(); });
     showFootWarn('Open this page on claude.ai to ask Claude.');
     renderConnections();
     return;
@@ -3125,8 +3297,8 @@ setLibStatus('Loading your library…');
     try { const me = await userCap.me(); const first = String((me && me.name) || '').trim().split(/\s+/)[0]; if (first) { deskName(first.slice(0, 24)); renderNav(); setMode(mode); } } catch (e) {}
   }
   if (db && userCap) { try { id = await userCap.id(); } catch (e) { id = null; } }
-  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } try { startTasks(); } catch (e) { renderTasks(); } loadBuildings().then(calLoad); await loadLibrary(); }
-  else { loadBuildings().then(calLoad); renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
+  if (db && id) { myId = id; libCol = db; try { canDelete = !!(await userCap.canEdit()); } catch (e) { canDelete = false; } try { startTasks(); } catch (e) { renderTasks(); } loadBuildings().then(() => { calLoad(); emgLoad(); }); await loadLibrary(); }
+  else { loadBuildings().then(() => { calLoad(); emgLoad(); }); renderLibrary(); renderTasks(); setLibStatus('Documents you add stay for this visit only. Sign in to claude.ai to save them.', true); }
   render();
 })();
 </script>
