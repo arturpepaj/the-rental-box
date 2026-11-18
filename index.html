@@ -642,6 +642,17 @@ header {
 .disc-x:hover { color: var(--ink); }
 .emg { width: 100%; display: flex; flex-direction: column; gap: 12px; }
 .emg[hidden] { display: none; }
+.tab-drop[hidden], .tab-note[hidden] { display: none !important; }
+.inb-card { gap: 6px; }
+.inb-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+.inb-from { font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inb-date { white-space: nowrap; }
+.inb-subj { font: 500 14.5px var(--sans); color: var(--ink); }
+.inb-hint, .fm-rows input { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 10px; width: 100%; box-sizing: border-box; }
+.inb-draft, #fmInfo { width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13.5px/1.55 var(--sans); padding: 10px 12px; resize: vertical; }
+.fm-rows { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(160px, 2fr) minmax(80px, 1fr); gap: 6px 10px; align-items: center; font-size: 13px; color: var(--ink); }
+.fm-rows small { color: var(--subtle); font-size: 11.5px; }
+@media (max-width: 700px) { .fm-rows { grid-template-columns: 1fr; } .fm-src { display: none; } }
 .emg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px 14px; }
 .emg-head b { font: 400 22px var(--serif); color: var(--ink); }
 .emg-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
@@ -830,6 +841,8 @@ header {
         <div id="nycPanel" class="nyc" hidden></div>
         <div id="calPanel" class="cal" hidden></div>
         <div id="emgPanel" class="emg" hidden></div>
+        <div id="inbPanel" class="emg" hidden></div>
+        <div id="fmPanel" class="emg" hidden></div>
         <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
       </div>
     </div>
@@ -932,11 +945,15 @@ const ICONS = {
   systems: '<path d="M8 3c2.3 3 4 5.2 4 7.3a4 4 0 01-8 0C4 8.2 5.7 6 8 3z"/><path d="M17 9l-3.5 6h4l-1.5 6 4.5-7.5h-4L18 9z"/>',
   mechanical: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 10l3-3 3 3M9 14l3 3 3-3"/>',
   records: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
-  emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>'
+  emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
+  inbox: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><path d="M14 17l2.5-2.5M14 17l2.5 2.5M14 17h6" stroke-width="1.2"/>',
+  forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
 const SECTIONS = [
   { key:'desk', title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
+  { key:'inbox', title:'Inbox Replies', desc:'Your last 5 Outlook emails. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you.', samples:['Which of my last emails need an answer today?','Summarize my last 5 emails'] },
+  { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
   { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
   { key:'legal', title:'Legal Check', desc:'Leases and riders, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Can the elevator vendor charge us this extra fee under the contract?'] },
@@ -1258,7 +1275,10 @@ function buildContext(question, budget) {
   const sec = byKey[mode];
   const tabDocs = (tabFiles[mode] || []).filter(f => f.status === 'ok' && f.kind === 'text').map(f => ({ name: f.name, text: f.text, where: 'Uploaded in this section' }));
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
-  const all = (mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
+  const extra = [];
+  if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
+  if (mode === 'inbox' && typeof inb !== 'undefined' && inb.items && inb.items.length) extra.push({ name: 'Last 5 Outlook emails', text: inb.items.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.preview}`).join('\n'), where: 'Outlook' });
+  const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
   const fmt = (d, body) => `<document name="${d.name.replace(/"/g, "'")}" source="${d.where}">\n${body}\n</document>`;
   const fullSize = all.reduce((n, d) => n + d.text.length + 120, 0);
@@ -2443,12 +2463,15 @@ function setMode(key) {
   $('askTitle').textContent = s.title;
   $('askSub').textContent = s.desc;
   $('yardiNote').hidden = !s.yardi;
+  $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
   renderNyc(); if (key === 'records' && $('propertyName').value.trim() && mcp) nycLoad(false);
   if (typeof renderCal === 'function') { try { renderCal(); } catch (e) {} }
   if (typeof renderEmg === 'function') { try { renderEmg(); } catch (e) {} }
+  if (typeof renderInbox === 'function') { try { renderInbox(); } catch (e) {} }
+  if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
@@ -3291,6 +3314,215 @@ function updateClock() {
   catch (e) { $('clock').textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 }
 setInterval(updateClock, 30000); updateClock();
+
+/* ---------- Inbox Replies ---------- */
+const inb = { items: null, loading: false, msg: '', drafts: {}, hints: {} };
+function inbDate(d) { const t = new Date(d); return isNaN(t) ? '' : t.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+async function inbLoad() {
+  if (!mcp) { inb.msg = 'Open this page on claude.ai and connect Microsoft 365 to see your emails.'; inb.items = []; renderInbox(); return; }
+  inb.loading = true; inb.msg = ''; inb.drafts = {}; renderInbox();
+  try {
+    const r = await mcp.callTool(MS, 'outlook_email_search', { order: 'newest', limit: 5 }, { cache: false });
+    let j = {}; try { j = JSON.parse(compactSearch(r)); } catch (e) {}
+    inb.items = (j.emails || []).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5);
+    if (!inb.items.length) inb.msg = 'No emails found in your Inbox.';
+  } catch (e) { inb.items = inb.items || []; inb.msg = mcpMsg(e); }
+  inb.loading = false; renderInbox();
+}
+function inbReadTool(onStatus) {
+  return { name: 'read_attachment', description: 'Read an attachment of this email (or a file it links to) using a mail:/// or file:/// uri listed in the email. Read every attachment that matters before writing the reply.',
+    inputSchema: { type: 'object', properties: { uri: { type: 'string' } }, required: ['uri'] },
+    async execute(input, ctx) { const u = String(input.uri || ''); if (!/^(mail|file):\/\/\//.test(u)) throw new Error('Use a mail:/// or file:/// uri from the email.');
+      onStatus('Reading an attachment…');
+      try { return textOf(await mcp.callTool(MS, 'read_resource', { uri: u }, { signal: ctx && ctx.signal, cache: false })).slice(0, 20000); }
+      catch (e) { throw new Error(mcpMsg(e)); } } };
+}
+async function inbSuggest(i) {
+  const m = inb.items[i]; if (!m) return;
+  if (!sample) { inb.drafts[i] = { status: 'Claude is not available on this view.' }; renderInbox(); return; }
+  const d = inb.drafts[i] = { status: 'Reading the email…', text: '', note: '', busy: true }; renderInbox();
+  const set = s => { d.status = s; renderInbox(); };
+  try {
+    const full = textOf(await mcp.callTool(MS, 'read_resource', { uri: m.uri }, { cache: false })).slice(0, 24000);
+    set('Writing a reply…');
+    const bld = $('propertyName').value.trim();
+    const hint = (inb.hints[i] || '').trim();
+    const prompt = `You help a NYC residential property manager answer email. Write a suggested reply to the email below.
+${bld ? 'Current building: ' + bld + '.\n' : ''}${hint ? 'What the manager wants to say: ' + hint + '\n' : ''}
+Rules:
+- First, if the email has attachments, read the ones that matter with read_attachment. Base the reply on the email and its attachments.
+- Plain text only. No markdown, no bold, no headings.
+- Casual, friendly tone. Knowledgeable but not expert-sounding. It must not read like AI wrote it.
+- Simple English, short sentences. The manager's first language is not English.
+- Start with a greeting line like "Hi Maria,". Then one blank line between paragraphs. Keep it short: 2 to 4 short paragraphs.
+- If you list items, use numbered items with no blank lines between them.
+- Put one blank line before "Thank you," and end there. Never add a name, title, phone or signature.
+- Never invent facts, dates, prices or promises. If the manager must fill something in, write it in [brackets], like [day and time].
+- After the reply, write a line with only --- and then one short note for the manager: what to check before sending, and say if an attachment could only be partly read. If nothing, write "Nothing to check."
+
+Email:
+${full}`;
+    const r = await sample([{ role: 'user', content: prompt }], { tools: [inbReadTool(set)], modelTier: 'default', cache: false });
+    const parts = String(r.text || '').split(/\n-{3,}\s*\n/);
+    d.text = parts[0].trim(); d.note = (parts.slice(1).join(' ').trim()); d.status = '';
+  } catch (e) { d.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (mcpMsg(e) || 'Could not write a reply. Try again.'); }
+  d.busy = false; renderInbox();
+}
+function inbCopy(text, btn) {
+  const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); };
+  const fallback = () => { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) {} t.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+}
+function renderInbox() {
+  const el = $('inbPanel'); if (!el) return;
+  el.hidden = mode !== 'inbox'; if (el.hidden) return;
+  if (inb.items === null && !inb.loading) { setTimeout(inbLoad, 0); }
+  const items = inb.items || [];
+  el.innerHTML = `<div class="emg-head"><b>Last 5 emails</b><button class="nyc-btn ghost" type="button" id="inbRefresh"${inb.loading ? ' disabled' : ''}>${inb.loading ? 'Loading…' : 'Refresh'}</button></div>
+    <p class="nyc-msg">Click “Suggest a reply”. Claude reads the email and its attachments and writes a plain text reply. Copy it into Outlook. Nothing is sent for you.</p>
+    ${inb.msg ? `<p class="nyc-msg warn">${esc(inb.msg)}</p>` : ''}
+    ${items.map((m, i) => { const d = inb.drafts[i] || {}; return `<div class="cal-box inb-card">
+      <div class="inb-top"><span class="inb-from">${esc(m.from || 'Unknown sender')}</span><span class="inb-date">${esc(inbDate(m.date))}</span></div>
+      <div class="inb-subj">${m.hasAttachments ? '📎 ' : ''}${esc(m.subject || '(no subject)')}</div>
+      <p>${esc(m.preview || '')}</p>
+      <input class="inb-hint" data-hint="${i}" placeholder="Optional: what to say, e.g. yes, the plumber can come Tuesday" value="${esc(inb.hints[i] || '')}">
+      <div class="cal-btns"><button class="nyc-btn" type="button" data-suggest="${i}"${d.busy ? ' disabled' : ''}>${d.text ? 'Try again' : 'Suggest a reply'}</button>${m.link ? `<a class="nyc-btn ghost" href="${esc(m.link)}" target="_blank" rel="noopener">Open in Outlook</a>` : ''}${d.status ? `<span class="nyc-msg" style="padding:0">${esc(d.status)}</span>` : ''}</div>
+      ${d.text ? `<textarea class="inb-draft" data-draft="${i}" rows="${Math.min(16, d.text.split('\n').length + 2)}">${esc(d.text)}</textarea>
+        <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${i}">Copy</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>` : ''}
+    </div>`; }).join('')}`;
+}
+$('inbPanel').addEventListener('click', e => {
+  if (e.target.closest('#inbRefresh')) { inbLoad(); return; }
+  const s = e.target.closest('[data-suggest]'); if (s) { inbSuggest(+s.dataset.suggest); return; }
+  const c = e.target.closest('[data-copy]'); if (c) { const t = $('inbPanel').querySelector(`[data-draft="${c.dataset.copy}"]`); inbCopy(t ? t.value : '', c); }
+});
+$('inbPanel').addEventListener('input', e => {
+  if (e.target.dataset.hint != null) inb.hints[e.target.dataset.hint] = e.target.value;
+  if (e.target.dataset.draft != null && inb.drafts[e.target.dataset.draft]) inb.drafts[e.target.dataset.draft].text = e.target.value;
+});
+
+/* ---------- Fill a PDF form ---------- */
+const PDFLIB = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+const fm = { name: '', bytes: null, kind: '', fields: [], pages: [], rows: [], info: '', status: '', busy: false };
+const fmSafe = s => String(s == null ? '' : s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '');
+async function fmOpen(file) {
+  fm.name = file.name; fm.rows = []; fm.fields = []; fm.pages = []; fm.kind = ''; fm.status = 'Reading the form…'; fm.busy = true; renderForms();
+  try {
+    fm.bytes = new Uint8Array(await file.arrayBuffer());
+    await loadScript(PDFLIB);
+    const doc = await PDFLib.PDFDocument.load(fm.bytes, { ignoreEncryption: true });
+    let fields = []; try { fields = doc.getForm().getFields(); } catch (e) { fields = []; }
+    fm.fields = fields.map(f => { const L = PDFLib; const type = f instanceof L.PDFCheckBox ? 'checkbox' : (f instanceof L.PDFDropdown || f instanceof L.PDFOptionList) ? 'choice' : f instanceof L.PDFRadioGroup ? 'radio' : f instanceof L.PDFTextField ? 'text' : 'other';
+      let options = []; try { if (f.getOptions) options = f.getOptions(); } catch (e) {} return { name: f.getName(), type, options }; }).filter(f => f.type !== 'other');
+    fm.kind = fm.fields.length ? 'fields' : 'flat';
+    await loadScript(LIBS.pdf); window.pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+    const pdf = await window.pdfjsLib.getDocument({ data: fm.bytes.slice() }).promise;
+    const maxImg = (limits && limits.images && limits.images.maxCount) || 0;
+    for (let p = 1; p <= Math.min(pdf.numPages, 6); p++) {
+      const page = await pdf.getPage(p); const vp = page.getViewport({ scale: 1 });
+      const tc = await page.getTextContent();
+      const words = tc.items.filter(t => t.str && t.str.trim()).map(t => ({ s: t.str.trim(), x: Math.round(t.transform[4]), y: Math.round(t.transform[5]), w: Math.round(t.width || 0) }));
+      let img = null;
+      if (p <= maxImg) { const v2 = page.getViewport({ scale: 1.4 }); const c = document.createElement('canvas'); c.width = v2.width; c.height = v2.height;
+        await page.render({ canvasContext: c.getContext('2d'), viewport: v2 }).promise; img = await new Promise(r => c.toBlob(r, 'image/png')); }
+      fm.pages.push({ n: p, w: Math.round(vp.width), h: Math.round(vp.height), words, img });
+    }
+    fm.status = fm.kind === 'fields' ? `Found ${fm.fields.length} fillable fields. Add any details below, then press “Fill with Claude”.` : 'This form has no fillable fields. Claude will type the answers on the page. Add any details below, then press “Fill with Claude”.';
+  } catch (e) { fm.bytes = null; fm.status = 'Could not open this PDF. If it is password protected, remove the password and try again.'; }
+  fm.busy = false; renderForms();
+}
+async function fmFill() {
+  if (!fm.bytes) return;
+  if (!sample) { fm.status = 'Claude is not available on this view.'; renderForms(); return; }
+  fm.busy = true; fm.status = 'Claude is filling the form…'; renderForms();
+  try {
+    const ctx = buildContext('name address unit apartment phone email date lease rent tenant owner vendor insurance account ' + fm.info, 40000);
+    const bld = $('propertyName').value.trim();
+    const tools = [];
+    if (mcp) { const t = emailTools({ set status(v) { fm.status = v; renderForms(); } }); for (const x of t) if (x.name === 'search_email' || x.name === 'read_email') tools.push(x); }
+    const common = `You fill a blank PDF form for a NYC residential property manager.
+Today: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}. Current building: ${bld || 'not given'}.
+Information from the manager:
+${fm.info || '(none)'}
+Use only real information: the manager's notes, the documents below${tools.length ? ', and Outlook (search_email, read_email) when a detail is missing' : ''}. Never invent names, numbers, dates or amounts. If you do not know a value, leave it out of the list and add it to "missing".
+${ctx.text ? '\nDocuments:\n' + ctx.text : '\nNo documents uploaded.'}`;
+    let out;
+    if (fm.kind === 'fields') {
+      const list = fm.fields.slice(0, 200).map(f => `- "${f.name}" (${f.type}${f.options.length ? ', options: ' + f.options.slice(0, 20).join(' | ') : ''})`).join('\n');
+      const words = fm.pages.map(p => `Page ${p.n}: ` + p.words.map(w => w.s).join(' ')).join('\n').slice(0, 12000);
+      out = await sample.json(`${common}
+
+Form "${fm.name}". Page text (to understand what each field means):
+${words}
+
+Fillable fields:
+${list}
+
+Reply with only JSON: {"fields":[{"name": exact field name, "label": short plain label, "value": text, or "true"/"false" for checkbox, or one of the options, "source": where it came from, short}], "missing": [short labels of fields you could not fill]}`, { tools, images: fm.pages.map(p => p.img).filter(Boolean), modelTier: 'default', cache: false });
+      fm.rows = ((out && out.fields) || []).filter(r => r && fm.fields.some(f => f.name === r.name)).map(r => ({ name: r.name, label: r.label || r.name, value: String(r.value == null ? '' : r.value), source: r.source || '' }));
+    } else {
+      const pages = fm.pages.map(p => `Page ${p.n} (width ${p.w}, height ${p.h} points; x from left, y from bottom):\n` + p.words.slice(0, 400).map(w => `"${w.s}" x=${w.x} y=${w.y} w=${w.w}`).join('\n')).join('\n\n').slice(0, 30000);
+      out = await sample.json(`${common}
+
+Form "${fm.name}" has no fillable fields, so the answers will be typed on the page. The page images are attached. Here is every piece of printed text with its position in PDF points:
+${pages}
+
+For each blank you can fill, give where to type the answer: usually just right of its label (x = label x + label w + 6, same y) or on the blank line under it. For check boxes, type "X" on the box. Make sure the text does not cover printed words.
+Reply with only JSON: {"items":[{"page": number, "x": number, "y": number, "size": 9 to 11, "label": the printed label, "value": text to type, "source": short}], "missing": [short labels you could not fill]}`, { tools, images: fm.pages.map(p => p.img).filter(Boolean), modelTier: 'default', cache: false });
+      fm.rows = ((out && out.items) || []).filter(r => r && r.value != null && fm.pages.some(p => p.n === +r.page)).map(r => ({ page: +r.page, x: +r.x || 0, y: +r.y || 0, size: Math.min(14, Math.max(7, +r.size || 10)), label: r.label || '', value: String(r.value), source: r.source || '' }));
+    }
+    const miss = (out && Array.isArray(out.missing)) ? out.missing.slice(0, 30) : [];
+    fm.status = `Filled ${fm.rows.length} item${fm.rows.length === 1 ? '' : 's'}. Check and fix the values below, then download.` + (miss.length ? ` Not found: ${miss.join(', ')}.` : '');
+  } catch (e) { fm.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Claude could not fill the form. Try again.'; }
+  fm.busy = false; renderForms();
+}
+async function fmDownload() {
+  if (!fm.bytes || !fm.rows.length) return;
+  fm.busy = true; fm.status = 'Making the filled PDF…'; renderForms();
+  try {
+    await loadScript(PDFLIB);
+    const doc = await PDFLib.PDFDocument.load(fm.bytes, { ignoreEncryption: true });
+    if (fm.kind === 'fields') {
+      const form = doc.getForm();
+      for (const r of fm.rows) { const v = fmSafe(r.value); const meta = fm.fields.find(f => f.name === r.name); if (!meta) continue;
+        try {
+          if (meta.type === 'text') form.getTextField(r.name).setText(v);
+          else if (meta.type === 'checkbox') { const cb = form.getCheckBox(r.name); /^(true|yes|x|1|checked)$/i.test(v.trim()) ? cb.check() : cb.uncheck(); }
+          else if (meta.type === 'choice') { const f = form.getField(r.name); if (meta.options.includes(v)) f.select(v); }
+          else if (meta.type === 'radio') { if (meta.options.includes(v)) form.getRadioGroup(r.name).select(v); }
+        } catch (e) {}
+      }
+      try { form.updateFieldAppearances(await doc.embedFont(PDFLib.StandardFonts.Helvetica)); } catch (e) {}
+    } else {
+      const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica); const pages = doc.getPages();
+      for (const r of fm.rows) { const pg = pages[r.page - 1]; if (!pg) continue; const v = fmSafe(r.value); if (!v.trim()) continue;
+        try { pg.drawText(v, { x: r.x, y: r.y, size: r.size, font, color: PDFLib.rgb(0.05, 0.1, 0.45) }); } catch (e) {} }
+    }
+    const out = await doc.save();
+    const name = fm.name.replace(/\.pdf$/i, '') + ' - filled.pdf';
+    const blob = new Blob([out], { type: 'application/pdf' });
+    if (downloads) await downloads.save({ filename: name, data: blob }); else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+    fm.status = 'Downloaded “' + name + '”. Open it and check every value before you sign or send it.';
+  } catch (e) { fm.status = 'Could not make the filled PDF.'; }
+  fm.busy = false; renderForms();
+}
+function renderForms() {
+  const el = $('fmPanel'); if (!el) return;
+  el.hidden = mode !== 'forms'; if (el.hidden) return;
+  el.innerHTML = `<div class="emg-head"><b>Fill a PDF form</b>${fm.name ? `<span class="nyc-msg">${esc(fm.name)}</span>` : ''}</div>
+    <div class="cal-box"><h3>1. Upload a blank PDF form</h3><p>Any form: a lease rider, an application, a DHCR or HPD form, a vendor W-9, an insurance certificate request. It works best with fillable PDFs.</p>
+      <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${fm.name ? 'Choose another PDF' : 'Choose PDF'}<input type="file" id="fmFile" accept="application/pdf,.pdf" hidden></label></div></div>
+    <div class="cal-box"><h3>2. What should go in it?</h3><p>Type the details (tenant, unit, dates, amounts). Claude also uses the documents in your Library, the current building${mcp ? ' and your Outlook' : ''}. Nothing is guessed: missing items are left blank.</p>
+      <textarea id="fmInfo" rows="4" placeholder="Example: Tenant Maria Lopez, apt 5B, lease start 12/1/2026, rent $3,250, security $3,250">${esc(fm.info)}</textarea>
+      <div class="cal-btns"><button class="nyc-btn" type="button" id="fmFill"${!fm.bytes || fm.busy ? ' disabled' : ''}>Fill with Claude</button></div></div>
+    ${fm.status ? `<p class="nyc-msg">${esc(fm.status)}</p>` : ''}
+    ${fm.rows.length ? `<div class="cal-box"><h3>3. Check the values</h3>
+      <div class="fm-rows">${fm.rows.map((r, i) => `<label title="${esc(r.source ? 'From: ' + r.source : '')}">${esc(r.label || r.name || '')}${fm.kind === 'flat' ? ` <small>p${r.page}</small>` : ''}</label><input data-fm="${i}" value="${esc(r.value)}"><small class="fm-src">${esc(r.source || '')}</small>`).join('')}</div>
+      <div class="cal-btns"><button class="nyc-btn" type="button" id="fmDown"${fm.busy ? ' disabled' : ''}>Download filled PDF</button></div></div>` : ''}`;
+}
+$('fmPanel').addEventListener('change', e => { if (e.target.id === 'fmFile' && e.target.files[0]) fmOpen(e.target.files[0]); });
+$('fmPanel').addEventListener('input', e => { if (e.target.id === 'fmInfo') fm.info = e.target.value.slice(0, 5000); if (e.target.dataset.fm != null && fm.rows[e.target.dataset.fm]) fm.rows[e.target.dataset.fm].value = e.target.value; });
+$('fmPanel').addEventListener('click', e => { if (e.target.closest('#fmFill')) fmFill(); if (e.target.closest('#fmDown')) fmDownload(); });
 
 /* ---------- Start ---------- */
 renderNav(); setMode('desk'); setSendState(); renderLibrary();
