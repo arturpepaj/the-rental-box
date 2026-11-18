@@ -928,7 +928,15 @@ const SECTIONS = [
   { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts. Send and Roar here also look up the NYC code and find manufacturer manuals and spec sheets.', samples:['What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
-  { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident.', samples:['Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
+  { key:'emergency', title:'Emergency Prep', desc:'What to do in a fire, flood, medical emergency, power outage or other building incident, and how to recover after a fire.',
+    guide:`Building recovery after a fire. Include these steps in every answer about a fire or fire damage (after the usual life-safety steps), in this order:
+1. Call a water and fire mitigation vendor right away when the Fire Department used water to put out the fire. They remove water, dry the building and prevent mold.
+2. Call a contractor (or the mitigation vendor) to order plywood and board up the broken or removed windows.
+3. Light panel: on at least one window in every room, the plywood must have a cut-out about 2 feet x 1 feet with plexiglass installed, so daylight comes in. The mitigation contractor should do this. Check that they actually did it.
+4. Tell the vendor how many apartments you expect to be vacant, so they bring keycode locks for those doors. Do not rely on regular keys. Keycode locks make access easy for inspections (FDNY, DOB, HPD, insurance adjuster, contractors) without handing out keys.
+5. Call the American Red Cross (1-800-RED-CROSS, 1-800-733-2767) to help relocate the displaced residents.
+These are the manager's own procedure: present them as the building's steps.`,
+    samples:['What do we do after a fire?','Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
 ];
 const byKey = Object.fromEntries(SECTIONS.map(s => [s.key, s]));
 function deskName(first) { byKey.desk.title = first ? `${first}’s Desk` : 'Manager’s Desk'; }
@@ -1296,7 +1304,7 @@ function instructions(context, withEmail) {
   const bld = $('propertyName').value.trim();
   return `You are ToolBox for Rentals, an assistant for a residential property manager in New York.
 Building: ${bld || 'not given'}. Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
-Current section: ${sec.title}. ${sec.desc}
+Current section: ${sec.title}. ${sec.desc}${sec.guide ? '\n' + sec.guide : ''}
 
 How to answer:
 - Use the documents below first. After each fact taken from a document, name it in brackets, like [Elevator contract.pdf].
