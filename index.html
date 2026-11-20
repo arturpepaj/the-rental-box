@@ -228,6 +228,9 @@ header {
 }
 .tab-drop:hover, .tab-drop.dragover { border-color: var(--ask); background: rgba(196,160,126,0.08); color: var(--ink); }
 .tab-note { font-size: 11.5px; color: var(--subtle); max-width: 360px; line-height: 1.5; }
+.tab-drop.big { max-width: 480px; min-height: 120px; padding: 28px 20px; font-size: 15px; font-weight: 700; background: var(--ask); color: var(--on-ask); border: 2px dashed rgba(26,23,20,0.35); border-radius: 14px; box-shadow: 0 6px 20px rgba(196,160,126,0.18); }
+.tab-drop.big svg { width: 22px; height: 22px; }
+.tab-drop.big:hover, .tab-drop.big.dragover, .center.drag-on .tab-drop.big { background: var(--ask-hover); color: var(--on-ask); border-color: rgba(26,23,20,0.55); }
 .msg { display: flex; flex-direction: column; gap: 6px; }
 .msg.user { align-items: flex-end; }
 .bubble { font-size: 14.5px; line-height: 1.6; max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
@@ -2510,6 +2513,7 @@ function setMode(key) {
   $('yardiNote').hidden = !s.yardi;
   $('budgetNote').hidden = key !== 'budgeting';
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
+  $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
