@@ -862,6 +862,7 @@ header {
             <span id="tabDropLabel">Drop a file here or click to upload</span>
           </button>
           <p class="yardi-note" id="yardiNote" hidden><b>Yardi or AppFolio data:</b> the Yardi Virtuoso connector reads your Yardi Voyager data in Claude with your normal Yardi login. It needs Yardi’s <b>Virtuoso Enterprise</b> package. Ask IT or your Yardi administrator to turn it on.<br>This also works with <b>AppFolio</b>: connect <b>AppFolio Realm-X</b> with your AppFolio login.<br>Connect both in claude.ai Settings → Connectors.</p>
+          <p class="yardi-note" id="budgetNote" hidden><b>No AI property management software?</b> You can still run budgets and variance reports. Upload your GL ledgers, proposals, prior budgets, financial statements and any other files you think help (invoices, contracts, bank statements). Add them to the Library on the left, or drop them in this tab.</p>
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
         <div id="nycPanel" class="nyc" hidden></div>
@@ -2490,6 +2491,7 @@ function setMode(key) {
   $('askTitle').textContent = s.title;
   $('askSub').textContent = s.desc;
   $('yardiNote').hidden = !s.yardi;
+  $('budgetNote').hidden = key !== 'budgeting';
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
