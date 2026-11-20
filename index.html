@@ -623,6 +623,7 @@ header {
 .bld-add.ghost2:hover { color: var(--ask); border-color: var(--ask); }
 .yardi-note { max-width: 560px; margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink); background: rgba(196,160,126,.1); border: 1px solid rgba(196,160,126,.45); border-radius: 10px; padding: 9px 12px; text-align: left; }
 .yardi-note b { color: var(--ask); font-weight: 600; }
+.yardi-note a { color: var(--ask); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .yardi-note[hidden], .hero.compact .yardi-note { display: none; }
 .donate-link { color: var(--ask); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 .donate-link:hover { color: var(--ask-hover); text-decoration: underline; }
@@ -893,6 +894,7 @@ header {
           </button>
           <p class="yardi-note" id="yardiNote" hidden><b>Yardi or AppFolio data:</b> the Yardi Virtuoso connector reads your Yardi Voyager data in Claude with your normal Yardi login. It needs Yardi’s <b>Virtuoso Enterprise</b> package. Ask IT or your Yardi administrator to turn it on.<br>This also works with <b>AppFolio</b>: connect <b>AppFolio Realm-X</b> with your AppFolio login.<br>Connect both in claude.ai Settings → Connectors.</p>
           <p class="yardi-note" id="budgetNote" hidden><b>No AI property management software?</b> You can still run budgets and variance reports. Upload your GL ledgers, proposals, prior budgets, financial statements and any other files you think help (invoices, contracts, bank statements). Add them to the Library on the left, or drop them in this tab.</p>
+          <p class="yardi-note" id="mechLink" hidden><b>Learn:</b> <a href="https://www.youtube.com/watch?v=78599TkCZSc" target="_blank" rel="noopener">How a combustion boiler works (video) ↗</a></p>
           <p class="tab-note" id="tabNote">Upload a document here to ask about it in this section only. It is not saved to the Library.</p>
         </div>
         <div id="nycPanel" class="nyc" hidden></div>
@@ -2524,6 +2526,7 @@ function setMode(key) {
   $('askSub').textContent = s.desc;
   $('yardiNote').hidden = !s.yardi;
   $('budgetNote').hidden = key !== 'budgeting';
+  $('mechLink').hidden = key !== 'mechanical';
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
