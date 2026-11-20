@@ -664,7 +664,7 @@ header {
 .crt-groups { display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow: auto; }
 .crt-g { display: grid; grid-template-columns: 18px 110px 1fr auto; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); padding: 5px 8px; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
 .crt-t { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
-.crt-non_rent .crt-t, .crt-deposit .crt-t { color: #e08a6a; } .crt-unclear .crt-t, .crt-opening .crt-t { color: #e0b56a; } .crt-rent .crt-t, .crt-rent_credit .crt-t { color: #7fc79a; }
+.crt-non_rent .crt-t, .crt-deposit .crt-t, .crt-other_payment .crt-t { color: #e08a6a; } .crt-payment .crt-t { color: #7fc79a; } .crt-unclear .crt-t, .crt-opening .crt-t { color: #e0b56a; } .crt-rent .crt-t, .crt-rent_credit .crt-t { color: #7fc79a; }
 .crt-a { font-variant-numeric: tabular-nums; }
 .crt-table { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
 .crt-table table { width: 100%; border-collapse: collapse; font-size: 12.5px; color: var(--ink); }
@@ -3368,7 +3368,7 @@ setInterval(updateClock, 30000); updateClock();
 const crt = { open: true, file: '', tenant: '', apt: '', status: '', busy: false, rows: [], groups: {}, warn: [] };
 const crtMoney = n => (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const crtNum = v => { if (typeof v === 'number') return isFinite(v) ? v : 0; const s = String(v == null ? '' : v).replace(/[$,\s]/g, ''); const neg = /^\(.*\)$/.test(s); const n = parseFloat(s.replace(/[()]/g, '')); return isFinite(n) ? (neg ? -n : n) : 0; };
-const CRT_TYPES = { rent: 'Rent', payment: 'Payment', rent_credit: 'Rent credit', non_rent: 'Not rent', deposit: 'Security deposit', opening: 'Prior balance', unclear: 'Unclear' };
+const CRT_TYPES = { rent: 'Rent', payment: 'Rent payment', rent_credit: 'Rent credit', other_payment: 'Payment not for rent', non_rent: 'Not rent', deposit: 'Security deposit', opening: 'Prior balance', unclear: 'Unclear' };
 function crtGroupKey(r) { return r.type + '|' + String(r.desc || '').toLowerCase().replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b/g, ' ').replace(/[0-9#\/.\-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); }
 async function crtExtract(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !/^,+$/.test(l));
@@ -3386,7 +3386,8 @@ For each line give:
 - kind: "charge" (adds to what the tenant owes) or "credit" (lowers it: payments, concessions, reversals of charges). A returned or bounced payment is a "charge" with type "payment" (it undoes a payment).
 - type, one of:
   "rent": monthly rent, base rent, legal regulated rent, preferential rent, lease rent, and rent increases that are part of the rent (MCI, IAI, rent guidelines increase).
-  "payment": any money received for the tenant: tenant payments, money orders, checks, ACH, ERAP, Section 8 or HAP, CityFHEPS, FHEPS, DSS or HRA one-shot deal, charity. Also a bounced or returned payment (as kind "charge").
+  "payment": money received for rent: tenant rent payments, money orders, checks, ACH, ERAP, Section 8 or HAP, CityFHEPS, FHEPS, DSS or HRA one-shot deal, charity. Use this when the ledger does not say the payment was for something else. Also a bounced or returned rent payment (as kind "charge").
+  "other_payment": a payment the ledger clearly marks as paid for something that is not rent: legal fees, late fees, utilities, damages, parking, storage, a security deposit or another fee. Also a bounced or returned payment of that kind (as kind "charge").
   "rent_credit": rent concession, rent abatement, rent credit, write-off of rent, reversal of a rent charge.
   "non_rent": everything that is not rent: late fees, legal or attorney fees, court costs, NSF or returned check fees, utilities (electric, gas, water) unless the ledger says they are part of rent, air conditioner charges, parking, storage, amenity, pet, damages, repairs, keys or fobs, move-in, application, washer or dryer fees, and reversals of those fees (as kind "credit").
   "deposit": security deposit charged, received or applied.
@@ -3417,7 +3418,7 @@ async function crtOpen(file) {
     crt.rows = await crtExtract(r.text);
     crt.groups = {};
     for (const x of crt.rows) { const k = crtGroupKey(x); if (!crt.groups[k]) crt.groups[k] = { type: x.type, desc: x.desc, n: 0, total: 0, on: x.type === 'rent' || x.type === 'payment' || x.type === 'rent_credit' }; const g = crt.groups[k]; g.n++; g.total += x.kind === 'charge' ? x.amount : -x.amount; }
-    crt.status = crt.rows.length ? `Read ${crt.rows.length} lines. Check the charge types below. Only rent stays in. All payments count toward rent.` + (r.note ? ' ' + r.note + '.' : '') : 'No ledger lines were found in this file.';
+    crt.status = crt.rows.length ? `Read ${crt.rows.length} lines. Check the charge types below. Only rent and payments toward rent stay in.` + (r.note ? ' ' + r.note + '.' : '') : 'No ledger lines were found in this file.';
   } catch (e) { crt.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (e && e.message) || 'Could not read this ledger.'; }
   crt.busy = false; renderCrt();
 }
@@ -3425,51 +3426,41 @@ function crtBuild() {
   const kept = [], removed = []; let bal = 0, rent = 0, paid = 0, removedTotal = 0;
   for (const x of crt.rows) {
     const g = crt.groups[crtGroupKey(x)]; const signed = x.kind === 'charge' ? x.amount : -x.amount;
-    if (x.type === 'payment' || (g && g.on)) {
+    if (g && g.on) {
       bal += signed;
       if (signed > 0) rent += signed; else paid += -signed;
       kept.push({ date: x.date, desc: x.desc, charge: signed > 0 ? signed : 0, credit: signed < 0 ? -signed : 0, bal: Math.round(bal * 100) / 100 });
-    } else { removed.push({ date: x.date, desc: x.desc, type: CRT_TYPES[x.type], amount: signed }); removedTotal += signed; }
+    } else { removed.push({ date: x.date, desc: x.desc, type: CRT_TYPES[x.type], amount: signed }); if (x.type !== 'payment' && x.type !== 'other_payment') removedTotal += signed; }
   }
   return { kept, removed, rent, paid, owed: Math.round(bal * 100) / 100, removedTotal };
 }
 function crtTitle() { return ['Rent ledger', crt.tenant, crt.apt ? 'Apt ' + crt.apt : '', $('propertyName').value.trim()].filter(Boolean).join(' - '); }
 async function crtExcel() {
   const L = crtBuild(); await loadScript(LIBS.xlsx);
-  const aoa = [[crtTitle()], ['Rent and payments only. Fees and other charges are removed.'], [], ['Date', 'Description', 'Rent charged', 'Paid / credit', 'Balance']];
-  for (const r of L.kept) aoa.push([r.date, r.desc, r.charge || '', r.credit || '', r.bal]);
-  aoa.push([], ['', 'Total rent charged', L.rent], ['', 'Total paid and credited', '', L.paid], ['', 'Rent owed', '', '', L.owed]);
-  const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
-  XLSX.utils.book_append_sheet(wb, ws, 'Rent ledger');
-  const aoa2 = [['Removed from the court ledger (not rent)'], ['Date', 'Description', 'Type', 'Amount']].concat(L.removed.map(r => [r.date, r.desc, r.type, r.amount])).concat([[], ['', 'Total removed', '', Math.round(L.removedTotal * 100) / 100]]);
-  const ws2 = XLSX.utils.aoa_to_sheet(aoa2); ws2['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 18 }, { wch: 14 }];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Removed charges');
+  const ws = {}; const set = (r, c, v) => { ws[XLSX.utils.encode_cell({ r, c })] = v; };
+  set(0, 0, { t: 's', v: crtTitle() }); set(1, 0, { t: 's', v: 'Rent and payments toward rent only. Fees and other charges are removed.' });
+  ['Date', 'Description', 'Rent charged', 'Paid toward rent', 'Balance'].forEach((h, c) => set(3, c, { t: 's', v: h }));
+  const first = 4; let r = first; const money = '$#,##0.00';
+  for (const x of L.kept) {
+    const xl = r + 1;
+    set(r, 0, { t: 's', v: x.date }); set(r, 1, { t: 's', v: x.desc });
+    if (x.charge) set(r, 2, { t: 'n', v: x.charge, z: money });
+    if (x.credit) set(r, 3, { t: 'n', v: x.credit, z: money });
+    set(r, 4, { t: 'n', f: r === first ? `C${xl}-D${xl}` : `E${xl - 1}+C${xl}-D${xl}`, v: x.bal, z: money });
+    r++;
+  }
+  const last = Math.max(r, first + 1); r++;
+  set(r, 1, { t: 's', v: 'Total rent charged' }); set(r, 2, { t: 'n', f: `SUM(C${first + 1}:C${last})`, v: L.rent, z: money }); r++;
+  set(r, 1, { t: 's', v: 'Total paid toward rent' }); set(r, 3, { t: 'n', f: `SUM(D${first + 1}:D${last})`, v: L.paid, z: money }); r++;
+  set(r, 1, { t: 's', v: 'Rent owed' }); set(r, 4, { t: 'n', f: `C${r - 1}-D${r}`, v: L.owed, z: money });
+  ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: 4 } });
+  ws['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 15 }, { wch: 17 }, { wch: 15 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Rent ledger');
+  const aoa2 = [['Removed from the court ledger (not rent, or not paid toward rent)'], ['Date', 'Description', 'Type', 'Amount']].concat(L.removed.map(x => [x.date, x.desc, x.type, x.amount])).concat([[], ['', 'Fees and charges removed', '', Math.round(L.removedTotal * 100) / 100]]);
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2); ws2['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 22 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Removed lines');
   const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   await crtSave(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), crtTitle() + '.xlsx');
-}
-async function crtPdf() {
-  const L = crtBuild(); await loadScript(PDFLIB);
-  const doc = await PDFLib.PDFDocument.create(); const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica); const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-  const W = 612, H = 792, M = 48; let page, y;
-  const cols = [M, M + 72, M + 300, M + 385, M + 465];
-  const right = (p, t, x, yy, f, sz) => p.drawText(t, { x: x - f.widthOfTextAtSize(t, sz), y: yy, size: sz, font: f });
-  const header = () => { page.drawText('Date', { x: cols[0], y, size: 9, font: bold }); page.drawText('Description', { x: cols[1], y, size: 9, font: bold }); right(page, 'Rent charged', cols[3] - 6, y, bold, 9); right(page, 'Paid / credit', cols[4] - 6, y, bold, 9); right(page, 'Balance', W - M, y, bold, 9); y -= 6; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: .6 }); y -= 13; };
-  const newPage = first => { page = doc.addPage([W, H]); y = H - M; if (first) { page.drawText(fmSafe(crtTitle()), { x: M, y, size: 14, font: bold }); y -= 18; page.drawText('Rent and payments only. Fees and other charges are removed.', { x: M, y, size: 9.5, font }); y -= 24; } header(); };
-  newPage(true);
-  for (const r of L.kept) {
-    if (y < M + 40) newPage(false);
-    page.drawText(fmSafe(r.date), { x: cols[0], y, size: 9, font });
-    let d = fmSafe(r.desc); while (d && font.widthOfTextAtSize(d, 9) > 220) d = d.slice(0, -1);
-    page.drawText(d, { x: cols[1], y, size: 9, font });
-    if (r.charge) right(page, crtMoney(r.charge), cols[3] - 6, y, font, 9);
-    if (r.credit) right(page, crtMoney(r.credit), cols[4] - 6, y, font, 9);
-    right(page, crtMoney(r.bal), W - M, y, font, 9); y -= 14;
-  }
-  if (y < M + 70) newPage(false);
-  y -= 6; page.drawLine({ start: { x: M, y: y + 10 }, end: { x: W - M, y: y + 10 }, thickness: .6 });
-  for (const [t, v, b] of [['Total rent charged', L.rent], ['Total paid and credited', L.paid], ['Rent owed', L.owed, true]]) { page.drawText(t, { x: cols[1], y, size: 10, font: b ? bold : font }); right(page, crtMoney(v), W - M, y, b ? bold : font, 10); y -= 15; }
-  const data = await doc.save();
-  await crtSave(new Blob([data], { type: 'application/pdf' }), crtTitle() + '.pdf');
 }
 async function crtSave(blob, name) {
   name = name.replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 120);
@@ -3479,26 +3470,24 @@ function renderCrt() {
   const el = $('crtPanel'); if (!el) return;
   el.hidden = mode !== 'arrears'; if (el.hidden) return;
   const has = crt.rows.length > 0; const L = has ? crtBuild() : null;
-  const groups = Object.entries(crt.groups).filter(([, g]) => g.type !== 'payment').sort((a, b) => Object.keys(CRT_TYPES).indexOf(a[1].type) - Object.keys(CRT_TYPES).indexOf(b[1].type));
-  const pays = Object.values(crt.groups).filter(g => g.type === 'payment');
+  const groups = Object.entries(crt.groups).sort((a, b) => Object.keys(CRT_TYPES).indexOf(a[1].type) - Object.keys(CRT_TYPES).indexOf(b[1].type));
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Rent-only ledger for Housing Court</b><button class="nyc-btn ghost" type="button" id="crtToggle">${crt.open ? 'Hide' : 'Open'}</button></div>
-    <p>In a NYC Housing Court nonpayment case you can ask only for rent. Upload the full tenant ledger (Excel, CSV or PDF). Claude takes out late fees, legal fees and other charges, keeps every payment, and gives you a rent-only ledger to bring to court.</p>
+    <p>In a NYC Housing Court nonpayment case you can ask only for rent. Upload the full tenant ledger (Excel, CSV or PDF). Claude takes out late fees, legal fees and other charges, keeps only payments toward rent, and gives you a rent-only ledger in Excel that you can change before court.</p>
     ${crt.open ? `<div class="crt-in"><input id="crtTenant" placeholder="Tenant name (optional)" value="${esc(crt.tenant)}"><input id="crtApt" placeholder="Apt (optional)" value="${esc(crt.apt)}"></div>
       <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${crt.file ? 'Upload another ledger' : 'Upload full ledger'}<input type="file" id="crtFile" accept=".xlsx,.xls,.csv,.pdf,.txt" hidden></label>${crt.file ? `<span class="nyc-msg" style="padding:0">${esc(crt.file)}</span>` : ''}</div>
       ${crt.status ? `<p class="nyc-msg">${esc(crt.status)}</p>` : ''}
-      ${has ? `<div class="crt-sum"><div><small>Rent charged</small><b>${crtMoney(L.rent)}</b></div><div><small>Paid and credited</small><b>${crtMoney(L.paid)}</b></div><div class="crt-owed"><small>Rent owed</small><b>${crtMoney(L.owed)}</b></div><div><small>Removed (not rent)</small><b>${crtMoney(L.removedTotal)}</b></div></div>
-        <h3>Charge types found</h3><p class="nyc-msg" style="padding:0">Checked items stay in the court ledger. Leave only real rent checked.${pays.length ? ` ${pays.reduce((a, g) => a + g.n, 0)} payment lines are always kept.` : ''}</p>
+      ${has ? `<div class="crt-sum"><div><small>Rent charged</small><b>${crtMoney(L.rent)}</b></div><div><small>Paid toward rent</small><b>${crtMoney(L.paid)}</b></div><div class="crt-owed"><small>Rent owed</small><b>${crtMoney(L.owed)}</b></div><div><small>Fees and charges removed</small><b>${crtMoney(L.removedTotal)}</b></div></div>
+        <h3>Charge types found</h3><p class="nyc-msg" style="padding:0">Checked items stay in the court ledger. Leave checked only rent, rent credits and payments toward rent.</p>
         <div class="crt-groups">${groups.map(([k, g]) => `<label class="crt-g crt-${g.type}"><input type="checkbox" data-crtg="${esc(k)}"${g.on ? ' checked' : ''}><span class="crt-t">${CRT_TYPES[g.type]}</span><span class="crt-d">${esc(g.desc)}${g.n > 1 ? ` <small>×${g.n}</small>` : ''}</span><span class="crt-a">${crtMoney(g.total)}</span></label>`).join('')}</div>
         ${groups.some(([, g]) => g.type === 'unclear' || g.type === 'opening') ? `<p class="nyc-msg warn" style="padding:0">Check the “Unclear” and “Prior balance” lines. A prior balance can hide old fees. If you can, upload the ledger from the month the arrears started.</p>` : ''}
-        <div class="cal-btns"><button class="nyc-btn" type="button" id="crtXlsx">Download Excel</button><button class="nyc-btn" type="button" id="crtPdf">Download PDF</button><button class="nyc-btn ghost" type="button" id="crtShow">${crt.show ? 'Hide ledger' : 'Show ledger'}</button></div>
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="crtXlsx">Download rent-only ledger (Excel)</button><button class="nyc-btn ghost" type="button" id="crtShow">${crt.show ? 'Hide ledger' : 'Show ledger'}</button></div>
         ${crt.show ? `<div class="crt-table"><table><thead><tr><th>Date</th><th>Description</th><th>Rent</th><th>Paid</th><th>Balance</th></tr></thead><tbody>${L.kept.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.desc)}</td><td>${r.charge ? crtMoney(r.charge) : ''}</td><td>${r.credit ? crtMoney(r.credit) : ''}</td><td>${crtMoney(r.bal)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-        <p class="fh-legal">Check every line against the original ledger before you use it. Ask your attorney if MCI, IAI or other increases belong in the legal rent. This helps you prepare; it is not legal advice.</p>` : ''}` : ''}</div>`;
+        <p class="fh-legal">The Excel file has formulas: if you change, add or delete a line, the balance and totals update. Check every line against the original ledger before you use it. Ask your attorney if MCI, IAI or other increases belong in the legal rent. This helps you prepare; it is not legal advice.</p>` : ''}` : ''}</div>`;
 }
 $('crtPanel').addEventListener('click', e => {
   if (e.target.closest('#crtToggle')) { crt.open = !crt.open; renderCrt(); }
   if (e.target.closest('#crtShow')) { crt.show = !crt.show; renderCrt(); }
   if (e.target.closest('#crtXlsx')) crtExcel().catch(() => { crt.status = 'Could not make the Excel file.'; renderCrt(); });
-  if (e.target.closest('#crtPdf')) crtPdf().catch(() => { crt.status = 'Could not make the PDF.'; renderCrt(); });
 });
 $('crtPanel').addEventListener('change', e => {
   if (e.target.id === 'crtFile' && e.target.files[0]) crtOpen(e.target.files[0]);
