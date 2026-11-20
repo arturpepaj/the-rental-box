@@ -645,6 +645,16 @@ header {
 .emg[hidden] { display: none; }
 .tab-drop[hidden], .tab-note[hidden] { display: none !important; }
 .inb-card { gap: 6px; }
+.fh-box textarea { width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13.5px/1.5 var(--sans); padding: 10px 12px; resize: vertical; }
+.fh-res { border-radius: 10px; padding: 10px 12px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; color: var(--ink); }
+.fh-res p { margin: 0; }
+.fh-ok { border-color: rgba(80,170,110,.6); background: rgba(80,170,110,.08); }
+.fh-mid { border-color: rgba(230,170,70,.6); background: rgba(230,170,70,.08); }
+.fh-bad { border-color: rgba(220,90,70,.7); background: rgba(220,90,70,.08); }
+.fh-flag { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.fh-flag > div { font-weight: 600; }
+.fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
+.fh-legal { font-size: 11.5px; color: var(--subtle); }
 .inb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .inb-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .inb-colh { margin: 0; font: 400 20px var(--serif); color: #fff; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; background: var(--inb-c); position: sticky; top: 0; z-index: 2; }
@@ -857,6 +867,7 @@ header {
         <div id="nycPanel" class="nyc" hidden></div>
         <div id="calPanel" class="cal" hidden></div>
         <div id="emgPanel" class="emg" hidden></div>
+        <div id="fhPanel" class="emg" hidden></div>
         <div id="inbPanel" class="emg" hidden></div>
         <div id="fmPanel" class="emg" hidden></div>
         <div id="messages" class="thread-inner" style="max-width:none;width:100%"></div>
@@ -970,7 +981,7 @@ const SECTIONS = [
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
-  { key:'lease', title:'Leases & Regulations', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
+  { key:'lease', title:'Leases & Regulations', guide: () => FH_RULES + '\nWhen a question touches ads, screening, applications, fees, accommodations or how to treat an applicant or tenant, check it against these fair housing rules and flag any problem.', desc:'Building regulations, occupancy guidelines and resident policies. Includes a Fair Housing check for ads, emails and screening rules. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Is this listing ad OK under fair housing laws?','Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
   { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
   { key:'legal', title:'Legal Check', desc:'Leases and riders, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Can the elevator vendor charge us this extra fee under the contract?'] },
   { key:'budgeting', yardi:true, title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month. Notes come only from invoices, emails, Teams, SharePoint or notes. Guesses are marked. Download to Excel under the report.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
@@ -2487,6 +2498,7 @@ function setMode(key) {
   if (typeof renderCal === 'function') { try { renderCal(); } catch (e) {} }
   if (typeof renderEmg === 'function') { try { renderEmg(); } catch (e) {} }
   if (typeof renderInbox === 'function') { try { renderInbox(); } catch (e) {} }
+  if (typeof renderFh === 'function') { try { renderFh(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -3332,6 +3344,75 @@ function updateClock() {
 }
 setInterval(updateClock, 30000); updateClock();
 
+/* ---------- Fair Housing check ---------- */
+const FH_RULES = `Fair housing laws to check against (New York City rentals):
+- Federal Fair Housing Act: race, color, religion, sex (incl. sexual orientation and gender identity), national origin, disability, familial status (children). No discriminatory ads or statements (42 U.S.C. 3604(c)). Reasonable accommodations and modifications for disability. Service and support animals are not pets.
+- NYS Human Rights Law (Executive Law 296): adds age, marital status, military status, sexual orientation, gender identity, lawful source of income (vouchers, Section 8, public assistance), arrest or sealed records, citizenship and immigration status, lawful occupation in some cases.
+- NYC Human Rights Law (Admin Code 8-107): adds lawful source of income (incl. CityFHEPS, Section 8), immigration status, partnership status, presence of children, lawful occupation, height and weight, and protects from discrimination based on arrest or conviction record under the Fair Chance for Housing Act (Local Law 24 of 2023: criminal history can be checked only after a conditional offer, with limits). Applies to buildings with more than 3 units, plus ads for any size.
+- NY rental application rules (Real Property Law 238-a, Housing Stability and Tenant Protection Act 2019): application and screening fee max $20, no fee if the applicant gives a recent background check; no tenant blacklists (housing court history). Security deposit max one month.
+- Phrases that are red flags: "no Section 8", "no vouchers", "no programs", "must have income of 40x" applied to voucher holders (income rules must count the voucher), "perfect for young professionals", "no kids", "adults only", "mature", "Christian home", "English speakers only", "no wheelchairs", "able-bodied", "must be employed" (source of income), "no felons" or "no criminal record", "US citizens only", "ideal for single person", asking about disability or medications, pet fees for service or support animals.`;
+const fh = { open: false, text: '', busy: false, status: '', result: null };
+function fhTools(onStatus) {
+  const tools = [];
+  for (const t of (legalTools || []).filter(t => t.server === 'Legal Data Hunter')) tools.push({ name: t.name, description: t.description, inputSchema: t.inputSchema,
+    async execute(input, ctx) { onStatus(t.status); try { return textOf(await mcp.callTool(t.server, t.tool, input, { signal: ctx.signal, cache: false })).slice(0, 20000); } catch (e) { throw new Error(mcpMsg(e)); } } });
+  if (mechReady) tools.push({ name: 'fair_housing_lookup', description: 'Search official fair housing guidance: HUD, NYC Commission on Human Rights, NYS Division of Human Rights, NYC Admin Code 8-107, NYS Executive Law 296. Returns sources with links.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+    async execute(input, ctx) { const q = String(input.query || '').slice(0, 300); onStatus('Checking fair housing guidance…');
+      return mechWeb('web_search', { objective: `Find official fair housing law or guidance that answers: ${q}. Prefer nyc.gov/cchr, dhr.ny.gov, hud.gov, codelibrary.amlegal.com and law.cornell.edu.`, search_queries: [`${q} site:nyc.gov`, `${q} site:dhr.ny.gov`, `${q} site:hud.gov`, `${q} fair housing New York`] }, ctx.signal); } });
+  return tools;
+}
+async function fhRun(text, kind, onStatus) {
+  if (!sample) throw new Error('Claude is not available on this view.');
+  if (mcp) { try { await getLegalTools(); } catch (e) {} try { await getMechTools(); } catch (e) {} }
+  const tools = fhTools(onStatus);
+  onStatus('Checking for fair housing problems…');
+  const prompt = `You are a fair housing compliance checker for a NYC residential property manager. Check the ${kind || 'text'} below for anything that could break federal, New York State or New York City fair housing law: wording in ads, emails or replies, screening criteria, application steps, fees, and how people are treated.
+${FH_RULES}
+${tools.length ? 'Use the tools to confirm the exact rule and get an official link for each problem you flag (at most 3 lookups).' : 'No research tools are connected: use the rules above and say links could not be checked.'}
+Be practical: do not flag normal, neutral wording. Quote the exact words that are a problem.
+Reply with only JSON, no other text:
+{"verdict": "ok" or "review" or "problem", "summary": "1 or 2 short sentences in simple English", "flags": [{"quote": "exact words", "issue": "why it is a problem, short", "law": "law and section", "link": "official URL or empty", "fix": "neutral wording to use instead"}]}
+
+Text to check:
+"""
+${String(text).slice(0, 20000)}
+"""`;
+  const r = await sample([{ role: 'user', content: prompt }], { tools, modelTier: 'default', cache: false });
+  const raw = String(r.text || ''); const m = raw.match(/\{[\s\S]*\}/);
+  let j = null; try { j = JSON.parse(m ? m[0] : raw); } catch (e) {}
+  if (!j) return { verdict: 'review', summary: raw.slice(0, 600) || 'The check did not return a result. Try again.', flags: [] };
+  j.flags = Array.isArray(j.flags) ? j.flags.slice(0, 12) : [];
+  return j;
+}
+function fhResultHtml(res) {
+  if (!res) return '';
+  const v = res.verdict === 'ok' ? ['ok', 'No fair housing problems found'] : res.verdict === 'problem' ? ['bad', 'Fair housing problem found'] : ['mid', 'Please review'];
+  return `<div class="fh-res fh-${v[0]}"><b>${v[1]}</b>${res.summary ? `<p>${esc(res.summary)}</p>` : ''}
+    ${res.flags.map(f => `<div class="fh-flag"><div>“${esc(f.quote || '')}”</div><p>${esc(f.issue || '')}${f.law ? ` <small>(${esc(f.law)})</small>` : ''}</p>${f.fix ? `<p><b>Say instead:</b> ${esc(f.fix)}</p>` : ''}${/^https?:\/\//.test(f.link || '') ? `<a href="${esc(f.link)}" target="_blank" rel="noopener">Source</a>` : ''}</div>`).join('')}
+    <p class="fh-legal">This is a quick check to help you, not legal advice. For anything important, confirm with your attorney.</p></div>`;
+}
+function renderFh() {
+  const el = $('fhPanel'); if (!el) return;
+  el.hidden = mode !== 'lease'; if (el.hidden) return;
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Fair Housing check</b><button class="nyc-btn ghost" type="button" id="fhToggle">${fh.open ? 'Hide' : 'Open'}</button></div>
+    <p>Paste a listing ad, an email, a reply or your screening rules. Claude checks it against federal, New York State and NYC fair housing laws and shows what to change.</p>
+    ${fh.open ? `<textarea id="fhText" rows="5" placeholder="Example: Sunny 2BR, perfect for young professionals. No vouchers. Income 40x rent.">${esc(fh.text)}</textarea>
+      <div class="cal-btns"><button class="nyc-btn" type="button" id="fhGo"${fh.busy ? ' disabled' : ''}>Check</button>${fh.status ? `<span class="nyc-msg" style="padding:0">${esc(fh.status)}</span>` : ''}</div>
+      ${fhResultHtml(fh.result)}` : ''}</div>`;
+}
+$('fhPanel').addEventListener('click', async e => {
+  if (e.target.closest('#fhToggle')) { fh.open = !fh.open; renderFh(); return; }
+  if (e.target.closest('#fhGo')) {
+    if (!fh.text.trim()) { fh.status = 'Paste some text first.'; renderFh(); return; }
+    fh.busy = true; fh.result = null; renderFh();
+    try { fh.result = await fhRun(fh.text, 'text', s => { fh.status = s; renderFh(); }); fh.status = ''; }
+    catch (err) { fh.status = err && err.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (err && err.message) || 'The check failed. Try again.'; }
+    fh.busy = false; renderFh();
+  }
+});
+$('fhPanel').addEventListener('input', e => { if (e.target.id === 'fhText') fh.text = e.target.value.slice(0, 20000); });
+
 /* ---------- Inbox Replies (Outlook and Gmail) ---------- */
 const GM = 'Gmail';
 const inb = { loading: false, loaded: false, src: { outlook: { items: [], msg: '', ok: false }, gmail: { items: [], msg: '', ok: false } }, drafts: {}, hints: {} };
@@ -3422,6 +3503,7 @@ Rules:
 - If you list items, use numbered items with no blank lines between them.
 - Put one blank line before "Thank you," and end there. Never add a name, title, phone or signature.
 - Never invent facts, dates, prices or promises. If the manager must fill something in, write it in [brackets], like [day and time].
+- Follow fair housing laws (federal, NYS and NYC): never mention or treat people differently because of race, color, religion, national origin, sex, gender identity, sexual orientation, disability, age, children, marital status, source of income (like Section 8 or vouchers), immigration status or arrest and conviction record. If the email asks for something that could break these laws, do not agree to it and say so in the note.
 - After the reply, write a line with only --- and then one short note for the manager: what to check before sending, and say if an attachment could only be partly read. If nothing, write "Nothing to check."
 
 ${src === 'gmail' ? 'Gmail thread' : 'Email'}:
@@ -3447,7 +3529,7 @@ function inbCard(m, key) {
       <div class="cal-btns"><button class="nyc-btn" type="button" data-suggest="${key}"${d.busy ? ' disabled' : ''}>${d.text ? 'Try again' : 'Suggest a reply'}</button>${m.link ? `<a class="nyc-btn ghost" href="${esc(m.link)}" target="_blank" rel="noopener">Open in ${app}</a>` : ''}${d.status ? `<span class="nyc-msg" style="padding:0">${esc(d.status)}</span>` : ''}</div>
       ${d.text ? `<textarea class="inb-draft" data-draft="${key}" rows="${Math.min(16, d.text.split('\n').length + 2)}">${esc(d.text)}</textarea>
         <p class="nyc-msg warn" style="padding:0">Double check this reply. You are responsible for fully understanding it before you send it.</p>
-        <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${key}">Copy</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>` : ''}
+        <div class="cal-btns"><button class="nyc-btn" type="button" data-copy="${key}">Copy</button><button class="nyc-btn ghost" type="button" data-fh="${key}"${d.fhBusy ? ' disabled' : ''}>${d.fhBusy ? 'Checking…' : 'Fair Housing check'}</button>${d.note ? `<span class="nyc-msg" style="padding:0"><b>Check:</b> ${esc(d.note)}</span>` : ''}</div>${d.fhStatus ? `<p class="nyc-msg" style="padding:0">${esc(d.fhStatus)}</p>` : ''}${fhResultHtml(d.fh)}` : ''}
     </div>`;
 }
 function inbColumn(src, title) {
@@ -3475,6 +3557,8 @@ function renderInbox() {
 $('inbPanel').addEventListener('click', e => {
   if (e.target.closest('#inbRefresh')) { inbLoad(); return; }
   const s = e.target.closest('[data-suggest]'); if (s) { inbSuggest(s.dataset.suggest); return; }
+  const f = e.target.closest('[data-fh]'); if (f) { const d = inb.drafts[f.dataset.fh]; if (!d || !d.text) return; d.fhBusy = true; d.fh = null; renderInbox();
+    fhRun(d.text, 'suggested email reply', st => { d.fhStatus = st; renderInbox(); }).then(r => { d.fh = r; }, err => { d.fh = null; d.fhStatus = (err && err.message) || 'The check failed.'; }).then(() => { d.fhBusy = false; if (d.fh) d.fhStatus = ''; renderInbox(); }); return; }
   const c = e.target.closest('[data-copy]'); if (c) { const t = $('inbPanel').querySelector(`[data-draft="${c.dataset.copy}"]`); inbCopy(t ? t.value : '', c); }
 });
 $('inbPanel').addEventListener('input', e => {
