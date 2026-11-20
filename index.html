@@ -655,6 +655,22 @@ header {
 .fh-flag > div { font-weight: 600; }
 .fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
+.crt-in { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.crt-in input { height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 10px; }
+.crt-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.crt-sum div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.crt-sum small { font-size: 11.5px; color: var(--muted); } .crt-sum b { font: 600 16px var(--sans); color: var(--ink); }
+.crt-sum .crt-owed { border-color: rgba(80,170,110,.6); background: rgba(80,170,110,.08); }
+.crt-groups { display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow: auto; }
+.crt-g { display: grid; grid-template-columns: 18px 110px 1fr auto; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); padding: 5px 8px; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+.crt-t { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.crt-non_rent .crt-t, .crt-deposit .crt-t { color: #e08a6a; } .crt-unclear .crt-t, .crt-opening .crt-t { color: #e0b56a; } .crt-rent .crt-t, .crt-rent_credit .crt-t { color: #7fc79a; }
+.crt-a { font-variant-numeric: tabular-nums; }
+.crt-table { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.crt-table table { width: 100%; border-collapse: collapse; font-size: 12.5px; color: var(--ink); }
+.crt-table th, .crt-table td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.crt-table td:nth-child(n+3), .crt-table th:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 700px) { .crt-sum { grid-template-columns: repeat(2, 1fr); } .crt-g { grid-template-columns: 18px 1fr auto; } .crt-t { display: none; } }
 .inb-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .inb-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .inb-colh { margin: 0; font: 400 20px var(--serif); color: #fff; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; background: var(--inb-c); position: sticky; top: 0; z-index: 2; }
@@ -868,6 +884,7 @@ header {
         <div id="nycPanel" class="nyc" hidden></div>
         <div id="calPanel" class="cal" hidden></div>
         <div id="emgPanel" class="emg" hidden></div>
+        <div id="crtPanel" class="emg" hidden></div>
         <div id="fhPanel" class="emg" hidden></div>
         <div id="inbPanel" class="emg" hidden></div>
         <div id="fmPanel" class="emg" hidden></div>
@@ -983,7 +1000,7 @@ const SECTIONS = [
   { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
   { key:'lease', title:'Leases & Regulations', guide: () => FH_RULES + '\nWhen a question touches ads, screening, applications, fees, accommodations or how to treat an applicant or tenant, check it against these fair housing rules and flag any problem.', desc:'Building regulations, occupancy guidelines and resident policies. Includes a Fair Housing check for ads, emails and screening rules. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library).', samples:['Is this listing ad OK under fair housing laws?','Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
-  { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso.', samples:['Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
+  { key:'arrears', yardi:true, title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso. Includes a rent-only ledger maker for Housing Court.', samples:['Which charges can I ask for in Housing Court?','Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
   { key:'legal', title:'Legal Check', desc:'Leases and riders, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Can the elevator vendor charge us this extra fee under the contract?'] },
   { key:'budgeting', yardi:true, title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month. Notes come only from invoices, emails, Teams, SharePoint or notes. Guesses are marked. Download to Excel under the report.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
   { key:'vendors', yardi:true, title:'Vendors & Invoices', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates.', samples:['Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
@@ -2501,6 +2518,7 @@ function setMode(key) {
   if (typeof renderEmg === 'function') { try { renderEmg(); } catch (e) {} }
   if (typeof renderInbox === 'function') { try { renderInbox(); } catch (e) {} }
   if (typeof renderFh === 'function') { try { renderFh(); } catch (e) {} }
+  if (typeof renderCrt === 'function') { try { renderCrt(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -3345,6 +3363,148 @@ function updateClock() {
   catch (e) { $('clock').textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 }
 setInterval(updateClock, 30000); updateClock();
+
+/* ---------- Rent-only court ledger (NYC Housing Court) ---------- */
+const crt = { open: true, file: '', tenant: '', apt: '', status: '', busy: false, rows: [], groups: {}, warn: [] };
+const crtMoney = n => (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const crtNum = v => { if (typeof v === 'number') return isFinite(v) ? v : 0; const s = String(v == null ? '' : v).replace(/[$,\s]/g, ''); const neg = /^\(.*\)$/.test(s); const n = parseFloat(s.replace(/[()]/g, '')); return isFinite(n) ? (neg ? -n : n) : 0; };
+const CRT_TYPES = { rent: 'Rent', payment: 'Payment', rent_credit: 'Rent credit', non_rent: 'Not rent', deposit: 'Security deposit', opening: 'Prior balance', unclear: 'Unclear' };
+function crtGroupKey(r) { return r.type + '|' + String(r.desc || '').toLowerCase().replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b/g, ' ').replace(/[0-9#\/.\-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); }
+async function crtExtract(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !/^,+$/.test(l));
+  const head = lines.slice(0, 3).join('\n');
+  const chunks = []; for (let i = 0; i < lines.length; i += 140) chunks.push(lines.slice(i, i + 140).join('\n'));
+  if (chunks.length > 25) throw new Error('This ledger is very long. Upload only the months you need for the case (up to about 3,500 lines).');
+  const out = [];
+  for (let c = 0; c < chunks.length; c++) {
+    crt.status = `Reading the ledger… part ${c + 1} of ${chunks.length}`; renderCrt();
+    const j = await sample.json(`You read a NYC residential tenant ledger and list every money line in it, in order. Do not skip, merge or invent lines. Skip only headers, running balance columns and blank or summary lines (like "Total").
+For each line give:
+- date: YYYY-MM-DD (the transaction date)
+- desc: the line description, as written
+- amount: a positive number
+- kind: "charge" (adds to what the tenant owes) or "credit" (lowers it: payments, concessions, reversals of charges). A returned or bounced payment is a "charge" with type "payment" (it undoes a payment).
+- type, one of:
+  "rent": monthly rent, base rent, legal regulated rent, preferential rent, lease rent, and rent increases that are part of the rent (MCI, IAI, rent guidelines increase).
+  "payment": any money received for the tenant: tenant payments, money orders, checks, ACH, ERAP, Section 8 or HAP, CityFHEPS, FHEPS, DSS or HRA one-shot deal, charity. Also a bounced or returned payment (as kind "charge").
+  "rent_credit": rent concession, rent abatement, rent credit, write-off of rent, reversal of a rent charge.
+  "non_rent": everything that is not rent: late fees, legal or attorney fees, court costs, NSF or returned check fees, utilities (electric, gas, water) unless the ledger says they are part of rent, air conditioner charges, parking, storage, amenity, pet, damages, repairs, keys or fobs, move-in, application, washer or dryer fees, and reversals of those fees (as kind "credit").
+  "deposit": security deposit charged, received or applied.
+  "opening": balance forward or prior balance.
+  "unclear": cannot tell.
+Return only JSON: {"rows":[{"date":"","desc":"","amount":0,"kind":"charge","type":"rent"}]}
+
+Ledger header (for column names):
+${head}
+
+Ledger lines (part ${c + 1} of ${chunks.length}):
+${chunks[c]}`, { modelTier: 'default', cache: false });
+    for (const r of ((j && j.rows) || [])) {
+      const amt = Math.abs(crtNum(r.amount)); if (!amt) continue;
+      const type = CRT_TYPES[r.type] ? r.type : 'unclear';
+      out.push({ date: String(r.date || '').slice(0, 10), desc: String(r.desc || '').slice(0, 120), amount: Math.round(amt * 100) / 100, kind: r.kind === 'credit' ? 'credit' : 'charge', type });
+    }
+  }
+  return out.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+async function crtOpen(file) {
+  if (!sample) { crt.status = 'Claude is not available on this view. Open this page on claude.ai.'; renderCrt(); return; }
+  crt.file = file.name; crt.rows = []; crt.groups = {}; crt.busy = true; crt.status = 'Opening the file…'; renderCrt();
+  try {
+    const r = await readFile(file);
+    if (r.kind === 'image') throw new Error('Upload the ledger as Excel, CSV or PDF, not a photo.');
+    if (!r.text || r.text.trim().length < 20) throw new Error('No text found in this file.');
+    crt.rows = await crtExtract(r.text);
+    crt.groups = {};
+    for (const x of crt.rows) { const k = crtGroupKey(x); if (!crt.groups[k]) crt.groups[k] = { type: x.type, desc: x.desc, n: 0, total: 0, on: x.type === 'rent' || x.type === 'payment' || x.type === 'rent_credit' }; const g = crt.groups[k]; g.n++; g.total += x.kind === 'charge' ? x.amount : -x.amount; }
+    crt.status = crt.rows.length ? `Read ${crt.rows.length} lines. Check the charge types below. Only rent stays in. All payments count toward rent.` + (r.note ? ' ' + r.note + '.' : '') : 'No ledger lines were found in this file.';
+  } catch (e) { crt.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (e && e.message) || 'Could not read this ledger.'; }
+  crt.busy = false; renderCrt();
+}
+function crtBuild() {
+  const kept = [], removed = []; let bal = 0, rent = 0, paid = 0, removedTotal = 0;
+  for (const x of crt.rows) {
+    const g = crt.groups[crtGroupKey(x)]; const signed = x.kind === 'charge' ? x.amount : -x.amount;
+    if (x.type === 'payment' || (g && g.on)) {
+      bal += signed;
+      if (signed > 0) rent += signed; else paid += -signed;
+      kept.push({ date: x.date, desc: x.desc, charge: signed > 0 ? signed : 0, credit: signed < 0 ? -signed : 0, bal: Math.round(bal * 100) / 100 });
+    } else { removed.push({ date: x.date, desc: x.desc, type: CRT_TYPES[x.type], amount: signed }); removedTotal += signed; }
+  }
+  return { kept, removed, rent, paid, owed: Math.round(bal * 100) / 100, removedTotal };
+}
+function crtTitle() { return ['Rent ledger', crt.tenant, crt.apt ? 'Apt ' + crt.apt : '', $('propertyName').value.trim()].filter(Boolean).join(' - '); }
+async function crtExcel() {
+  const L = crtBuild(); await loadScript(LIBS.xlsx);
+  const aoa = [[crtTitle()], ['Rent and payments only. Fees and other charges are removed.'], [], ['Date', 'Description', 'Rent charged', 'Paid / credit', 'Balance']];
+  for (const r of L.kept) aoa.push([r.date, r.desc, r.charge || '', r.credit || '', r.bal]);
+  aoa.push([], ['', 'Total rent charged', L.rent], ['', 'Total paid and credited', '', L.paid], ['', 'Rent owed', '', '', L.owed]);
+  const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Rent ledger');
+  const aoa2 = [['Removed from the court ledger (not rent)'], ['Date', 'Description', 'Type', 'Amount']].concat(L.removed.map(r => [r.date, r.desc, r.type, r.amount])).concat([[], ['', 'Total removed', '', Math.round(L.removedTotal * 100) / 100]]);
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2); ws2['!cols'] = [{ wch: 12 }, { wch: 46 }, { wch: 18 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Removed charges');
+  const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  await crtSave(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), crtTitle() + '.xlsx');
+}
+async function crtPdf() {
+  const L = crtBuild(); await loadScript(PDFLIB);
+  const doc = await PDFLib.PDFDocument.create(); const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica); const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  const W = 612, H = 792, M = 48; let page, y;
+  const cols = [M, M + 72, M + 300, M + 385, M + 465];
+  const right = (p, t, x, yy, f, sz) => p.drawText(t, { x: x - f.widthOfTextAtSize(t, sz), y: yy, size: sz, font: f });
+  const header = () => { page.drawText('Date', { x: cols[0], y, size: 9, font: bold }); page.drawText('Description', { x: cols[1], y, size: 9, font: bold }); right(page, 'Rent charged', cols[3] - 6, y, bold, 9); right(page, 'Paid / credit', cols[4] - 6, y, bold, 9); right(page, 'Balance', W - M, y, bold, 9); y -= 6; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: .6 }); y -= 13; };
+  const newPage = first => { page = doc.addPage([W, H]); y = H - M; if (first) { page.drawText(fmSafe(crtTitle()), { x: M, y, size: 14, font: bold }); y -= 18; page.drawText('Rent and payments only. Fees and other charges are removed.', { x: M, y, size: 9.5, font }); y -= 24; } header(); };
+  newPage(true);
+  for (const r of L.kept) {
+    if (y < M + 40) newPage(false);
+    page.drawText(fmSafe(r.date), { x: cols[0], y, size: 9, font });
+    let d = fmSafe(r.desc); while (d && font.widthOfTextAtSize(d, 9) > 220) d = d.slice(0, -1);
+    page.drawText(d, { x: cols[1], y, size: 9, font });
+    if (r.charge) right(page, crtMoney(r.charge), cols[3] - 6, y, font, 9);
+    if (r.credit) right(page, crtMoney(r.credit), cols[4] - 6, y, font, 9);
+    right(page, crtMoney(r.bal), W - M, y, font, 9); y -= 14;
+  }
+  if (y < M + 70) newPage(false);
+  y -= 6; page.drawLine({ start: { x: M, y: y + 10 }, end: { x: W - M, y: y + 10 }, thickness: .6 });
+  for (const [t, v, b] of [['Total rent charged', L.rent], ['Total paid and credited', L.paid], ['Rent owed', L.owed, true]]) { page.drawText(t, { x: cols[1], y, size: 10, font: b ? bold : font }); right(page, crtMoney(v), W - M, y, b ? bold : font, 10); y -= 15; }
+  const data = await doc.save();
+  await crtSave(new Blob([data], { type: 'application/pdf' }), crtTitle() + '.pdf');
+}
+async function crtSave(blob, name) {
+  name = name.replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 120);
+  if (downloads) await downloads.save({ filename: name, data: blob }); else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+}
+function renderCrt() {
+  const el = $('crtPanel'); if (!el) return;
+  el.hidden = mode !== 'arrears'; if (el.hidden) return;
+  const has = crt.rows.length > 0; const L = has ? crtBuild() : null;
+  const groups = Object.entries(crt.groups).filter(([, g]) => g.type !== 'payment').sort((a, b) => Object.keys(CRT_TYPES).indexOf(a[1].type) - Object.keys(CRT_TYPES).indexOf(b[1].type));
+  const pays = Object.values(crt.groups).filter(g => g.type === 'payment');
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Rent-only ledger for Housing Court</b><button class="nyc-btn ghost" type="button" id="crtToggle">${crt.open ? 'Hide' : 'Open'}</button></div>
+    <p>In a NYC Housing Court nonpayment case you can ask only for rent. Upload the full tenant ledger (Excel, CSV or PDF). Claude takes out late fees, legal fees and other charges, keeps every payment, and gives you a rent-only ledger to bring to court.</p>
+    ${crt.open ? `<div class="crt-in"><input id="crtTenant" placeholder="Tenant name (optional)" value="${esc(crt.tenant)}"><input id="crtApt" placeholder="Apt (optional)" value="${esc(crt.apt)}"></div>
+      <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${crt.file ? 'Upload another ledger' : 'Upload full ledger'}<input type="file" id="crtFile" accept=".xlsx,.xls,.csv,.pdf,.txt" hidden></label>${crt.file ? `<span class="nyc-msg" style="padding:0">${esc(crt.file)}</span>` : ''}</div>
+      ${crt.status ? `<p class="nyc-msg">${esc(crt.status)}</p>` : ''}
+      ${has ? `<div class="crt-sum"><div><small>Rent charged</small><b>${crtMoney(L.rent)}</b></div><div><small>Paid and credited</small><b>${crtMoney(L.paid)}</b></div><div class="crt-owed"><small>Rent owed</small><b>${crtMoney(L.owed)}</b></div><div><small>Removed (not rent)</small><b>${crtMoney(L.removedTotal)}</b></div></div>
+        <h3>Charge types found</h3><p class="nyc-msg" style="padding:0">Checked items stay in the court ledger. Leave only real rent checked.${pays.length ? ` ${pays.reduce((a, g) => a + g.n, 0)} payment lines are always kept.` : ''}</p>
+        <div class="crt-groups">${groups.map(([k, g]) => `<label class="crt-g crt-${g.type}"><input type="checkbox" data-crtg="${esc(k)}"${g.on ? ' checked' : ''}><span class="crt-t">${CRT_TYPES[g.type]}</span><span class="crt-d">${esc(g.desc)}${g.n > 1 ? ` <small>×${g.n}</small>` : ''}</span><span class="crt-a">${crtMoney(g.total)}</span></label>`).join('')}</div>
+        ${groups.some(([, g]) => g.type === 'unclear' || g.type === 'opening') ? `<p class="nyc-msg warn" style="padding:0">Check the “Unclear” and “Prior balance” lines. A prior balance can hide old fees. If you can, upload the ledger from the month the arrears started.</p>` : ''}
+        <div class="cal-btns"><button class="nyc-btn" type="button" id="crtXlsx">Download Excel</button><button class="nyc-btn" type="button" id="crtPdf">Download PDF</button><button class="nyc-btn ghost" type="button" id="crtShow">${crt.show ? 'Hide ledger' : 'Show ledger'}</button></div>
+        ${crt.show ? `<div class="crt-table"><table><thead><tr><th>Date</th><th>Description</th><th>Rent</th><th>Paid</th><th>Balance</th></tr></thead><tbody>${L.kept.map(r => `<tr><td>${esc(r.date)}</td><td>${esc(r.desc)}</td><td>${r.charge ? crtMoney(r.charge) : ''}</td><td>${r.credit ? crtMoney(r.credit) : ''}</td><td>${crtMoney(r.bal)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        <p class="fh-legal">Check every line against the original ledger before you use it. Ask your attorney if MCI, IAI or other increases belong in the legal rent. This helps you prepare; it is not legal advice.</p>` : ''}` : ''}</div>`;
+}
+$('crtPanel').addEventListener('click', e => {
+  if (e.target.closest('#crtToggle')) { crt.open = !crt.open; renderCrt(); }
+  if (e.target.closest('#crtShow')) { crt.show = !crt.show; renderCrt(); }
+  if (e.target.closest('#crtXlsx')) crtExcel().catch(() => { crt.status = 'Could not make the Excel file.'; renderCrt(); });
+  if (e.target.closest('#crtPdf')) crtPdf().catch(() => { crt.status = 'Could not make the PDF.'; renderCrt(); });
+});
+$('crtPanel').addEventListener('change', e => {
+  if (e.target.id === 'crtFile' && e.target.files[0]) crtOpen(e.target.files[0]);
+  if (e.target.dataset.crtg != null && crt.groups[e.target.dataset.crtg]) { crt.groups[e.target.dataset.crtg].on = e.target.checked; renderCrt(); }
+});
+$('crtPanel').addEventListener('input', e => { if (e.target.id === 'crtTenant') crt.tenant = e.target.value.slice(0, 80); if (e.target.id === 'crtApt') crt.apt = e.target.value.slice(0, 20); });
 
 /* ---------- Fair Housing check ---------- */
 const FH_RULES = `Fair housing laws to check against (New York City rentals):
