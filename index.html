@@ -3908,7 +3908,7 @@ ${texts.join('\n\n') || 'The invoice image is attached.'}`, { images, modelTier:
     const items = ((j && j.items) || []).map(i => ({ desc: String(i.desc || '').slice(0, 120), amount: Math.round(rdNum(i.amount) * 100) / 100, cat: ['bath', 'kitchen', 'other', 'exclude'].includes(i.cat) ? i.cat : 'other', item: String(i.item || 'Other'), why: String(i.why || ''), include: i.cat !== 'exclude' })).filter(i => i.amount);
     rd.items = rd.items.concat(items);
     rd.meta = j || {};
-    if (!rd.v.address && j && j.address) rd.v.address = String(j.address); if (!rd.v.apt && j && j.apt) rd.v.apt = String(j.apt);
+    if (!rd.v.address && !$('propertyName').value.trim() && j && j.address) { rd.v.address = String(j.address); rd.addrEdited = true; } if (!rd.v.apt && j && j.apt) rd.v.apt = String(j.apt);
     rd.flags = ((j && j.notes) || []).map(String).slice(0, 8);
     if (j && !j.license) rd.flags.push('No contractor license number found. IAI work must be done by a licensed contractor.');
     const lineSum = items.reduce((a, i) => a + i.amount, 0); if (j && j.total && Math.abs(lineSum - rdNum(j.total)) > 1) rd.flags.push(`Invoice lines add up to ${rdMoney(lineSum)} but the invoice total is ${rdMoney(rdNum(j.total))}. Check the lines.`);
@@ -3967,6 +3967,7 @@ Return only JSON: {"fields":[{"name":"exact field name","value":"text or true"}]
 function renderRider() {
   const el = $('riderPanel'); if (!el) return;
   el.hidden = mode !== 'lease'; if (el.hidden) return;
+  if (!rd.addrEdited) { const top = $('propertyName').value.trim(); if (top) rd.v.address = top; }
   const v = rd.v, c = rdCalc(), miss = rdMissing(); const missK = new Set(miss.map(m => m[0]));
   const inp = (k, label, ph, type) => `<label class="${missK.has(k) ? 'rd-miss' : ''}">${label}</label><input data-rd="${k}" ${type ? `type="${type}"` : ''} value="${esc(v[k])}" placeholder="${esc(ph || '')}">`;
   const sel = (k, label, opts) => `<label class="${missK.has(k) ? 'rd-miss' : ''}">${label}</label><select data-rd="${k}">${opts.map(([val, t]) => `<option value="${val}"${v[k] === val ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
@@ -4008,7 +4009,8 @@ $('riderPanel').addEventListener('change', e => {
   if (e.target.dataset.rd && e.target.tagName === 'SELECT') { rd.v[e.target.dataset.rd] = e.target.value; renderRider(); }
   if (e.target.dataset.rd && e.target.tagName === 'INPUT') { rd.v[e.target.dataset.rd] = e.target.value; clearTimeout(rd.t); rd.t = setTimeout(() => { const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.rd : null; renderRider(); if (f) { const n = $('riderPanel').querySelector(`[data-rd="${f}"]`); if (n) n.focus(); } }, 0); }
 });
-$('riderPanel').addEventListener('input', e => { if (e.target.dataset.rd && e.target.tagName === 'INPUT') rd.v[e.target.dataset.rd] = e.target.value.slice(0, 200); });
+$('riderPanel').addEventListener('input', e => { if (e.target.dataset.rd && e.target.tagName === 'INPUT') { rd.v[e.target.dataset.rd] = e.target.value.slice(0, 200); if (e.target.dataset.rd === 'address') rd.addrEdited = !!e.target.value.trim(); } });
+['input', 'change'].forEach(ev => $('propertyName').addEventListener(ev, () => { if (mode === 'lease' && !rd.addrEdited && rd.open && document.activeElement && !$('riderPanel').contains(document.activeElement)) { clearTimeout(rd.pt); rd.pt = setTimeout(renderRider, 300); } }));
 
 /* ---------- Rent Registration Review: DHCR registration reports, possible overcharges ---------- */
 // NYC Rent Guidelines Board renewal rates by lease start (Oct 1 - Sep 30): [1-year %, 2-year % (total over both years)]
