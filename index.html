@@ -677,6 +677,13 @@ header {
 .pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
 .pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
 .pj-add b { font-size: 14px; } .pj-add span { color: var(--muted); font-size: 12.5px; } .pj-add:hover { border-color: var(--ask); }
+.cp-docs { display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
+.cp-doc { display: grid; grid-template-columns: 92px 1fr auto 22px; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 4px 8px; }
+.cp-doc button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 11px; }
+.cp-t { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.cp-proposal, .cp-contract { color: #7aa7d6; } .cp-invoice { color: var(--ask); } .cp-change-order { color: #c9932f; } .cp-payment { color: #4f9e6b; }
+.cp-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .cp-n small { display: block; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.cp-a { font-variant-numeric: tabular-nums; } .cp-tot { margin: 0; font-size: 12.5px; color: var(--muted); } .cp-tot b { color: var(--ink); } .cp-tot .cp-over { color: #e08a6a; }
 .pj-tl { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; gap: 8px; border-left: 2px solid var(--line); max-height: 320px; overflow: auto; }
 .pj-tl li { display: grid; grid-template-columns: 84px 1fr; gap: 8px; font-size: 12.5px; color: var(--ink); padding-left: 8px; position: relative; }
 .pj-tl li::before { content: ''; position: absolute; left: -9px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--ask); }
@@ -937,6 +944,7 @@ header {
         <div id="calPanel" class="cal" hidden></div>
         <div id="emgPanel" class="emg" hidden></div>
         <div id="pjPanel" class="emg" hidden></div>
+        <div id="cpPanel" class="emg" hidden></div>
         <div id="coiPanel" class="emg" hidden></div>
         <div id="crtPanel" class="emg" hidden></div>
         <div id="regPanel" class="emg" hidden></div>
@@ -1047,6 +1055,7 @@ const ICONS = {
   mechanical: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 10l3-3 3 3M9 14l3 3 3-3"/>',
   records: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
+  projects: '<path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/><path d="M2 11l10-7 10 7" stroke-width="1.2"/>',
   inbox: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><path d="M14 17l2.5-2.5M14 17l2.5 2.5M14 17h6" stroke-width="1.2"/>',
   regs: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/><path d="M13 14l2 2 3-4"/>',
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
@@ -1056,9 +1065,9 @@ const SECTIONS = [
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
-  { key:'lease', title:'Leases & Regulations', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST + '\n\n' + FH_RULES + '\nWhen a question touches ads, screening, applications, fees, accommodations or how to treat an applicant or tenant, check it against these fair housing rules and flag any problem. For rent-stabilized questions (rent increases, vacancy, preferential rent, MCI, IAI, overcharge, owner use, deposits, fees, notices) apply the HSTPA rules above.', desc:'Building regulations, occupancy guidelines and resident policies. Leases will be pulled from Yardi Virtuoso. Answers cross-check Yardi Virtuoso with BuildingLink (after you upload BuildingLink data to the Library). Includes a Rent Registration Review: upload up to 10 DHCR registration reports to find possible overcharges.', samples:['Which apartments have the biggest overcharge risk?','Fill the lease rider from this contractor invoice','When must I send the renewal lease, and on which form?','Can I raise the rent on a vacant stabilized apartment?','Cross-check unit 1005 between Yardi and BuildingLink','Any noise complaints about unit 1005 this year?','How do we handle a reasonable accommodation request?'] },
+  { key:'projects', title:'Project Management', desc:'Construction and capital projects: roofs, facades, boilers, elevators, apartment renovations. Each project box keeps its own proposals, invoices and change orders and shows proposed versus invoiced. Roar builds a timeline from the files, your email and your delegate mailboxes.', samples:['Which projects have invoices higher than the proposal?','Where does the roof project stand?','Compare the invoices with the proposal for the boiler job'] },
   { key:'arrears', yardi:true, guide: () => HSTPA_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST + '\nFor arrears and Housing Court questions apply the HSTPA rules above: rent only in court (RPAPL 702), 14-day rent demand, 5-day certified late notice, late fee limits, receipts.', title:'Rent Collection & Arrears', desc:'Rent collection, arrears, payment plans and collection notices. Receivables will be pulled from Yardi Virtuoso. Includes a rent-only ledger maker for Housing Court.', samples:['Which charges can I ask for in Housing Court?','Did unit 1005 promise a payment date?','Who is behind on rent?','Draft a rent reminder letter'] },
-  { key:'legal', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + FH_RULES, title:'Legal Check', desc:'Leases and riders, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Includes a Fair Housing check for ads, emails and screening rules. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['Is this listing ad OK under fair housing laws?','How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Can the elevator vendor charge us this extra fee under the contract?'] },
+  { key:'legal', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST + '\n\n' + FH_RULES + '\nWhen a question touches ads, screening, applications, fees, accommodations or how to treat an applicant or tenant, check it against these fair housing rules and flag any problem. For rent-stabilized questions (rent increases, vacancy, preferential rent, MCI, IAI, overcharge, owner use, deposits, fees, notices) apply the HSTPA rules above.', title:'Leases, Regulations & Legal', desc:'Leases and riders, building regulations and resident policies, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Leases will be pulled from Yardi Virtuoso. Includes the Rent Registration Review, the Lease Rider with IAI, and a Fair Housing check. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['Which apartments have the biggest overcharge risk?','Fill the lease rider from this contractor invoice','When must I send the renewal lease, and on which form?','Can I raise the rent on a vacant stabilized apartment?','Is this listing ad OK under fair housing laws?','How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Cross-check unit 1005 between Yardi and BuildingLink'] },
   { key:'budgeting', yardi:true, title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month. Notes come only from invoices, emails, Teams, SharePoint or notes. Guesses are marked. Download to Excel under the report.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
   { key:'vendors', yardi:true, title:'Vendors, Invoices & Insurance', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates. Includes an Insurance (COI) check: set your requirements and see if a vendor’s certificate has enough coverage.', samples:['Which vendor insurance certificates expire soon?','Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
   { key:'systems', title:'Building Systems', desc:'Plumbing and electric: risers, booster pumps and pressure zones, hot water heaters, panels, apartment submeters, generators, violations and maintenance records. The NYC Plumbing Code is connected: ask what the code says and get the section with a link.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','All leak reports for unit 1005','Recent leak history?','How do the water booster pumps and pressure zones work?','Which apartments show unusual electric submeter use?','When was the generator last tested?'] },
@@ -1380,7 +1389,8 @@ function buildContext(question, budget) {
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
   if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | resident ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
-  if (mode === 'lease' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
+  if (mode === 'projects' && typeof cp !== 'undefined' && cp.list.some(x => x.name || x.timeline.length || x.docs.length)) extra.push({ name: 'Construction projects', text: cp.list.filter(x => x.name || x.timeline.length || x.docs.length).map(x => { const t = cpTotals(x); return `Project: ${x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\nProposed ${t.prop}, change orders ${t.co}, invoiced ${t.inv}, paid ${t.paid}\n${x.summary}\nFiles: ` + x.docs.map(d => `${d.type} ${d.vendor} ${d.number} ${d.date} ${d.amount ?? ''} ${d.scope}`).join('; ') + '\n' + x.timeline.map(e => `${e.date}: ${e.event}`).join('\n'); }).join('\n\n'), where: 'Project Management' });
+  if (mode === 'legal' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
@@ -1453,7 +1463,7 @@ How to answer:
 - To fill a blank form: list each field with the value to enter. Mark anything not found as [needed].
 - Legal, fair housing and Housing Court questions: give practical guidance, and say when to call counsel. You are not a lawyer.
 - Life-safety emergencies (fire, gas smell, flood with electrical risk, medical): first line is "Call 911 now."
-- Leases & Regulations: cross-check lease information from Yardi Virtuoso against BuildingLink data in the documents (residents and occupants, phone and email, move-in and lease dates, pets, parking or storage, keys and fobs). List every mismatch in a table: Item | Yardi | BuildingLink | What to fix. If BuildingLink data is not in the documents, say to export it from BuildingLink and add it to the Library.
+- Leases, Regulations & Legal: cross-check lease information from Yardi Virtuoso against BuildingLink data in the documents (residents and occupants, phone and email, move-in and lease dates, pets, parking or storage, keys and fobs). List every mismatch in a table: Item | Yardi | BuildingLink | What to fix. If BuildingLink data is not in the documents, say to export it from BuildingLink and add it to the Library.
 - Rental applications: only check if an application is complete against the listed requirements. If the application is not in the documents, say to export it from OnSite and upload it (until an OnSite API or AI connector is available). Never recommend approving or rejecting an applicant, and never judge applicants by protected traits.
 - Leases, payables (invoices, vendor payments) and receivables (rent charges, tenant payments, arrears) will be pulled from Yardi Virtuoso. Never ask the user to upload them. If you need them and they are not in the documents, say this data will come from Yardi Virtuoso. Exception: you may ask the user to upload an invoice to check it for duplicates.
 - Duplicate invoice check: compare the uploaded invoice with every other invoice and payment in the documents. Flag the same invoice number (also with small changes like extra zeros, dashes or letters), the same vendor with the same or very close amount (within about 1%), and close dates. List each possible duplicate with vendor, invoice number, amount and date, and say how sure you are.
@@ -2609,7 +2619,7 @@ function setMode(key) {
   $('yardiNote').hidden = !s.yardi;
   $('budgetNote').hidden = key !== 'budgeting';
   $('mechLink').hidden = key !== 'mechanical';
-  $('hstpaLink').hidden = key !== 'lease';
+  $('hstpaLink').hidden = key !== 'legal';
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
@@ -2625,6 +2635,7 @@ function setMode(key) {
   if (typeof renderRider === 'function') { try { renderRider(); } catch (e) {} }
   if (typeof renderReg === 'function') { try { renderReg(); } catch (e) {} }
   if (typeof renderPj === 'function') { try { renderPj(); } catch (e) {} }
+  if (typeof renderCp === 'function') { try { renderCp(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -2820,6 +2831,7 @@ $('propertyName').addEventListener('change', e => {
   if (!addrHasZip(f.value)) { const ask = f.value; addrZip(ask).then(z => { if (!z || f.value !== ask) return; const full = fmtAddr(ask, z.zip, z.boro); f.value = full; if (nyc.key === ask.toUpperCase()) nyc.key = full.toUpperCase(); try { localStorage.setItem('rb-building', full); } catch (err) {} const sb = buildings.find(b => bldKey(b.addr) === bldKey(full)); if (sb) bldRename(sb, full).then(renderBuildings); else renderBuildings(); }); }
 }, true);
 $('propertyName').addEventListener('input', renderBuildings);
+$('propertyName').addEventListener('change', () => setTimeout(() => { if (mode === 'desk' && typeof renderPj === 'function') renderPj(); if (mode === 'projects' && typeof renderCp === 'function') renderCp(); }, 50));
 $('propertyName').addEventListener('change', renderBuildings);
 
 
@@ -3651,6 +3663,164 @@ $('pjPanel').addEventListener('click', async e => {
 });
 function confirmInline(btn, text) { if (btn.dataset.sure) return true; btn.dataset.sure = '1'; btn.textContent = text; setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = '✕'; } }, 3000); return false; }
 
+/* ---------- Project Management (construction) ---------- */
+const CP_STATUS = ['Not started', 'Planning', 'In progress', 'On hold', 'Done'];
+const cp = { list: [], mailboxes: '', loaded: false, store: 'local', open: {}, busy: {}, status: {} };
+const cpNew = n => ({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', bld: '', keys: '', state: 'Not started', next: '', summary: '', timeline: [], docs: [], at: Date.now(), n });
+function cpLocal() { try { localStorage.setItem('rb-cprojects', JSON.stringify({ list: cp.list })); } catch (e) {} }
+async function cpLoad() {
+  try { const v = JSON.parse(localStorage.getItem('rb-cprojects') || '{}'); cp.list = v.list || []; } catch (e) {}
+  if (db && myId) {
+    try {
+      const snap = await db.collection(`emc/${myId}/cproj`).get(); const rows = snap.docs.map(d => d.data()).filter(Boolean);
+      const cfg = rows.find(r => r.id === '_cfg'); const list = rows.filter(r => r.id !== '_cfg');
+      if (list.length) cp.list = list.sort((a, b) => (a.n || 0) - (b.n || 0));
+      cp.store = 'db';
+    } catch (e) {}
+  }
+  for (const p of cp.list) if (!Array.isArray(p.docs)) p.docs = [];
+  while (cp.list.length < 4) cp.list.push(cpNew(cp.list.length));
+  cp.loaded = true; cpLocal(); renderCp();
+}
+async function cpSave(p) {
+  cpLocal(); if (cp.store !== 'db') return;
+  try { await db.doc(`emc/${myId}`).set({ uid: myId, at: Date.now() }); await db.doc(`emc/${myId}/cproj/${p.id}`).set(Object.assign({}, p, { timeline: (p.timeline || []).slice(0, 80) })); } catch (e) { showFootWarn('Saved on this computer only.'); }
+}
+function cpTools(onStatus) {
+  const boxes = pjBoxes();
+  const tools = [
+    { name: 'search_mail', description: `Search Outlook email. mailbox: leave empty for the user's own mailbox, or one of the delegate (surrogate) mailboxes: ${boxes.join(', ') || 'none listed'}. In a delegate mailbox, send query alone, or sender and dates without query. Returns up to 25 emails with uri, date, from, subject, preview. Not sorted.`,
+      inputSchema: { type: 'object', properties: { query: { type: 'string' }, sender: { type: 'string' }, afterDateTime: { type: 'string' }, beforeDateTime: { type: 'string' }, mailbox: { type: 'string' }, offset: { type: 'number' } } },
+      async execute(input, ctx) {
+        const args = { limit: 25, offset: Math.max(0, Number(input.offset) || 0) };
+        const box = String(input.mailbox || '').trim().toLowerCase();
+        if (box) { if (!boxes.map(b => b.toLowerCase()).includes(box)) throw new Error('That mailbox is not in the delegate list.'); args.mailboxOwnerEmail = box; }
+        for (const k of ['query', 'sender', 'afterDateTime', 'beforeDateTime']) if (input[k]) args[k] = String(input[k]).slice(0, 300);
+        if (box && args.query) { delete args.sender; delete args.afterDateTime; delete args.beforeDateTime; }
+        if (!args.query && !args.sender && !args.afterDateTime && !args.beforeDateTime) throw new Error('Give a query, sender or date.');
+        onStatus('Searching ' + (box || 'your Outlook') + ': ' + (args.query || args.sender || 'by date') + '…');
+        try { return compactSearch(await mcp.callTool(MS, 'outlook_email_search', args, { signal: ctx.signal, cache: false })); } catch (e) { throw new Error(mcpMsg(e)); }
+      } },
+    { name: 'read_mail', description: 'Read one Outlook email in full using its uri from search_mail (also attachments it lists).',
+      inputSchema: { type: 'object', properties: { uri: { type: 'string' } }, required: ['uri'] },
+      async execute(input, ctx) { const uri = String(input.uri || ''); if (!/^(mail|file):\/\/\//.test(uri)) throw new Error('Use a mail:/// or file:/// uri.'); onStatus('Reading an email…');
+        try { return textOf(await mcp.callTool(MS, 'read_resource', { uri }, { signal: ctx.signal, cache: false })).slice(0, 16000); } catch (e) { throw new Error(mcpMsg(e)); } } },
+    { name: 'search_gmail', description: 'Search Gmail (if connected) with Gmail search syntax, e.g. "boiler after:2026/01/01". Returns threads with id, date, sender, subject, snippet.',
+      inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+      async execute(input, ctx) { onStatus('Searching Gmail: ' + input.query + '…');
+        try { return textOf(await mcp.callTool(GM, 'search_threads', { query: String(input.query || '').slice(0, 300), pageSize: 20 }, { signal: ctx.signal, cache: false })).slice(0, 16000); } catch (e) { throw new Error(inbOff(e) ? 'Gmail is not connected.' : mcpMsg(e)); } } },
+    { name: 'read_gmail', description: 'Read a Gmail thread in full by thread id.',
+      inputSchema: { type: 'object', properties: { threadId: { type: 'string' } }, required: ['threadId'] },
+      async execute(input, ctx) { onStatus('Reading a Gmail thread…');
+        try { return textOf(await mcp.callTool(GM, 'get_thread', { threadId: String(input.threadId || ''), messageFormat: 'PLAIN_TEXT' }, { signal: ctx.signal, cache: false })).slice(-16000); } catch (e) { throw new Error(mcpMsg(e)); } } }
+  ];
+  return tools;
+}
+const cpText = {};
+const cpMoney = n => '$' + (Math.round((+n || 0) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+async function cpDocText(d) {
+  if (cpText[d.id] != null) return cpText[d.id];
+  try { const v = localStorage.getItem('rb-cdoc-' + d.id); if (v) return (cpText[d.id] = v); } catch (e) {}
+  if (cp.store === 'db') { try { const x = await db.doc(`emc/${myId}/cdoc/${d.id}`).get(); const t = x && (x.data ? x.data() : x); if (t && t.text) return (cpText[d.id] = t.text); } catch (e) {} }
+  return '';
+}
+async function cpUpload(p, files) {
+  if (!sample) { cp.status[p.id] = 'Claude is not available on this view.'; renderCp(); return; }
+  cp.busy[p.id] = true; renderCp();
+  for (const f of files.slice(0, 10)) {
+    cp.status[p.id] = `Reading ${f.name}…`; renderCp();
+    try {
+      const r = await readFile(f); const text = String(r.text || '').slice(0, 30000);
+      const j = await sample.json(`Read this construction document for the project "${p.name || 'unnamed'}" and pull out the facts. Dollar amounts as plain numbers, dates as YYYY-MM-DD, null if not shown. Do not guess.
+Return only JSON: {"type": "proposal" or "invoice" or "change order" or "contract" or "payment" or "other", "vendor": "", "date": "", "number": "proposal or invoice number", "amount": number|null (total of this document), "scope": "what the work is, one short line", "paid": true|false|null}
+
+${text || 'The document image is attached.'}`, { images: r.kind === 'image' ? [r.blob] : [], modelTier: 'default', cache: false });
+      const d = { id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: f.name.slice(0, 120), type: String((j && j.type) || 'other'), vendor: String((j && j.vendor) || '').slice(0, 80), date: String((j && j.date) || '').slice(0, 10), number: String((j && j.number) || '').slice(0, 40), amount: j && j.amount != null ? +String(j.amount).replace(/[$,]/g, '') || 0 : null, scope: String((j && j.scope) || '').slice(0, 200), paid: j ? j.paid : null, at: Date.now() };
+      p.docs.push(d); cpText[d.id] = text;
+      try { localStorage.setItem('rb-cdoc-' + d.id, text.slice(0, 20000)); } catch (e) {}
+      if (cp.store === 'db') { try { await db.doc(`emc/${myId}/cdoc/${d.id}`).set({ pid: p.id, name: d.name, text: text.slice(0, 30000) }); } catch (e) {} }
+      if (d.date) { p.timeline.push({ date: d.date, event: `${d.type.charAt(0).toUpperCase() + d.type.slice(1)}${d.vendor ? ' from ' + d.vendor : ''}${d.amount != null ? ' for ' + cpMoney(d.amount) : ''}${d.scope ? ': ' + d.scope : ''}`, who: d.vendor, source: 'Uploaded file', subject: d.name }); p.timeline.sort((a, b) => a.date.localeCompare(b.date)); }
+    } catch (e) { cp.status[p.id] = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : `Could not read ${f.name}.`; }
+  }
+  cp.busy[p.id] = false; cp.open[p.id] = true; await cpSave(p);
+  if (!/Could not|limit/.test(cp.status[p.id] || '')) cp.status[p.id] = `${p.docs.length} file${p.docs.length === 1 ? '' : 's'} in this project.`;
+  renderCp();
+}
+function cpTotals(p) {
+  const sum = t => p.docs.filter(d => t.includes(d.type) && d.amount != null).reduce((a, d) => a + d.amount, 0);
+  return { prop: sum(['proposal', 'contract']), co: sum(['change order']), inv: sum(['invoice']), paid: sum(['payment']) + p.docs.filter(d => d.type === 'invoice' && d.paid === true && d.amount != null).reduce((a, d) => a + d.amount, 0) };
+}
+async function cpRoar(p) {
+  if (!sample || !mcp) { cp.status[p.id] = 'Open this page on claude.ai and connect Microsoft 365 (and Gmail if you use it).'; renderCp(); return; }
+  if (!p.name.trim() && !p.keys.trim()) { cp.status[p.id] = 'Give the project a name or some keywords first.'; renderCp(); return; }
+  cp.busy[p.id] = true; cp.status[p.id] = 'Roar is searching your email…'; renderCp();
+  const set = s => { cp.status[p.id] = s; renderCp(); };
+  try {
+    const boxes = pjBoxes();
+    const prompt = `Build a timeline of events for this property management project by searching the user's email.
+Project: ${p.name || '(no name)'}
+Building: ${p.bld || $('propertyName').value.trim() || 'not given'}
+Keywords, vendors, people: ${p.keys || 'none'}
+Mailboxes to search: the user's own Outlook${boxes.length ? ', and these delegate (surrogate) mailboxes: ' + boxes.join(', ') : ''}${', plus Gmail if it is connected'}.
+${p.docs.length ? 'Uploaded project files (proposals, invoices etc.):\n' + (await Promise.all(p.docs.slice(0, 12).map(async d => `--- ${d.name} (${d.type}, ${d.vendor}, ${d.date}, ${d.amount != null ? cpMoney(d.amount) : 'no amount'}) ---\n` + String(await cpDocText(d)).slice(0, 3000)))).join('\n') + '\n' : ''}${p.timeline && p.timeline.length ? 'Timeline found before (keep these events, add new ones): ' + JSON.stringify(p.timeline.slice(0, 40).map(t => ({ date: t.date, event: t.event }))) : ''}
+Steps: search every mailbox with 2-4 different keyword searches (project name, building, vendor names, key words like proposal, invoice, permit, inspection, approval). Read the important emails (proposals, approvals, contracts, invoices, schedule changes, problems). Use at most about 15 tool calls.
+Then reply with only JSON, no other text:
+{"summary": "2-3 short sentences: where the project stands now", "state": one of ${JSON.stringify(CP_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
+Sort the timeline oldest first. Only include events you saw in an email or an uploaded file. Never guess dates. Compare invoices with proposals and change orders, and mention in the summary if invoices are higher than what was approved.`;
+    const r = await sample([{ role: 'user', content: prompt }], { tools: cpTools(set), modelTier: 'default', cache: false });
+    const raw = String(r.text || ''); const m = raw.match(/\{[\s\S]*\}/); let j = null; try { j = JSON.parse(m ? m[0] : raw); } catch (e) {}
+    if (!j) throw new Error('Roar did not return a timeline. Try again with clearer keywords.');
+    const seen = new Set(); p.timeline = ((j.timeline || []).concat(p.timeline || [])).filter(t => t && t.date && t.event).filter(t => { const k = t.date + '|' + String(t.event).slice(0, 40).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+      .map(t => ({ date: String(t.date).slice(0, 10), event: String(t.event).slice(0, 300), who: String(t.who || '').slice(0, 80), source: String(t.source || '').slice(0, 60), subject: String(t.subject || '').slice(0, 140) })).sort((a, b) => a.date.localeCompare(b.date)).slice(-80);
+    if (j.summary) p.summary = String(j.summary).slice(0, 600); if (CP_STATUS.includes(j.state)) p.state = j.state; if (j.next) p.next = String(j.next).slice(0, 300);
+    p.updated = Date.now(); cp.open[p.id] = true; await cpSave(p);
+    cp.status[p.id] = `Found ${p.timeline.length} event${p.timeline.length === 1 ? '' : 's'}.`;
+  } catch (e) { cp.status[p.id] = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (e && e.message) || 'Roar could not build the timeline.'; }
+  cp.busy[p.id] = false; renderCp();
+}
+function renderCp() {
+  const el = $('cpPanel'); if (!el) return;
+  el.hidden = mode !== 'projects'; if (el.hidden) return;
+  if (!cp.loaded) { cp.loaded = true; cpLoad(); return; }
+  const top = $('propertyName').value.trim();
+  for (const p of cp.list) if (!p.bld && top) { p.bld = top; cpSave(p); }
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Construction projects</b><span class="nyc-msg">${cp.list.length} tracked</span></div>
+    <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline, compares invoices with proposals, and gives the next step.</p>
+    <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="cpBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
+    <div class="pj-grid">${cp.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
+      <div class="pj-top"><input class="pj-name" data-cp="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"><select data-cp="${p.id}" data-f="state">${CP_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+      <input data-cp="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
+      <input data-cp="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
+      <input data-cp="${p.id}" data-f="next" value="${esc(p.next)}" placeholder="Next step">
+      ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-cproar="${p.id}"${cp.busy[p.id] ? ' disabled' : ''}>✦ ${cp.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-cptl="${p.id}">${cp.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-cpdel="${p.id}" title="Remove project">✕</button></div>
+      <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">+ Upload invoices or proposals<input type="file" data-cpup="${p.id}" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label></div>
+      ${p.docs.length ? (() => { const t = cpTotals(p); return `<div class="cp-docs">${p.docs.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(d => `<div class="cp-doc"><span class="cp-t cp-${esc(d.type.replace(/\s+/g, '-'))}">${esc(d.type)}</span><span class="cp-n" title="${esc(d.name)}">${esc(d.vendor || d.name)}${d.number ? ' #' + esc(d.number) : ''}<small>${esc(d.date || '')}${d.scope ? ' · ' + esc(d.scope) : ''}</small></span><span class="cp-a">${d.amount != null ? cpMoney(d.amount) : '—'}</span><button type="button" data-cpdoc="${p.id}|${d.id}" title="Remove file">✕</button></div>`).join('')}</div>
+        <p class="cp-tot">Proposed/contract <b>${cpMoney(t.prop)}</b>${t.co ? ` · Change orders <b>${cpMoney(t.co)}</b>` : ''} · Invoiced <b class="${t.inv > t.prop + t.co && t.prop ? 'cp-over' : ''}">${cpMoney(t.inv)}</b>${t.paid ? ` · Paid <b>${cpMoney(t.paid)}</b>` : ''}${t.prop ? ` · Left on contract <b>${cpMoney(t.prop + t.co - t.inv)}</b>` : ''}</p>`; })() : ''}
+      ${cp.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(cp.status[p.id])}</p>` : ''}
+      ${cp.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
+    </div>`).join('')}
+    <button class="pj-card pj-add" type="button" id="cpAdd"><b>+ Add another project</b><span>Want to keep track of more projects? Add a box.</span></button></div>
+    <p class="fh-legal">Roar only reads email. Check each event against the email before you rely on it.</p></div>`;
+}
+$('cpPanel').addEventListener('input', e => {
+  const id = e.target.dataset.cp; if (id) { const p = cp.list.find(x => x.id === id); if (p) { p[e.target.dataset.f] = e.target.value.slice(0, 300); clearTimeout(cp.t); cp.t = setTimeout(() => cpSave(p), 600); } }
+  if (e.target.id === 'cpBoxes') { pj.mailboxes = e.target.value.slice(0, 500); clearTimeout(cp.tb); cp.tb = setTimeout(pjSaveCfg, 600); }
+});
+$('cpPanel').addEventListener('change', e => {
+  if (e.target.dataset.cpup && e.target.files.length) { const p = cp.list.find(x => x.id === e.target.dataset.cpup); if (p) cpUpload(p, [...e.target.files]); return; } const id = e.target.dataset.cp; if (id && e.target.tagName === 'SELECT') { const p = cp.list.find(x => x.id === id); p.state = e.target.value; cpSave(p); renderCp(); } });
+$('cpPanel').addEventListener('click', async e => {
+  if (e.target.closest('#cpAdd')) { const p = cpNew(cp.list.length); cp.list.push(p); await cpSave(p); renderCp(); const n = $('cpPanel').querySelector(`[data-cp="${p.id}"][data-f="name"]`); if (n) n.focus(); return; }
+  const r = e.target.closest('[data-cproar]'); if (r) { const p = cp.list.find(x => x.id === r.dataset.cproar); if (p) cpRoar(p); return; }
+  const dd = e.target.closest('[data-cpdoc]'); if (dd) { const [pid, did] = dd.dataset.cpdoc.split('|'); const p = cp.list.find(x => x.id === pid); if (!p) return; if (!confirmInline(dd, 'Remove?')) return; p.docs = p.docs.filter(x => x.id !== did); try { localStorage.removeItem('rb-cdoc-' + did); } catch (err) {} if (cp.store === 'db') { try { await db.doc(`emc/${myId}/cdoc/${did}`).delete(); } catch (err) {} } await cpSave(p); renderCp(); return; }
+  const t = e.target.closest('[data-cptl]'); if (t) { cp.open[t.dataset.cptl] = !cp.open[t.dataset.cptl]; renderCp(); return; }
+  const d = e.target.closest('[data-cpdel]'); if (d) {
+    const p = cp.list.find(x => x.id === d.dataset.cpdel); if (!p) return;
+    if ((p.name || p.timeline.length) && !confirmInline(d, 'Remove?')) return;
+    cp.list = cp.list.filter(x => x !== p); cpLocal(); if (cp.store === 'db') { try { await db.doc(`emc/${myId}/cproj/${p.id}`).delete(); } catch (err) {} } renderCp();
+  }
+});
+
 /* ---------- Insurance: COI requirements and vendor COI check ---------- */
 const COI_DEFAULT = { gl_occ: 1000000, gl_agg: 2000000, auto: 1000000, umb: 5000000, el: 1000000, wc: true, dbl: true, ai: '', holder: '', waiver: true, pnc: true, notes: '' };
 const COI_FIELDS = [['gl_occ', 'General liability, each occurrence'], ['gl_agg', 'General liability, aggregate'], ['auto', 'Auto liability (combined single limit)'], ['umb', 'Umbrella / excess'], ['el', "Employer's liability, each accident"]];
@@ -4166,7 +4336,7 @@ Return only JSON: {"fields":[{"name":"exact field name","value":"text or true"}]
 }
 function renderRider() {
   const el = $('riderPanel'); if (!el) return;
-  el.hidden = mode !== 'lease'; if (el.hidden) return;
+  el.hidden = mode !== 'legal'; if (el.hidden) return;
   if (!rd.addrEdited) { const top = $('propertyName').value.trim(); if (top) rd.v.address = top; }
   const v = rd.v, c = rdCalc(), miss = rdMissing(); const missK = new Set(miss.map(m => m[0]));
   const inp = (k, label, ph, type) => `<label class="${missK.has(k) ? 'rd-miss' : ''}">${label}</label><input data-rd="${k}" ${type ? `type="${type}"` : ''} value="${esc(v[k])}" placeholder="${esc(ph || '')}">`;
@@ -4210,7 +4380,7 @@ $('riderPanel').addEventListener('change', e => {
   if (e.target.dataset.rd && e.target.tagName === 'INPUT') { rd.v[e.target.dataset.rd] = e.target.value; clearTimeout(rd.t); rd.t = setTimeout(() => { const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.rd : null; renderRider(); if (f) { const n = $('riderPanel').querySelector(`[data-rd="${f}"]`); if (n) n.focus(); } }, 0); }
 });
 $('riderPanel').addEventListener('input', e => { if (e.target.dataset.rd && e.target.tagName === 'INPUT') { rd.v[e.target.dataset.rd] = e.target.value.slice(0, 200); if (e.target.dataset.rd === 'address') rd.addrEdited = !!e.target.value.trim(); } });
-['input', 'change'].forEach(ev => $('propertyName').addEventListener(ev, () => { if (mode === 'lease' && !rd.addrEdited && rd.open && document.activeElement && !$('riderPanel').contains(document.activeElement)) { clearTimeout(rd.pt); rd.pt = setTimeout(renderRider, 300); } }));
+['input', 'change'].forEach(ev => $('propertyName').addEventListener(ev, () => { if (mode === 'legal' && !rd.addrEdited && rd.open && document.activeElement && !$('riderPanel').contains(document.activeElement)) { clearTimeout(rd.pt); rd.pt = setTimeout(renderRider, 300); } }));
 
 /* ---------- Rent Registration Review: DHCR registration reports, possible overcharges ---------- */
 // NYC Rent Guidelines Board renewal rates by lease start (Oct 1 - Sep 30): [1-year %, 2-year % (total over both years)]
@@ -4318,7 +4488,7 @@ async function rgExcel() {
 }
 function renderReg() {
   const el = $('regPanel'); if (!el) return;
-  el.hidden = mode !== 'lease'; if (el.hidden) return;
+  el.hidden = mode !== 'legal'; if (el.hidden) return;
   const n = { high: 0, medium: 0, low: 0 }; rg.flags.forEach(x => n[x.level]++);
   const list = rg.flags.filter(x => rg.filter === 'all' || x.level === rg.filter);
   const lv = { high: ['coi-bad', '!'], medium: ['coi-warn', '!'], low: ['coi-ok', 'i'] };
