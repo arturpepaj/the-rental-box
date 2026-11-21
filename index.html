@@ -3630,14 +3630,13 @@ function renderPj() {
   const top = $('propertyName').value.trim();
   for (const p of pj.list) if (!p.bld && top) { p.bld = top; pjSave(p); }
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Resident Matters</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
-    <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened and the next step.</p>
+    <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
       <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
       <input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Resident name and apartment, e.g. Maria Lopez, 5B">
       <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address">
       <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
-      <input data-pj="${p.id}" data-f="next" value="${esc(p.next)}" placeholder="Next step">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
       <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
       ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
@@ -3785,13 +3784,12 @@ function renderCp() {
   const top = $('propertyName').value.trim();
   for (const p of cp.list) if (!p.bld && top) { p.bld = top; cpSave(p); }
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Construction projects</b><span class="nyc-msg">${cp.list.length} tracked</span></div>
-    <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline, compares invoices with proposals, and gives the next step.</p>
+    <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline and compares invoices with proposals.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="cpBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${cp.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
       <div class="pj-top"><input class="pj-name" data-cp="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"><select data-cp="${p.id}" data-f="state">${CP_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
       <input data-cp="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
       <input data-cp="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
-      <input data-cp="${p.id}" data-f="next" value="${esc(p.next)}" placeholder="Next step">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
       <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-cproar="${p.id}"${cp.busy[p.id] ? ' disabled' : ''}>✦ ${cp.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-cptl="${p.id}">${cp.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-cpdel="${p.id}" title="Remove project">✕</button></div>
       <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">+ Upload invoices or proposals<input type="file" data-cpup="${p.id}" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label></div>
