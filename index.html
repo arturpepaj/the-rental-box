@@ -704,11 +704,13 @@ header {
 @media (prefers-reduced-motion: reduce) { .nyc-btn.pj-roar { animation: none; } } .pj-del { margin-left: auto; padding: 4px 10px !important; }
 .pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
 .pj-add b { font-size: 14px; } .pj-add span { color: var(--muted); font-size: 12.5px; } .pj-add:hover { border-color: var(--ask); }
-.ins-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.ins-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .ins-ph { position: relative; display: flex; flex-direction: column; gap: 4px; }
 .ins-ph img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
 .ins-ph span { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; border-radius: 6px; padding: 0 5px; }
 .ins-ph button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.6); color: #fff; border: 0; border-radius: 6px; font-size: 11px; cursor: pointer; }
+.ins-ph textarea { min-height: 54px; resize: vertical; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 12px/1.35 var(--sans); padding: 5px 6px; }
+.ins-ed { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .ins-ed > div { display: flex; gap: 4px; } .ins-ed input { min-width: 0; height: 26px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font: 12.5px var(--sans); padding: 0 5px; } .ins-ed input:hover, .ins-ed input:focus { border-color: var(--line); background: var(--surface-2); outline: none; } .ins-ed .ins-loc { width: 34%; font-weight: 700; color: var(--ink); } .ins-ed .ins-iss { flex: 1; font-weight: 700; color: var(--ink); }
 .ins-ph input { height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 12px var(--sans); padding: 0 6px; }
 .ins-items { display: flex; flex-direction: column; gap: 6px; }
 .ins-it { display: grid; grid-template-columns: 18px 72px 1fr 170px; gap: 10px; align-items: center; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 13px; color: var(--ink); }
@@ -3968,7 +3970,7 @@ $('cpPanel').addEventListener('click', async e => {
 /* ---------- Inspections: photos -> inspection report and work list ---------- */
 const INSP_TYPES = ['Apartment inspection', 'Move-out inspection', 'Move-in inspection', 'Building walk-through', 'Common areas', 'Roof and facade', 'Boiler and mechanical room', 'Violation follow-up'];
 const INSP_SEV = { urgent: ['Urgent', 0], high: ['High', 1], medium: ['Medium', 2], low: ['Low', 3] };
-const ins = { photos: [], items: [], type: INSP_TYPES[0], bld: '', unit: '', notes: '', date: '', status: '', busy: false, summary: '', added: false, bldEdited: false };
+const ins = { photos: [], items: [], type: INSP_TYPES[0], bld: '', unit: '', notes: '', date: '', by: '', byEdited: false, status: '', busy: false, summary: '', added: false, bldEdited: false };
 const insId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 async function insShrink(file) {
   const url = URL.createObjectURL(file);
@@ -4008,8 +4010,10 @@ For every problem you can actually see, list one item. Look for: leaks and water
 Do not invent problems you cannot see. If a photo shows no problem, do not list it.
 Severity: "urgent" (safety hazard, active leak, no heat or hot water, fire or life safety, likely HPD Class C), "high" (likely violation or damage that will get worse), "medium" (repair soon), "low" (cosmetic or routine).
 Assign: "Maintenance staff" for work the super or porter can do (paint, caulk, patch, replace a fixture, detector, door hardware, cleaning, pest bait), or "Contractor: <trade>" for licensed or bigger work (Contractor: Plumber, Electrician, Exterminator, Mason, Roofer, Window, Elevator, Boiler, Mold remediation, Lead abatement, General contractor).
-Return only JSON: {"summary": "1-2 short sentences about what these photos show overall", "items": [{"photo": photo number, "location": "room or area", "issue": "what is wrong, short, simple English", "action": "what to do", "severity": "urgent|high|medium|low", "assign": "Maintenance staff or Contractor: trade", "violation": "possible HPD/DOB/FDNY issue in a few words, or empty"}]}`, { images: group.map(p => p.blob), modelTier: 'default', cache: false });
+Also write a report note for EVERY photo (even with no problem): 1-2 short sentences in simple English saying what the photo shows and the condition. Include facts from the manager note for that photo.
+Return only JSON: {"summary": "1-2 short sentences about what these photos show overall", "photos": [{"photo": photo number, "note": "report note"}], "items": [{"photo": photo number, "location": "room or area", "issue": "what is wrong, short, simple English", "action": "what to do", "severity": "urgent|high|medium|low", "assign": "Maintenance staff or Contractor: trade", "violation": "possible HPD/DOB/FDNY issue in a few words, or empty"}]}`, { images: group.map(p => p.blob), modelTier: 'default', cache: false });
       if (j && j.summary) summaries.push(String(j.summary));
+      for (const pn of ((j && j.photos) || [])) { const n = parseInt(pn.photo, 10) - 1; if (n >= i && n < i + group.length && pn.note) ins.photos[n].note = String(pn.note).slice(0, 400); }
       for (const it of ((j && j.items) || [])) {
         const n = parseInt(it.photo, 10); const ph = ins.photos[n - 1] && n - 1 >= i && n - 1 < i + group.length ? ins.photos[n - 1] : group[0];
         ins.items.push({ id: insId(), photo: ph.id, location: String(it.location || '').slice(0, 80), issue: String(it.issue || '').slice(0, 240), action: String(it.action || '').slice(0, 240), severity: INSP_SEV[it.severity] ? it.severity : 'medium', assign: String(it.assign || 'Maintenance staff').slice(0, 60), violation: String(it.violation || '').slice(0, 120), keep: true });
@@ -4032,31 +4036,155 @@ async function insExcel() {
   for (const [who, list] of Object.entries(by).slice(0, 12)) { const w = XLSX.utils.aoa_to_sheet([[who], ['Severity', 'Location', 'Issue', 'Action', 'Done']].concat(list.map(x => [INSP_SEV[x.severity][0], x.location, x.issue, x.action, '']))); w['!cols'] = [{ wch: 9 }, { wch: 18 }, { wch: 45 }, { wch: 45 }, { wch: 8 }]; XLSX.utils.book_append_sheet(wb, w, who.replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31)); }
   await crtSave(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), insTitle() + '.xlsx');
 }
+// ----- Inspection report: shared helpers -----
+const insKeep = () => ins.items.filter(x => x.keep);
+const insDateTxt = () => { const d = new Date((ins.date || new Date().toISOString().slice(0, 10)) + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+const insPurpose = () => `This report lists the conditions seen in the photos taken during the ${ins.type.toLowerCase()}${ins.unit ? ' of ' + (/^\d/.test(ins.unit) ? 'apartment ' : '') + ins.unit : ''}, and the work needed to fix them. Each item is rated by urgency and assigned to maintenance staff or a contractor.`;
+const insPhotoNo = id => ins.photos.findIndex(p => p.id === id) + 1;
+const insItemsFor = id => insKeep().map((x, i) => [x, i + 1]).filter(([x]) => x.photo === id);
+const INSP_HEX = { urgent: 'C2533F', high: 'E08A3C', medium: 'C9932F', low: '4F9E6B' };
+const INSP_TINT = { urgent: 'F6DCD7', high: 'FBE6D3', medium: 'F7EBCF', low: 'DCEFE2' };
+// Small ZIP writer (no compression) for the Word file
+const ZIP_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function zipStore(files) {
+  const enc = new TextEncoder(); const parts = [], central = []; let off = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name); const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    let crc = 0xFFFFFFFF; for (let i = 0; i < data.length; i++) crc = ZIP_CRC[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8); crc = (crc ^ 0xFFFFFFFF) >>> 0;
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    parts.push(h.buffer, name, data); central.push(c.buffer, name); off += 30 + name.length + data.length;
+  }
+  const size = central.reduce((s, b) => s + (b.byteLength || b.length), 0);
+  const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, size, true); e.setUint32(16, off, true);
+  return new Blob(parts.concat(central, [e.buffer]), { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+// ----- Word (.docx) report: cover page, summary and work list, then 4 photos per letter page -----
+async function insDocx() {
+  const X = s => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const IN = 914400; const keep = insKeep(); const cnt = s => keep.filter(x => x.severity === s).length;
+  const rels = [], media = []; let pid = 1;
+  const img = (p, maxW, maxH) => { const k = Math.min(maxW / p.w, maxH / p.h); const cx = Math.round(p.w * k * IN), cy = Math.round(p.h * k * IN); let m = media.find(z => z.p === p); if (!m) { m = { p, rid: 'rIdImg' + (media.length + 1), file: 'image' + (media.length + 1) + '.jpeg' }; media.push(m); } const id = pid++;
+    return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Photo ${id}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${m.file}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${m.rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`; };
+  const run = (t, o = {}) => `<w:r><w:rPr>${o.b ? '<w:b/>' : ''}${o.i ? '<w:i/>' : ''}${o.caps ? '<w:caps/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz * 2}"/><w:szCs w:val="${o.sz * 2}"/>` : ''}${o.sp ? `<w:spacing w:val="${o.sp}"/>` : ''}</w:rPr><w:t xml:space="preserve">${X(t)}</w:t></w:r>`;
+  const par = (runs, o = {}) => `<w:p><w:pPr>${o.keep ? '<w:keepNext/>' : ''}${o.border ? `<w:pBdr><w:bottom w:val="single" w:sz="${o.border[1] || 12}" w:space="6" w:color="${o.border[0]}"/></w:pBdr>` : ''}<w:spacing w:before="${o.before || 0}" w:after="${o.after == null ? 80 : o.after}"${o.line ? ` w:line="${o.line}" w:lineRule="auto"` : ''}/>${o.align ? `<w:jc w:val="${o.align}"/>` : ''}</w:pPr>${runs}</w:p>`;
+  const pageBreak = '<w:p><w:pPr><w:spacing w:before="0" w:after="0"/><w:rPr><w:sz w:val="2"/></w:rPr></w:pPr><w:r><w:rPr><w:sz w:val="2"/></w:rPr><w:br w:type="page"/></w:r></w:p>';
+  const cell = (w, inner, o = {}) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : ''}${o.v ? `<w:vAlign w:val="${o.v}"/>` : ''}</w:tcPr>${inner || '<w:p/>'}</w:tc>`;
+  const table = (widths, rows, o = {}) => `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a, b) => a + b, 0)}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => o.lines === false ? `<w:${s} w:val="nil"/>` : `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="${o.lineColor || 'D9D9D9'}"/>`).join('')}</w:tblBorders><w:tblCellMar><w:top w:w="${o.pad || 80}" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="${o.pad || 80}" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${widths.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${rows.join('')}</w:tbl>`;
+  const row = (cells, o = {}) => `<w:tr><w:trPr><w:cantSplit/>${o.head ? '<w:tblHeader/>' : ''}${o.h ? `<w:trHeight w:val="${o.h}" w:hRule="atLeast"/>` : ''}</w:trPr>${cells.join('')}</w:tr>`;
+  const ACC = '1F3A5F', MUTED = '6B7280', FULL = 10512;
+  let body = '';
+  // Cover page
+  const cov = (keep[0] && ins.photos.find(p => p.id === keep[0].photo)) || ins.photos[0];
+  body += table([FULL], [row([cell(FULL, par(run('PROPERTY INSPECTION REPORT', { b: true, color: 'FFFFFF', sz: 11, sp: 40 }), { after: 0 }), { fill: ACC })])], { lines: false, pad: 140 });
+  body += par(run(ins.type, { b: true, sz: 30, color: '111827' }), { before: 480, after: 60 });
+  body += par(run('Inspection Report', { sz: 15, color: MUTED }), { after: 200, border: ['C9932F', 18] });
+  body += par(run(ins.bld || 'Building address', { b: true, sz: 20, color: ACC }), { before: 160, after: ins.unit ? 40 : 200 });
+  if (ins.unit) body += par(run((/^\d|^[A-Z]{0,2}\d/i.test(ins.unit) ? 'Apartment / area ' : '') + ins.unit, { sz: 14, color: '374151' }), { after: 200 });
+  if (cov) body += par(img(cov, 7.3, 3.5), { align: 'center', before: 120, after: 200 });
+  const det = [['Report for', insPurpose()], ['Inspection date', insDateTxt()], ['Prepared by', ins.by || ''], ['Photos', String(ins.photos.length)], ['Items found', `${keep.length} total: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low`]].filter(r => r[1]);
+  body += table([2300, FULL - 2300], det.map(([k, v]) => row([cell(2300, par(run(k, { b: true, sz: 10, color: MUTED }), { after: 0 }), { fill: 'F3F4F6' }), cell(FULL - 2300, par(run(v, { sz: 10.5 }), { after: 0 }))])), { lineColor: 'E5E7EB' });
+  body += pageBreak;
+  // Summary and work list
+  body += par(run('Summary', { b: true, sz: 16, color: ACC }), { after: 100, border: ['C9932F', 8] });
+  body += par(run(ins.summary || 'No summary.', { sz: 10.5 }), { after: 120 });
+  if (ins.notes) body += par(run('Manager notes: ', { b: true, sz: 10.5 }) + run(ins.notes, { sz: 10.5 }), { after: 120 });
+  body += table([2628, 2628, 2628, 2628], [row(['urgent', 'high', 'medium', 'low'].map(s => cell(2628, par(run(INSP_SEV[s][0], { b: true, sz: 9, color: INSP_HEX[s], caps: true }), { after: 0, align: 'center' }) + par(run(String(cnt(s)), { b: true, sz: 20 }), { after: 0, align: 'center' }), { fill: INSP_TINT[s] })))], { lineColor: 'FFFFFF', pad: 100 });
+  body += par(run('Work list', { b: true, sz: 16, color: ACC }), { before: 280, after: 100, border: ['C9932F', 8], keep: true });
+  const W = [450, 1050, 1500, 4612, 2100, 800];
+  const head = row(['#', 'Urgency', 'Location', 'Problem and action', 'Assigned to', 'Photo'].map((h, i) => cell(W[i], par(run(h, { b: true, sz: 9, color: 'FFFFFF' }), { after: 0 }), { fill: ACC })), { head: true });
+  body += table(W, [head].concat(keep.map((x, i) => row([
+    cell(W[0], par(run(String(i + 1), { sz: 9.5 }), { after: 0 })),
+    cell(W[1], par(run(INSP_SEV[x.severity][0], { b: true, sz: 9, color: INSP_HEX[x.severity] }), { after: 0 }), { fill: INSP_TINT[x.severity] }),
+    cell(W[2], par(run(x.location, { sz: 9.5 }), { after: 0 })),
+    cell(W[3], par(run(x.issue, { b: true, sz: 9.5 }), { after: 30 }) + par(run('Action: ' + x.action, { sz: 9.5, color: '374151' }), { after: x.violation ? 30 : 0 }) + (x.violation ? par(run('Possible violation: ' + x.violation, { i: true, sz: 9, color: 'A16207' }), { after: 0 }) : '')),
+    cell(W[4], par(run(x.assign, { sz: 9.5 }), { after: 0 })),
+    cell(W[5], par(run(String(insPhotoNo(x.photo) || ''), { sz: 9.5 }), { after: 0, align: 'center' }))
+  ]))));
+  body += par(run('Prepared from photos with AI help and reviewed by the manager. Check each item on site before work starts, and use licensed contractors where the law requires.', { i: true, sz: 8.5, color: MUTED }), { before: 160 });
+  // Photo pages: 2 x 2 per letter page
+  const CW = FULL / 2;
+  for (let i = 0; i < ins.photos.length; i += 4) {
+    body += pageBreak;
+    const group = ins.photos.slice(i, i + 4); const rowsX = [];
+    for (let r = 0; r < group.length; r += 2) rowsX.push(row([0, 1].map(c => { const p = group[r + c]; if (!p) return cell(CW, '<w:p/>'); const n = i + r + c + 1; const its = insItemsFor(p.id); const top = its.map(([x]) => x.severity).sort((a, b) => INSP_SEV[a][1] - INSP_SEV[b][1])[0];
+      return cell(CW, par(img(p, 3.4, 2.6), { align: 'center', after: 80 }) + par(run('Photo ' + n, { b: true, sz: 10.5, color: ACC }) + (top ? run('   ' + INSP_SEV[top][0], { b: true, sz: 9, color: INSP_HEX[top], caps: true }) : '') + (its.length ? run('   Item' + (its.length > 1 ? 's ' : ' ') + its.map(z => z[1]).join(', '), { sz: 9, color: MUTED }) : ''), { after: 40 }) + par(run(p.note || (its[0] ? its[0][0].issue : ''), { sz: 9.5 }), { after: 0, line: 252 }), { v: 'top' }); }), { h: 6120 }));
+    body += table([CW, CW], rowsX, { lineColor: 'E5E7EB', pad: 100 });
+  }
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}<w:sectPr><w:footerReference w:type="default" r:id="rIdFoot"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="864" w:right="864" w:bottom="864" w:left="864" w:header="432" w:footer="432" w:gutter="0"/><w:titlePg/></w:sectPr></w:body></w:document>`;
+  const fld = c => `<w:r><w:rPr><w:sz w:val="16"/><w:color w:val="6B7280"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="6B7280"/></w:rPr><w:instrText xml:space="preserve"> ${c} </w:instrText></w:r><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="6B7280"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="6B7280"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:sz w:val="16"/><w:color w:val="6B7280"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>`;
+  const foot = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D9D9D9"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="10512"/></w:tabs><w:spacing w:after="0"/></w:pPr>${run([ins.bld, ins.unit ? 'Apt/area ' + ins.unit : '', ins.type, insDateTxt()].filter(Boolean).join('  ·  '), { sz: 8, color: MUTED })}<w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:tab/></w:r>${run('Page ', { sz: 8, color: MUTED })}${fld('PAGE')}${run(' of ', { sz: 8, color: MUTED })}${fld('NUMPAGES')}</w:p></w:ftr>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:color w:val="1F2937"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="259" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
+  const files = [
+    { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>` },
+    { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>` },
+    { name: 'docProps/core.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${X(insTitle())}</dc:title><dc:creator>${X(ins.by || 'ToolBox for Rentals')}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>` },
+    { name: 'word/document.xml', data: doc },
+    { name: 'word/styles.xml', data: styles },
+    { name: 'word/footer1.xml', data: foot }
+  ];
+  rels.push(`<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`, `<Relationship Id="rIdFoot" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>`);
+  for (const m of media) { rels.push(`<Relationship Id="${m.rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.file}"/>`); files.push({ name: 'word/media/' + m.file, data: new Uint8Array(await m.p.blob.arrayBuffer()) }); }
+  files.push({ name: 'word/_rels/document.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels.join('')}</Relationships>` });
+  await crtSave(zipStore(files), insTitle().replace(/[\\/:*?"<>|]/g, '-') + '.docx');
+}
+// ----- PDF report: same layout -----
 async function insPdf() {
   await loadScript(PDFLIB);
+  const { rgb } = PDFLib; const hex = h => rgb(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255);
   const doc = await PDFLib.PDFDocument.create(); const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica); const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-  const W = 612, H = 792, M = 44; let page = doc.addPage([W, H]); let y = H - M;
-  const wrap = (t, f, sz, w) => { const out = []; let line = ''; for (const word of fmSafe(t).split(/\s+/)) { const tryL = line ? line + ' ' + word : word; if (f.widthOfTextAtSize(tryL, sz) > w && line) { out.push(line); line = word; } else line = tryL; } if (line) out.push(line); return out; };
-  const text = (t, sz, f, x, w) => { for (const l of wrap(t, f, sz, w)) { if (y < M + 20) { page = doc.addPage([W, H]); y = H - M; } page.drawText(l, { x, y, size: sz, font: f }); y -= sz + 3; } };
-  text(insTitle(), 15, bold, M, W - 2 * M); y -= 4;
-  if (ins.summary) { text(ins.summary, 10, font, M, W - 2 * M); y -= 6; }
-  const keep = ins.items.filter(x => x.keep);
-  const cnt = s => keep.filter(x => x.severity === s).length;
-  text(`${keep.length} items: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low.`, 10, bold, M, W - 2 * M); y -= 8;
-  const imgCache = {};
-  for (const [i, x] of keep.entries()) {
-    const p = ins.photos.find(z => z.id === x.photo);
-    const boxH = 118; if (y - boxH < M) { page = doc.addPage([W, H]); y = H - M; }
-    const top = y; page.drawLine({ start: { x: M, y: top + 6 }, end: { x: W - M, y: top + 6 }, thickness: .5, color: PDFLib.rgb(.75, .75, .75) });
-    if (p) { try { imgCache[p.id] = imgCache[p.id] || await doc.embedJpg(new Uint8Array(await p.blob.arrayBuffer())); const im = imgCache[p.id]; const k = Math.min(140 / im.width, 105 / im.height); page.drawImage(im, { x: M, y: top - 105 * 1 + (105 - im.height * k), width: im.width * k, height: im.height * k }); } catch (e) {} }
-    const tx = M + 152, tw = W - M - tx; y = top - 2;
-    text(`${i + 1}. [${INSP_SEV[x.severity][0]}] ${x.location ? x.location + ': ' : ''}${x.issue}`, 10.5, bold, tx, tw);
-    text('Action: ' + x.action, 9.5, font, tx, tw);
-    text('Assigned to: ' + x.assign + (x.violation ? '   Possible violation: ' + x.violation : ''), 9.5, font, tx, tw);
-    y = Math.min(y, top - 112);
+  const Wd = 612, Ht = 792, M = 44, CW = Wd - 2 * M; const keep = insKeep(); const cnt = s => keep.filter(x => x.severity === s).length; const cache = {};
+  const emb = async p => (cache[p.id] = cache[p.id] || await doc.embedJpg(new Uint8Array(await p.blob.arrayBuffer())));
+  const wrap = (t, f, sz, w) => { const out = []; for (const para of fmSafe(t).split('\n')) { let line = ''; for (const word of para.split(/\s+/)) { const tl = line ? line + ' ' + word : word; if (f.widthOfTextAtSize(tl, sz) > w && line) { out.push(line); line = word; } else line = tl; } out.push(line); } return out; };
+  let page, y; const newPage = () => { page = doc.addPage([Wd, Ht]); y = Ht - M; };
+  const text = (t, sz, f, x, w, color, lh) => { for (const l of wrap(t, f, sz, w)) { if (y < M + 30) newPage(); page.drawText(l, { x, y: y - sz, size: sz, font: f, color: color || hex('1F2937') }); y -= (lh || sz * 1.3); } };
+  const ACC = hex('1F3A5F'), MUT = hex('6B7280');
+  // Cover
+  newPage(); page.drawRectangle({ x: 0, y: Ht - 70, width: Wd, height: 70, color: ACC }); page.drawText('PROPERTY INSPECTION REPORT', { x: M, y: Ht - 43, size: 12, font: bold, color: rgb(1, 1, 1) });
+  y = Ht - 120; text(ins.type, 30, bold, M, CW, hex('111827')); y -= 2; text('Inspection Report', 15, font, M, CW, MUT); y -= 6;
+  page.drawRectangle({ x: M, y: y, width: CW, height: 2.5, color: hex('C9932F') }); y -= 26;
+  text(ins.bld || 'Building address', 20, bold, M, CW, ACC); if (ins.unit) text('Apartment / area ' + ins.unit, 13, font, M, CW, hex('374151'));
+  y -= 12; const cov = (keep[0] && ins.photos.find(p => p.id === keep[0].photo)) || ins.photos[0];
+  if (cov) { try { const im = await emb(cov); const k = Math.min(CW / im.width, 250 / im.height); page.drawImage(im, { x: M + (CW - im.width * k) / 2, y: y - im.height * k, width: im.width * k, height: im.height * k }); y -= im.height * k + 20; } catch (e) {} }
+  const det = [['Report for', insPurpose()], ['Inspection date', insDateTxt()], ['Prepared by', ins.by || ''], ['Photos', String(ins.photos.length)], ['Items found', `${keep.length} total: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low`]].filter(r => r[1]);
+  for (const [k, v] of det) { const lines = wrap(v, font, 10, CW - 130); const h = lines.length * 13 + 10; page.drawRectangle({ x: M, y: y - h, width: 120, height: h, color: hex('F3F4F6') }); page.drawRectangle({ x: M, y: y - h, width: CW, height: h, borderColor: hex('E5E7EB'), borderWidth: .6 }); page.drawText(k, { x: M + 8, y: y - 17, size: 9.5, font: bold, color: MUT }); lines.forEach((l, i) => page.drawText(l, { x: M + 130, y: y - 17 - i * 13, size: 10, font })); y -= h; }
+  // Summary and work list
+  newPage(); text('Summary', 16, bold, M, CW, ACC); page.drawRectangle({ x: M, y: y + 2, width: CW, height: 1.2, color: hex('C9932F') }); y -= 8;
+  text(ins.summary || 'No summary.', 10.5, font, M, CW); if (ins.notes) text('Manager notes: ' + ins.notes, 10.5, font, M, CW); y -= 8;
+  const bw = CW / 4; ['urgent', 'high', 'medium', 'low'].forEach((s, i) => { page.drawRectangle({ x: M + i * bw + 2, y: y - 50, width: bw - 4, height: 50, color: hex(INSP_TINT[s]) }); const L = INSP_SEV[s][0].toUpperCase(); page.drawText(L, { x: M + i * bw + bw / 2 - bold.widthOfTextAtSize(L, 8.5) / 2, y: y - 18, size: 8.5, font: bold, color: hex(INSP_HEX[s]) }); const n = String(cnt(s)); page.drawText(n, { x: M + i * bw + bw / 2 - bold.widthOfTextAtSize(n, 20) / 2, y: y - 42, size: 20, font: bold }); }); y -= 72;
+  text('Work list', 16, bold, M, CW, ACC); page.drawRectangle({ x: M, y: y + 2, width: CW, height: 1.2, color: hex('C9932F') }); y -= 8;
+  const cols = [[22, '#'], [58, 'Urgency'], [80, 'Location'], [246, 'Problem and action'], [86, 'Assigned to'], [32, 'Photo']];
+  const headRow = () => { page.drawRectangle({ x: M, y: y - 18, width: CW, height: 18, color: ACC }); let x = M; for (const [w, h] of cols) { page.drawText(h, { x: x + 4, y: y - 12.5, size: 8.5, font: bold, color: rgb(1, 1, 1) }); x += w; } y -= 18; };
+  headRow();
+  keep.forEach((it, i) => {
+    const cells = [[String(i + 1)], [INSP_SEV[it.severity][0]], wrap(it.location, font, 8.5, cols[2][0] - 8), wrap(it.issue, bold, 8.5, cols[3][0] - 8).concat(wrap('Action: ' + it.action, font, 8.5, cols[3][0] - 8), it.violation ? wrap('Possible violation: ' + it.violation, font, 8, cols[3][0] - 8) : []), wrap(it.assign, font, 8.5, cols[4][0] - 8), [String(insPhotoNo(it.photo) || '')]];
+    const h = Math.max(...cells.map(c => c.length)) * 11 + 8; if (y - h < M + 30) { newPage(); headRow(); }
+    page.drawRectangle({ x: M + cols[0][0], y: y - h, width: cols[1][0], height: h, color: hex(INSP_TINT[it.severity]) });
+    let x = M; const nIssue = wrap(it.issue, bold, 8.5, cols[3][0] - 8).length;
+    cells.forEach((c, ci) => { c.forEach((l, li) => page.drawText(l, { x: x + 4, y: y - 12 - li * 11, size: ci === 3 && li >= nIssue && /^Possible/.test(l) ? 8 : 8.5, font: (ci === 3 && li < nIssue) || ci === 1 ? bold : font, color: ci === 1 ? hex(INSP_HEX[it.severity]) : hex('1F2937') })); x += cols[ci][0]; });
+    page.drawLine({ start: { x: M, y: y - h }, end: { x: M + CW, y: y - h }, thickness: .5, color: hex('D9D9D9') }); y -= h;
+  });
+  y -= 12; text('Prepared from photos with AI help and reviewed by the manager. Check each item on site before work starts, and use licensed contractors where the law requires.', 8, font, M, CW, MUT);
+  // Photo pages: 2 x 2 per page
+  const GW = (CW - 12) / 2, GH = (Ht - 2 * M - 30 - 12) / 2;
+  for (let i = 0; i < ins.photos.length; i += 4) {
+    newPage();
+    for (let k = 0; k < 4 && i + k < ins.photos.length; k++) {
+      const p = ins.photos[i + k], n = i + k + 1; const gx = M + (k % 2) * (GW + 12), gy = Ht - M - Math.floor(k / 2) * (GH + 12);
+      page.drawRectangle({ x: gx, y: gy - GH, width: GW, height: GH, borderColor: hex('E5E7EB'), borderWidth: .7 });
+      let cy = gy - 8; try { const im = await emb(p); const s = Math.min((GW - 16) / im.width, 190 / im.height); page.drawImage(im, { x: gx + (GW - im.width * s) / 2, y: cy - im.height * s, width: im.width * s, height: im.height * s }); cy -= im.height * s + 8; } catch (e) { cy -= 198; }
+      const its = insItemsFor(p.id); const top = its.map(([x]) => x.severity).sort((a, b) => INSP_SEV[a][1] - INSP_SEV[b][1])[0];
+      let tx = gx + 8; page.drawText('Photo ' + n, { x: tx, y: cy - 11, size: 10.5, font: bold, color: ACC }); tx += bold.widthOfTextAtSize('Photo ' + n, 10.5) + 10;
+      if (top) { const L = INSP_SEV[top][0].toUpperCase(); page.drawText(L, { x: tx, y: cy - 11, size: 8.5, font: bold, color: hex(INSP_HEX[top]) }); tx += bold.widthOfTextAtSize(L, 8.5) + 10; }
+      if (its.length) page.drawText('Item' + (its.length > 1 ? 's ' : ' ') + its.map(z => z[1]).join(', '), { x: tx, y: cy - 11, size: 8.5, font, color: MUT });
+      cy -= 18; const lines = wrap(p.note || (its[0] ? its[0][0].issue : ''), font, 9, GW - 16); const maxL = Math.floor((cy - (gy - GH) - 6) / 11.5);
+      lines.slice(0, maxL).forEach((l, li) => page.drawText(li === maxL - 1 && lines.length > maxL ? l.replace(/\s*\S*$/, '…').replace('…', '...') : l, { x: gx + 8, y: cy - 9 - li * 11.5, size: 9, font }));
+    }
   }
-  y -= 10; text('Prepared from photos with AI help. Check each item on site before work starts.', 8.5, font, M, W - 2 * M);
-  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), insTitle() + '.pdf');
+  const pages = doc.getPages(); const ft = [ins.bld, ins.unit ? 'Apt/area ' + ins.unit : '', ins.type, insDateTxt()].filter(Boolean).join('  -  ');
+  pages.forEach((pg, i) => { if (!i) return; pg.drawLine({ start: { x: M, y: 34 }, end: { x: Wd - M, y: 34 }, thickness: .5, color: hex('D9D9D9') }); pg.drawText(fmSafe(ft).slice(0, 110), { x: M, y: 22, size: 7.5, font, color: MUT }); const pn = `Page ${i + 1} of ${pages.length}`; pg.drawText(pn, { x: Wd - M - font.widthOfTextAtSize(pn, 7.5), y: 22, size: 7.5, font, color: MUT }); });
+  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), insTitle().replace(/[\\/:*?"<>|]/g, '-') + '.pdf');
 }
 async function insToTasks() {
   const keep = ins.items.filter(x => x.keep); let n = 0;
@@ -4068,20 +4196,23 @@ function renderInsp() {
   const el = $('inspPanel'); if (!el) return;
   el.hidden = mode !== 'inspect'; if (el.hidden) return;
   if (!ins.bldEdited) ins.bld = $('propertyName').value.trim() || ins.bld;
+  if (!ins.by && !ins.byEdited && userCap && !ins.byAsked) { ins.byAsked = true; userCap.me().then(me => { if (me && me.name && !ins.byEdited && !ins.by) { ins.by = String(me.name).slice(0, 80); const f = $('insBy'); if (f && !f.value) f.value = ins.by; } }).catch(() => {}); }
   const keep = ins.items.filter(x => x.keep); const cnt = s => keep.filter(x => x.severity === s).length;
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Inspection report from photos</b>${ins.photos.length ? `<span class="nyc-msg">${ins.photos.length} photo${ins.photos.length === 1 ? '' : 's'}</span>` : ''}</div>
     <p>1. Add photos (up to 60). Add a short note under a photo if it helps. 2. Click Generate report.</p>
     <div class="coi-grid"><label>Inspection</label><select id="insType">${INSP_TYPES.map(t => `<option${ins.type === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
       <label>Building</label><div class="pj-addr"><input id="insBld" value="${esc(ins.bld)}" placeholder="Building address"><input id="insUnit" value="${esc(ins.unit)}" placeholder="Unit or area (optional)"></div>
+      <label>Prepared by</label><input id="insBy" value="${esc(ins.by)}" placeholder="Your name">
       <label>Date</label><input id="insDate" type="date" value="${esc(ins.date || new Date().toISOString().slice(0, 10))}">
       <label>Notes (optional)</label><input id="insNotes" value="${esc(ins.notes)}" placeholder="e.g. tenant moving out, check bathroom leak from 6B"></div>
     <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">${ins.photos.length ? '+ Add more photos' : '1. Upload photos'}<input type="file" id="insFile" accept="image/*" multiple hidden></label><button class="nyc-btn" type="button" id="insGo"${!ins.photos.length || ins.busy ? ' disabled' : ''}>${ins.busy ? 'Working…' : '2. Generate report'}</button>${ins.photos.length ? '<button class="nyc-btn ghost" type="button" id="insClear">Start over</button>' : ''}</div>
-    ${ins.photos.length ? `<div class="ins-photos">${ins.photos.map((p, i) => `<div class="ins-ph"><img src="${p.thumb}" alt=""><span>${i + 1}</span><button type="button" data-insdel="${p.id}" title="Remove photo">✕</button><input data-insnote="${p.id}" value="${esc(p.note)}" placeholder="Note"></div>`).join('')}</div>` : ''}
+    ${ins.photos.length ? `<div class="ins-photos">${ins.photos.map((p, i) => `<div class="ins-ph"><img src="${p.thumb}" alt=""><span>${i + 1}</span><button type="button" data-insdel="${p.id}" title="Remove photo">✕</button><textarea data-insnote="${p.id}" rows="3" placeholder="${ins.items.length ? 'Report note' : 'Note (optional). Claude writes the report note, you can edit it.'}">${esc(p.note)}</textarea></div>`).join('')}</div>` : ''}
     ${ins.status ? `<p class="nyc-msg">${esc(ins.status)}</p>` : ''}
     ${ins.items.length ? `${ins.summary ? `<p class="pj-sum">${esc(ins.summary)}</p>` : ''}
       <div class="crt-sum"><div class="rg-hi"><small>Urgent</small><b>${cnt('urgent')}</b></div><div><small>High</small><b>${cnt('high')}</b></div><div><small>Medium</small><b>${cnt('medium')}</b></div><div><small>Low</small><b>${cnt('low')}</b></div></div>
-      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it ins-${x.severity}${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div><b>${esc(x.location ? x.location + ': ' : '')}${esc(x.issue)}</b><small>${esc(x.action)}</small>${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><select data-inssev="${x.id}">${Object.entries(INSP_SEV).map(([k, v]) => `<option value="${k}"${x.severity === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
-      <div class="cal-btns"><button class="nyc-btn" type="button" id="insPdf">Download report (PDF)</button><button class="nyc-btn ghost" type="button" id="insXlsx">Download work list (Excel)</button><button class="nyc-btn ghost" type="button" id="insTasks"${ins.added ? ' disabled' : ''}>${ins.added ? 'Added to Open Tasks ✓' : 'Send to Open Tasks'}</button></div>
+      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it ins-${x.severity}${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div class="ins-ed"><div><input data-insf="location" data-insid="${x.id}" value="${esc(x.location)}" placeholder="Location" class="ins-loc"><input data-insf="issue" data-insid="${x.id}" value="${esc(x.issue)}" placeholder="Problem" class="ins-iss"></div><input data-insf="action" data-insid="${x.id}" value="${esc(x.action)}" placeholder="Action">${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><select data-inssev="${x.id}">${Object.entries(INSP_SEV).map(([k, v]) => `<option value="${k}"${x.severity === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
+      <p class="nyc-msg">You can edit any item above and the notes under each photo. The report has a cover page, a summary and work list, then 4 photos per page.</p>
+      <div class="cal-btns"><button class="nyc-btn" type="button" id="insDocx">Download report (Word)</button><button class="nyc-btn ghost" type="button" id="insPdf">Download report (PDF)</button><button class="nyc-btn ghost" type="button" id="insXlsx">Download work list (Excel)</button><button class="nyc-btn ghost" type="button" id="insTasks"${ins.added ? ' disabled' : ''}>${ins.added ? 'Added to Open Tasks ✓' : 'Send to Open Tasks'}</button></div>
       <p class="fh-legal">Claude sees only what is in the photos. Check each item on site before work starts, and use licensed contractors where the law requires.</p>` : ''}</div>`;
 }
 $('inspPanel').addEventListener('change', e => {
@@ -4097,13 +4228,16 @@ $('inspPanel').addEventListener('input', e => {
   if (t.id === 'insBld') { ins.bld = t.value.slice(0, 200); ins.bldEdited = !!t.value.trim(); }
   if (t.id === 'insUnit') ins.unit = t.value.slice(0, 40);
   if (t.id === 'insNotes') ins.notes = t.value.slice(0, 400);
-  if (t.dataset.insnote) { const p = ins.photos.find(y => y.id === t.dataset.insnote); if (p) p.note = t.value.slice(0, 120); }
+  if (t.id === 'insBy') { ins.by = t.value.slice(0, 80); ins.byEdited = true; }
+  if (t.dataset.insf) { const x = ins.items.find(y => y.id === t.dataset.insid); if (x) x[t.dataset.insf] = t.value.slice(0, 240); }
+  if (t.dataset.insnote) { const p = ins.photos.find(y => y.id === t.dataset.insnote); if (p) p.note = t.value.slice(0, 600); }
   if (t.dataset.insas) { const x = ins.items.find(y => y.id === t.dataset.insas); if (x) x.assign = t.value.slice(0, 60); }
 });
 $('inspPanel').addEventListener('click', e => {
   if (e.target.closest('#insGo')) insGenerate();
   if (e.target.closest('#insClear')) { Object.assign(ins, { photos: [], items: [], status: '', summary: '', added: false }); renderInsp(); }
   const d = e.target.closest('[data-insdel]'); if (d) { ins.photos = ins.photos.filter(p => p.id !== d.dataset.insdel); ins.items = ins.items.filter(x => x.photo !== d.dataset.insdel); renderInsp(); }
+  if (e.target.closest('#insDocx')) insDocx().catch(() => { ins.status = 'Could not make the Word file.'; renderInsp(); });
   if (e.target.closest('#insPdf')) insPdf().catch(() => { ins.status = 'Could not make the PDF.'; renderInsp(); });
   if (e.target.closest('#insXlsx')) insExcel().catch(() => { ins.status = 'Could not make the Excel file.'; renderInsp(); });
   if (e.target.closest('#insTasks')) insToTasks();
