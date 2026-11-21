@@ -667,6 +667,21 @@ header {
 .fh-flag > div { font-weight: 600; }
 .fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
+.pj-mb { display: grid; grid-template-columns: minmax(200px, auto) 1fr; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.pj-mb input, .pj-card input, .pj-card select { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 10px; width: 100%; box-sizing: border-box; }
+.pj-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
+.pj-planning { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-on-hold { border-left-color: #c9932f; } .pj-done { border-left-color: #4f9e6b; }
+.pj-top { display: grid; grid-template-columns: 1fr 120px; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
+.pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
+.pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
+.pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
+.pj-add b { font-size: 14px; } .pj-add span { color: var(--muted); font-size: 12.5px; } .pj-add:hover { border-color: var(--ask); }
+.pj-tl { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; gap: 8px; border-left: 2px solid var(--line); max-height: 320px; overflow: auto; }
+.pj-tl li { display: grid; grid-template-columns: 84px 1fr; gap: 8px; font-size: 12.5px; color: var(--ink); padding-left: 8px; position: relative; }
+.pj-tl li::before { content: ''; position: absolute; left: -9px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--ask); }
+.pj-d { color: var(--muted); font-variant-numeric: tabular-nums; } .pj-tl small { display: block; color: var(--muted); font-size: 11.5px; }
+@media (max-width: 900px) { .pj-grid { grid-template-columns: 1fr; } .pj-mb { grid-template-columns: 1fr; } }
 .coi-req { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .coi-req-h { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); } .coi-req-h small { color: var(--muted); } .coi-req-h button { margin-left: auto; }
 .coi-sum { margin: 0; font-size: 12.5px; color: var(--muted); }
@@ -921,6 +936,7 @@ header {
         <div id="nycPanel" class="nyc" hidden></div>
         <div id="calPanel" class="cal" hidden></div>
         <div id="emgPanel" class="emg" hidden></div>
+        <div id="pjPanel" class="emg" hidden></div>
         <div id="coiPanel" class="emg" hidden></div>
         <div id="crtPanel" class="emg" hidden></div>
         <div id="regPanel" class="emg" hidden></div>
@@ -1036,7 +1052,7 @@ const ICONS = {
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
 const SECTIONS = [
-  { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it.', samples:['Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
+  { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it. Track your projects below: Roar builds a timeline from your email and delegate mailboxes.', samples:['Where does the roof project stand?','Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
@@ -1363,6 +1379,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
+  if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Projects', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Project: ${x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Project tracker' });
   if (mode === 'lease' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
@@ -2607,6 +2624,7 @@ function setMode(key) {
   if (typeof renderCoi === 'function') { try { renderCoi(); } catch (e) {} }
   if (typeof renderRider === 'function') { try { renderRider(); } catch (e) {} }
   if (typeof renderReg === 'function') { try { renderReg(); } catch (e) {} }
+  if (typeof renderPj === 'function') { try { renderPj(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -3508,6 +3526,126 @@ function updateClock() {
   catch (e) { $('clock').textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 }
 setInterval(updateClock, 30000); updateClock();
+
+/* ---------- Project Tracker (Manager's Desk) ---------- */
+const PJ_STATUS = ['Not started', 'Planning', 'In progress', 'On hold', 'Done'];
+const pj = { list: [], mailboxes: '', loaded: false, store: 'local', open: {}, busy: {}, status: {} };
+const pjNew = n => ({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', bld: '', keys: '', state: 'Not started', next: '', summary: '', timeline: [], at: Date.now(), n });
+function pjLocal() { try { localStorage.setItem('rb-projects', JSON.stringify({ list: pj.list, mailboxes: pj.mailboxes })); } catch (e) {} }
+async function pjLoad() {
+  try { const v = JSON.parse(localStorage.getItem('rb-projects') || '{}'); pj.list = v.list || []; pj.mailboxes = v.mailboxes || ''; } catch (e) {}
+  if (db && myId) {
+    try {
+      const snap = await db.collection(`emc/${myId}/proj`).get(); const rows = snap.docs.map(d => d.data()).filter(Boolean);
+      const cfg = rows.find(r => r.id === '_cfg'); const list = rows.filter(r => r.id !== '_cfg');
+      if (list.length) pj.list = list.sort((a, b) => (a.n || 0) - (b.n || 0)); if (cfg) pj.mailboxes = cfg.mailboxes || '';
+      pj.store = 'db';
+    } catch (e) {}
+  }
+  while (pj.list.length < 4) pj.list.push(pjNew(pj.list.length));
+  pj.loaded = true; pjLocal(); renderPj();
+}
+async function pjSave(p) {
+  pjLocal(); if (pj.store !== 'db') return;
+  try { await db.doc(`emc/${myId}`).set({ uid: myId, at: Date.now() }); await db.doc(`emc/${myId}/proj/${p.id}`).set(Object.assign({}, p, { timeline: (p.timeline || []).slice(0, 80) })); } catch (e) { showFootWarn('Saved on this computer only.'); }
+}
+async function pjSaveCfg() { pjLocal(); if (pj.store === 'db') { try { await db.doc(`emc/${myId}/proj/_cfg`).set({ id: '_cfg', mailboxes: pj.mailboxes }); } catch (e) {} } }
+const pjBoxes = () => String(pj.mailboxes || '').split(/[,;\s]+/).map(s => s.trim()).filter(s => /@/.test(s)).slice(0, 8);
+function pjTools(onStatus) {
+  const boxes = pjBoxes();
+  const tools = [
+    { name: 'search_mail', description: `Search Outlook email. mailbox: leave empty for the user's own mailbox, or one of the delegate (surrogate) mailboxes: ${boxes.join(', ') || 'none listed'}. In a delegate mailbox, send query alone, or sender and dates without query. Returns up to 25 emails with uri, date, from, subject, preview. Not sorted.`,
+      inputSchema: { type: 'object', properties: { query: { type: 'string' }, sender: { type: 'string' }, afterDateTime: { type: 'string' }, beforeDateTime: { type: 'string' }, mailbox: { type: 'string' }, offset: { type: 'number' } } },
+      async execute(input, ctx) {
+        const args = { limit: 25, offset: Math.max(0, Number(input.offset) || 0) };
+        const box = String(input.mailbox || '').trim().toLowerCase();
+        if (box) { if (!boxes.map(b => b.toLowerCase()).includes(box)) throw new Error('That mailbox is not in the delegate list.'); args.mailboxOwnerEmail = box; }
+        for (const k of ['query', 'sender', 'afterDateTime', 'beforeDateTime']) if (input[k]) args[k] = String(input[k]).slice(0, 300);
+        if (box && args.query) { delete args.sender; delete args.afterDateTime; delete args.beforeDateTime; }
+        if (!args.query && !args.sender && !args.afterDateTime && !args.beforeDateTime) throw new Error('Give a query, sender or date.');
+        onStatus('Searching ' + (box || 'your Outlook') + ': ' + (args.query || args.sender || 'by date') + '…');
+        try { return compactSearch(await mcp.callTool(MS, 'outlook_email_search', args, { signal: ctx.signal, cache: false })); } catch (e) { throw new Error(mcpMsg(e)); }
+      } },
+    { name: 'read_mail', description: 'Read one Outlook email in full using its uri from search_mail (also attachments it lists).',
+      inputSchema: { type: 'object', properties: { uri: { type: 'string' } }, required: ['uri'] },
+      async execute(input, ctx) { const uri = String(input.uri || ''); if (!/^(mail|file):\/\/\//.test(uri)) throw new Error('Use a mail:/// or file:/// uri.'); onStatus('Reading an email…');
+        try { return textOf(await mcp.callTool(MS, 'read_resource', { uri }, { signal: ctx.signal, cache: false })).slice(0, 16000); } catch (e) { throw new Error(mcpMsg(e)); } } },
+    { name: 'search_gmail', description: 'Search Gmail (if connected) with Gmail search syntax, e.g. "boiler after:2026/01/01". Returns threads with id, date, sender, subject, snippet.',
+      inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+      async execute(input, ctx) { onStatus('Searching Gmail: ' + input.query + '…');
+        try { return textOf(await mcp.callTool(GM, 'search_threads', { query: String(input.query || '').slice(0, 300), pageSize: 20 }, { signal: ctx.signal, cache: false })).slice(0, 16000); } catch (e) { throw new Error(inbOff(e) ? 'Gmail is not connected.' : mcpMsg(e)); } } },
+    { name: 'read_gmail', description: 'Read a Gmail thread in full by thread id.',
+      inputSchema: { type: 'object', properties: { threadId: { type: 'string' } }, required: ['threadId'] },
+      async execute(input, ctx) { onStatus('Reading a Gmail thread…');
+        try { return textOf(await mcp.callTool(GM, 'get_thread', { threadId: String(input.threadId || ''), messageFormat: 'PLAIN_TEXT' }, { signal: ctx.signal, cache: false })).slice(-16000); } catch (e) { throw new Error(mcpMsg(e)); } } }
+  ];
+  return tools;
+}
+async function pjRoar(p) {
+  if (!sample || !mcp) { pj.status[p.id] = 'Open this page on claude.ai and connect Microsoft 365 (and Gmail if you use it).'; renderPj(); return; }
+  if (!p.name.trim() && !p.keys.trim()) { pj.status[p.id] = 'Give the project a name or some keywords first.'; renderPj(); return; }
+  pj.busy[p.id] = true; pj.status[p.id] = 'Roar is searching your email…'; renderPj();
+  const set = s => { pj.status[p.id] = s; renderPj(); };
+  try {
+    const boxes = pjBoxes();
+    const prompt = `Build a timeline of events for this property management project by searching the user's email.
+Project: ${p.name || '(no name)'}
+Building: ${p.bld || $('propertyName').value.trim() || 'not given'}
+Keywords, vendors, people: ${p.keys || 'none'}
+Mailboxes to search: the user's own Outlook${boxes.length ? ', and these delegate (surrogate) mailboxes: ' + boxes.join(', ') : ''}${', plus Gmail if it is connected'}.
+${p.timeline && p.timeline.length ? 'Timeline found before (keep these events, add new ones): ' + JSON.stringify(p.timeline.slice(0, 40).map(t => ({ date: t.date, event: t.event }))) : ''}
+Steps: search every mailbox with 2-4 different keyword searches (project name, building, vendor names, key words like proposal, invoice, permit, inspection, approval). Read the important emails (proposals, approvals, contracts, invoices, schedule changes, problems). Use at most about 15 tool calls.
+Then reply with only JSON, no other text:
+{"summary": "2-3 short sentences: where the project stands now", "state": one of ${JSON.stringify(PJ_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
+Sort the timeline oldest first. Only include events you saw in an email. Never guess dates.`;
+    const r = await sample([{ role: 'user', content: prompt }], { tools: pjTools(set), modelTier: 'default', cache: false });
+    const raw = String(r.text || ''); const m = raw.match(/\{[\s\S]*\}/); let j = null; try { j = JSON.parse(m ? m[0] : raw); } catch (e) {}
+    if (!j) throw new Error('Roar did not return a timeline. Try again with clearer keywords.');
+    const seen = new Set(); p.timeline = ((j.timeline || []).concat(p.timeline || [])).filter(t => t && t.date && t.event).filter(t => { const k = t.date + '|' + String(t.event).slice(0, 40).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+      .map(t => ({ date: String(t.date).slice(0, 10), event: String(t.event).slice(0, 300), who: String(t.who || '').slice(0, 80), source: String(t.source || '').slice(0, 60), subject: String(t.subject || '').slice(0, 140) })).sort((a, b) => a.date.localeCompare(b.date)).slice(-80);
+    if (j.summary) p.summary = String(j.summary).slice(0, 600); if (PJ_STATUS.includes(j.state)) p.state = j.state; if (j.next) p.next = String(j.next).slice(0, 300);
+    p.updated = Date.now(); pj.open[p.id] = true; await pjSave(p);
+    pj.status[p.id] = `Found ${p.timeline.length} event${p.timeline.length === 1 ? '' : 's'}.`;
+  } catch (e) { pj.status[p.id] = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (e && e.message) || 'Roar could not build the timeline.'; }
+  pj.busy[p.id] = false; renderPj();
+}
+function renderPj() {
+  const el = $('pjPanel'); if (!el) return;
+  el.hidden = mode !== 'desk'; if (el.hidden) return;
+  if (!pj.loaded) { pj.loaded = true; pjLoad(); return; }
+  const top = $('propertyName').value.trim();
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Projects</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
+    <p>Track your projects here. Press <b>✦ Roar</b> on a project and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of events and the next step.</p>
+    <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
+    <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
+      <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+      <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
+      <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
+      <input data-pj="${p.id}" data-f="next" value="${esc(p.next)}" placeholder="Next step">
+      ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove project">✕</button></div>
+      ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
+      ${pj.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
+    </div>`).join('')}
+    <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another project</b><span>Want to keep track of more projects? Add a box.</span></button></div>
+    <p class="fh-legal">Roar only reads email. Check each event against the email before you rely on it.</p></div>`;
+}
+$('pjPanel').addEventListener('input', e => {
+  const id = e.target.dataset.pj; if (id) { const p = pj.list.find(x => x.id === id); if (p) { p[e.target.dataset.f] = e.target.value.slice(0, 300); clearTimeout(pj.t); pj.t = setTimeout(() => pjSave(p), 600); } }
+  if (e.target.id === 'pjBoxes') { pj.mailboxes = e.target.value.slice(0, 500); clearTimeout(pj.tb); pj.tb = setTimeout(pjSaveCfg, 600); }
+});
+$('pjPanel').addEventListener('change', e => { const id = e.target.dataset.pj; if (id && e.target.tagName === 'SELECT') { const p = pj.list.find(x => x.id === id); p.state = e.target.value; pjSave(p); renderPj(); } });
+$('pjPanel').addEventListener('click', async e => {
+  if (e.target.closest('#pjAdd')) { const p = pjNew(pj.list.length); pj.list.push(p); await pjSave(p); renderPj(); const n = $('pjPanel').querySelector(`[data-pj="${p.id}"][data-f="name"]`); if (n) n.focus(); return; }
+  const r = e.target.closest('[data-pjroar]'); if (r) { const p = pj.list.find(x => x.id === r.dataset.pjroar); if (p) pjRoar(p); return; }
+  const t = e.target.closest('[data-pjtl]'); if (t) { pj.open[t.dataset.pjtl] = !pj.open[t.dataset.pjtl]; renderPj(); return; }
+  const d = e.target.closest('[data-pjdel]'); if (d) {
+    const p = pj.list.find(x => x.id === d.dataset.pjdel); if (!p) return;
+    if ((p.name || p.timeline.length) && !confirmInline(d, 'Remove?')) return;
+    pj.list = pj.list.filter(x => x !== p); pjLocal(); if (pj.store === 'db') { try { await db.doc(`emc/${myId}/proj/${p.id}`).delete(); } catch (err) {} } renderPj();
+  }
+});
+function confirmInline(btn, text) { if (btn.dataset.sure) return true; btn.dataset.sure = '1'; btn.textContent = text; setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = '✕'; } }, 3000); return false; }
 
 /* ---------- Insurance: COI requirements and vendor COI check ---------- */
 const COI_DEFAULT = { gl_occ: 1000000, gl_agg: 2000000, auto: 1000000, umb: 5000000, el: 1000000, wc: true, dbl: true, ai: '', holder: '', waiver: true, pnc: true, notes: '' };
