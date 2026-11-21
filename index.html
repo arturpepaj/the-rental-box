@@ -361,10 +361,11 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
+  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+.bottom-nav::after { content: ""; background: var(--surface); }
 .nav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   padding: 8px 4px; border: none; background: var(--surface); color: var(--ink); cursor: pointer;
@@ -449,13 +450,13 @@ header {
     padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
   .tasks.open { transform: translateX(0); }
-  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(7, minmax(0, 1fr)); }
   .tasks-toggle { display: grid; }
   .tasks-close { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
-  .bottom-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .nav-btn { font-size: 10px; padding: 6px 2px; overflow-wrap: anywhere; }
   .library {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
@@ -675,6 +676,9 @@ header {
 .coi-grid label.rd-miss { color: #e0b56a; font-weight: 600; } .coi-grid label.rd-miss::after { content: ' *'; }
 .rd-need { color: #e0b56a !important; font-weight: 600; }
 .crt-g.rd-row { grid-template-columns: 18px 120px 1fr auto; cursor: default; }
+.rg-hi { border-color: rgba(220,90,70,.7) !important; background: rgba(220,90,70,.08); }
+.coi-rows.rg-rows { grid-template-columns: 22px minmax(110px, 140px) 1fr 1fr; }
+.fh-box p a { color: var(--ask); }
 .rd-row select { height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 12px var(--sans); }
 .coi-sum a { color: var(--ask); }
 .coi-checks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink); }
@@ -916,6 +920,7 @@ header {
         <div id="emgPanel" class="emg" hidden></div>
         <div id="coiPanel" class="emg" hidden></div>
         <div id="crtPanel" class="emg" hidden></div>
+        <div id="regPanel" class="emg" hidden></div>
         <div id="riderPanel" class="emg" hidden></div>
         <div id="fhPanel" class="emg" hidden></div>
         <div id="inbPanel" class="emg" hidden></div>
@@ -1024,6 +1029,7 @@ const ICONS = {
   records: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
   inbox: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><path d="M14 17l2.5-2.5M14 17l2.5 2.5M14 17h6" stroke-width="1.2"/>',
+  regs: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/><path d="M13 14l2 2 3-4"/>',
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
 const SECTIONS = [
@@ -1040,6 +1046,7 @@ const SECTIONS = [
   { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts. Send and Roar here also look up the NYC code and find manufacturer manuals and spec sheets.', samples:['What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
+  { key:'regs', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE, title:'Rent Registration Review', desc:'Upload up to 10 full-year DHCR registration reports (Registered Apartment Information) for a building. Claude compares every apartment year by year and points out possible overcharges: increases above the guideline, vacancy increases after 2019, preferential rents raised, rent above the legal rent, and units listed as exempt.', samples:['Which apartments have the biggest overcharge risk?','Explain the flags for apartment 3A','Which units need IAI paperwork?'] },
   { key:'emergency', title:'Emergency Prep', desc:'Step-by-step plans for fire, flood, gas leak or shut-off, power outage, no heat, elevator entrapment and more. Save emergency contacts for each building and download printable checklists.',
     guide: () => emergencyGuide(),
     samples:['What do we do after a fire?','The gas is shut off for the whole building. What now?','Power outage checklist for this building','Last flood or water leak incident report','What do we do in a fire?','What runs on the emergency generator in a power outage?','How do we test stair pressurization?','Who do we call for a flood?'] }
@@ -1354,6 +1361,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
+  if (mode === 'regs' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
   const used = [];
@@ -2595,6 +2603,7 @@ function setMode(key) {
   if (typeof renderCrt === 'function') { try { renderCrt(); } catch (e) {} }
   if (typeof renderCoi === 'function') { try { renderCoi(); } catch (e) {} }
   if (typeof renderRider === 'function') { try { renderRider(); } catch (e) {} }
+  if (typeof renderReg === 'function') { try { renderReg(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -3998,6 +4007,133 @@ $('riderPanel').addEventListener('change', e => {
   if (e.target.dataset.rd && e.target.tagName === 'INPUT') { rd.v[e.target.dataset.rd] = e.target.value; clearTimeout(rd.t); rd.t = setTimeout(() => { const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.rd : null; renderRider(); if (f) { const n = $('riderPanel').querySelector(`[data-rd="${f}"]`); if (n) n.focus(); } }, 0); }
 });
 $('riderPanel').addEventListener('input', e => { if (e.target.dataset.rd && e.target.tagName === 'INPUT') rd.v[e.target.dataset.rd] = e.target.value.slice(0, 200); });
+
+/* ---------- Rent Registration Review: DHCR registration reports, possible overcharges ---------- */
+// NYC Rent Guidelines Board renewal rates by lease start (Oct 1 - Sep 30): [1-year %, 2-year % (total over both years)]
+const RGB_NYC = { 2010: [2.25, 4.5], 2011: [3.75, 7.25], 2012: [2, 4], 2013: [4, 7.75], 2014: [1, 2.75], 2015: [0, 2], 2016: [0, 2], 2017: [1.25, 2], 2018: [1.5, 2.5], 2019: [1.5, 2.5], 2020: [0, 1], 2021: [1.5, 2.5], 2022: [3.25, 5], 2023: [3, 6.04], 2024: [2.75, 5.25], 2025: [3, 4.5], 2026: [0, 0] };
+const HSTPA_DATE = '2019-06-14';
+const rg = { files: [], rows: [], flags: [], years: [], units: 0, lookFrom: 0, status: '', busy: false, filter: 'all' };
+const rgNum = v => { const n = parseFloat(String(v == null ? '' : v).replace(/[$,\s]/g, '')); return isFinite(n) ? n : 0; };
+const rgMoney = n => '$' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function rgGuideYear(dateStr, regYear) { // guideline year (Oct-Sep) of a lease start; fallback: lease likely began in the year before the April 1 registration
+  const d = new Date(String(dateStr || '') + 'T00:00:00');
+  if (!isNaN(d)) return d.getMonth() >= 9 ? d.getFullYear() : d.getFullYear() - 1;
+  return regYear ? regYear - 1 : null;
+}
+async function rgRead(files) {
+  if (!sample) { rg.status = 'Claude is not available on this view. Open this page on claude.ai.'; renderReg(); return; }
+  files = files.slice(0, Math.max(0, 10 - rg.files.length));
+  if (!files.length) { rg.status = 'You can upload up to 10 reports. Press Start over to load new ones.'; renderReg(); return; }
+  rg.busy = true; renderReg();
+  try {
+    for (let f = 0; f < files.length; f++) {
+      const file = files[f]; rg.status = `Reading ${file.name} (${f + 1} of ${files.length})…`; renderReg();
+      const r = await readFile(file);
+      const lines = String(r.text || '').split(/\r?\n/).filter(l => l.trim());
+      const chunks = []; for (let i = 0; i < lines.length; i += 180) chunks.push(lines.slice(i, i + 180).join('\n'));
+      const imgs = r.kind === 'image' ? [r.blob] : [];
+      if (!chunks.length && !imgs.length) { rg.status = `No text found in ${file.name}.`; continue; }
+      for (let c = 0; c < Math.max(1, chunks.length); c++) {
+        rg.status = `Reading ${file.name}: part ${c + 1} of ${Math.max(1, chunks.length)}…`; renderReg();
+        const j = await sample.json(`This is a NYC DHCR rent registration report ("Registered Apartment Information" / building registration) for one or more registration years. List EVERY apartment row. Do not skip, merge or invent rows.
+For each row give:
+- apt: apartment number as written
+- year: registration year (the April 1 registration date year, e.g. 2023)
+- status: registration status as written (e.g. RS, RC, VA vacant, EX exempt, PE permanently exempt, HRV high rent vacancy, TE temporarily exempt)
+- legal: legal regulated rent (number)
+- actual: actual or preferential rent paid (number, or null if not shown)
+- lease_start, lease_end: YYYY-MM-DD if shown
+- reason: reasons the rent differs or changed, as written (e.g. VACANCY LEASE, RENEWAL, IMPROVEMENTS, MCI, PREFERENTIAL RENT, ESTIMATED)
+- tenant_changed: true if the row shows a new tenant or vacancy lease, false if a renewal of the same tenant, null if unknown
+Also give "address" (building address) and "years" (registration years found).
+Return only JSON: {"address":"","years":[],"rows":[{"apt":"","year":2023,"status":"","legal":0,"actual":null,"lease_start":"","lease_end":"","reason":"","tenant_changed":null}]}
+
+${chunks[c] || 'The report image is attached.'}`, { images: imgs, modelTier: 'default', cache: false });
+        if (j && j.address && !rg.address) rg.address = String(j.address);
+        for (const x of ((j && j.rows) || [])) {
+          const year = parseInt(x.year, 10); if (!x.apt || !year) continue;
+          rg.rows.push({ apt: String(x.apt).trim().toUpperCase(), year, status: String(x.status || '').toUpperCase(), legal: rgNum(x.legal), actual: x.actual == null || x.actual === '' ? null : rgNum(x.actual), start: String(x.lease_start || ''), end: String(x.lease_end || ''), reason: String(x.reason || '').toUpperCase(), changed: x.tenant_changed === true ? true : x.tenant_changed === false ? false : null, file: file.name });
+        }
+      }
+      rg.files.push(file.name);
+    }
+    // de-duplicate the same apartment and year
+    const seen = new Map(); for (const x of rg.rows) seen.set(x.apt + '|' + x.year, x); rg.rows = [...seen.values()];
+    rgAnalyze();
+    rg.status = `Read ${rg.rows.length} apartment rows from ${rg.files.length} report${rg.files.length === 1 ? '' : 's'}.`;
+  } catch (e) { rg.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Could not read the report.'; }
+  rg.busy = false; renderReg();
+}
+function rgAnalyze() {
+  const flags = []; const add = (apt, year, level, issue, detail) => flags.push({ apt, year, level, issue, detail });
+  const byApt = {}; for (const x of rg.rows) (byApt[x.apt] = byApt[x.apt] || []).push(x);
+  const years = [...new Set(rg.rows.map(x => x.year))].sort();
+  const lookFrom = new Date().getFullYear() - 6;
+  for (const apt of Object.keys(byApt)) {
+    const h = byApt[apt].sort((a, b) => a.year - b.year);
+    for (let i = 0; i < h.length; i++) {
+      const x = h[i], p = h[i - 1];
+      if (x.actual != null && x.legal && x.actual > x.legal + 0.5) add(apt, x.year, 'high', 'Rent paid is above the legal rent', `Paid ${rgMoney(x.actual)}, legal ${rgMoney(x.legal)} (${rgMoney(x.actual - x.legal)} a month over).`);
+      if (/\b(EX|PE|HRV|HIGH RENT|HIGH INCOME|DEREG|EXEMPT)\b/.test(x.status) && x.year >= 2020) add(apt, x.year, 'high', 'Listed as exempt or deregulated after HSTPA', `Status "${x.status}". High-rent and high-income deregulation ended June 14, 2019. Check why this unit left stabilization.`);
+      if (!p) continue;
+      if (x.year - p.year > 1) add(apt, x.year, 'low', 'Missing registration years', `No registration found for ${Array.from({ length: x.year - p.year - 1 }, (_, k) => p.year + 1 + k).join(', ')} in the reports you uploaded. Missing registrations can freeze the rent until filed.`);
+      if (/\b(EX|PE|HRV|EXEMPT|DEREG)\b/.test(p.status) && /\bRS\b/.test(x.status)) add(apt, x.year, 'low', 'Back to stabilized after exempt', `Was "${p.status}" in ${p.year}. Check how the new legal rent was set.`);
+      if (p.legal && x.legal) {
+        const pct = (x.legal - p.legal) / p.legal * 100;
+        const gy = rgGuideYear(x.start, x.year); const g = RGB_NYC[gy];
+        const allowed = g ? Math.max(g[0], g[1]) : null;
+        const after = (x.start || (x.year + '-04-01')) >= HSTPA_DATE;
+        const imp = /IMPROV|IAI|MCI|CAPITAL/.test(x.reason);
+        const vac = x.changed === true || /VACANCY|NEW TENANT|VAC LEASE/.test(x.reason);
+        if (allowed != null && pct > allowed + 0.5 && x.legal - p.legal > 5) {
+          const detail = `Legal rent went from ${rgMoney(p.legal)} (${p.year}) to ${rgMoney(x.legal)} (${x.year}): +${pct.toFixed(1)}%. The largest NYC guideline for a lease starting ${gy}-${gy + 1} was ${allowed}%.`;
+          if (imp) add(apt, x.year, 'medium', 'Increase above guideline: IAI or MCI claimed', detail + ' Get the invoices, cancelled checks and DHCR order. IAI caps: $15,000 per 15 years (June 2019 to Oct 2024), $30,000 or $50,000 after Oct 17, 2024; MCI collection max 2% a year.');
+          else if (after) add(apt, x.year, 'high', vac ? 'Vacancy increase after HSTPA' : 'Increase above guideline', detail + (vac ? ' Vacancy and longevity bonuses ended June 14, 2019.' : ' No IAI or MCI reason is listed.'));
+          else add(apt, x.year, 'low', 'Large increase before HSTPA', detail + ' Before June 14, 2019 vacancy bonuses were allowed. Overcharge claims usually look back 6 years.');
+        }
+        if (p.actual != null && p.actual < p.legal - 0.5 && x.actual != null && after && x.changed !== true && !/VACANCY/.test(x.reason)) {
+          const ap = (x.actual - p.actual) / p.actual * 100;
+          if (allowed != null && ap > allowed + 0.5 && x.actual - p.actual > 5) add(apt, x.year, 'high', 'Preferential rent raised for the same tenant', `Paid ${rgMoney(p.actual)} (${p.year}) then ${rgMoney(x.actual)} (${x.year}), +${ap.toFixed(1)}%, with no new tenant shown. Since June 14, 2019 a tenant keeps the preferential rent for the whole tenancy, plus guideline increases only (DHCR Fact Sheet #40).`);
+        }
+      }
+    }
+  }
+  const order = { high: 0, medium: 1, low: 2 };
+  rg.flags = flags.sort((a, b) => order[a.level] - order[b.level] || a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year);
+  rg.years = years; rg.units = Object.keys(byApt).length; rg.lookFrom = lookFrom;
+}
+async function rgExcel() {
+  await loadScript(LIBS.xlsx);
+  const wb = XLSX.utils.book_new();
+  const f = [['Possible overcharges and items to check' + (rg.address ? ' - ' + rg.address : '')], ['Level', 'Apartment', 'Year', 'Issue', 'Details']].concat(rg.flags.map(x => [x.level, x.apt, x.year, x.issue, x.detail]));
+  const ws1 = XLSX.utils.aoa_to_sheet(f); ws1['!cols'] = [{ wch: 8 }, { wch: 10 }, { wch: 6 }, { wch: 40 }, { wch: 110 }]; XLSX.utils.book_append_sheet(wb, ws1, 'Flags');
+  const all = [['Apartment', 'Year', 'Status', 'Legal rent', 'Actual rent', 'Lease start', 'Lease end', 'Reason', 'New tenant', 'File']].concat(rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => [x.apt, x.year, x.status, x.legal, x.actual, x.start, x.end, x.reason, x.changed == null ? '' : x.changed ? 'yes' : 'no', x.file]));
+  const ws2 = XLSX.utils.aoa_to_sheet(all); ws2['!cols'] = [{ wch: 10 }, { wch: 6 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }, { wch: 10 }, { wch: 30 }]; XLSX.utils.book_append_sheet(wb, ws2, 'All registrations');
+  const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  await crtSave(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Rent registration review' + (rg.address ? ' - ' + rg.address : '') + '.xlsx');
+}
+function renderReg() {
+  const el = $('regPanel'); if (!el) return;
+  el.hidden = mode !== 'regs'; if (el.hidden) return;
+  const n = { high: 0, medium: 0, low: 0 }; rg.flags.forEach(x => n[x.level]++);
+  const list = rg.flags.filter(x => rg.filter === 'all' || x.level === rg.filter);
+  const lv = { high: ['coi-bad', '!'], medium: ['coi-warn', '!'], low: ['coi-ok', 'i'] };
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>DHCR registration reports</b>${rg.address ? `<span class="nyc-msg">${esc(rg.address)}</span>` : ''}</div>
+    <p>Upload up to 10 full-year "Registered Apartment Information" reports for the building, one per year. Get them from DHCR's <a href="https://rent.hcr.ny.gov" target="_blank" rel="noopener">Online Registration Information (Rent Connect) ↗</a>. Claude reads every apartment, compares the years, and points out possible overcharges.</p>
+    <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${rg.files.length ? 'Add more reports' : 'Upload registration reports'}<input type="file" id="rgFile" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label>${rg.files.length ? `<button class="nyc-btn ghost" type="button" id="rgClear">Start over</button>` : ''}<span class="nyc-msg" style="padding:0">${rg.files.length}/10 reports</span></div>
+    ${rg.files.length ? `<p class="coi-sum">${rg.files.map(esc).join(' · ')}</p>` : ''}
+    ${rg.status ? `<p class="nyc-msg">${esc(rg.status)}</p>` : ''}
+    ${rg.rows.length ? `<div class="crt-sum"><div><small>Apartments</small><b>${rg.units}</b></div><div><small>Years</small><b>${rg.years.length ? rg.years[0] + (rg.years.length > 1 ? '–' + rg.years[rg.years.length - 1] : '') : '—'}</b></div><div class="${n.high ? 'rg-hi' : 'crt-owed'}"><small>Possible overcharges</small><b>${n.high}</b></div><div><small>To check</small><b>${n.medium + n.low}</b></div></div>
+      <div class="cal-btns">${['all', 'high', 'medium', 'low'].map(k => `<button class="nyc-btn ${rg.filter === k ? '' : 'ghost'}" type="button" data-rgf="${k}">${k === 'all' ? `All (${rg.flags.length})` : k === 'high' ? `Likely problems (${n.high})` : k === 'medium' ? `Need paperwork (${n.medium})` : `Notes (${n.low})`}</button>`).join('')}<button class="nyc-btn ghost" type="button" id="rgXlsx">Download Excel</button></div>
+      ${list.length ? `<div class="coi-rows rg-rows">${list.map(x => `<div><span class="${lv[x.level][0]}">${lv[x.level][1]}</span></div><div><b>Apt ${esc(x.apt)} · ${x.year}</b><small>${x.year < rg.lookFrom ? 'Older than the 6-year lookback' : ''}</small></div><div style="grid-column: span 2"><b>${esc(x.issue)}</b><small>${esc(x.detail)}</small></div>`).join('')}</div>` : '<p class="nyc-msg">Nothing found in this group.</p>'}
+      <p class="fh-legal">These are possible issues found by comparing the registrations, not proof of an overcharge. A legal rent can rise for lawful reasons (IAI, MCI, 2-year leases, orders) that the report does not show. Check leases, riders, invoices and DHCR orders, and ask your attorney before you change any rent. NYC guideline rates used are from the Rent Guidelines Board orders.</p>` : ''}</div>`;
+}
+$('regPanel').addEventListener('change', e => { if (e.target.id === 'rgFile' && e.target.files.length) rgRead([...e.target.files]); });
+$('regPanel').addEventListener('click', e => {
+  const f = e.target.closest('[data-rgf]'); if (f) { rg.filter = f.dataset.rgf; renderReg(); }
+  if (e.target.closest('#rgClear')) { Object.assign(rg, { files: [], rows: [], flags: [], years: [], units: 0, status: '', address: '', filter: 'all' }); renderReg(); }
+  if (e.target.closest('#rgXlsx')) rgExcel().catch(() => { rg.status = 'Could not make the Excel file.'; renderReg(); });
+});
 
 /* ---------- Fair Housing check ---------- */
 const FH_RULES = `Fair housing laws to check against (New York City rentals):
