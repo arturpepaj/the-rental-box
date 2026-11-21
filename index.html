@@ -4039,7 +4039,7 @@ async function insExcel() {
 // ----- Inspection report: shared helpers -----
 const insKeep = () => ins.items.filter(x => x.keep);
 const insDateTxt = () => { const d = new Date((ins.date || new Date().toISOString().slice(0, 10)) + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
-const insPurpose = () => `This report lists the conditions seen in the photos taken during the ${ins.type.toLowerCase()}${ins.unit ? ' of ' + (/^\d/.test(ins.unit) ? 'apartment ' : '') + ins.unit : ''}, and the work needed to fix them. Each item is rated by urgency and assigned to maintenance staff or a contractor.`;
+const insPurpose = () => `${ins.type}${ins.unit ? ', ' + (/^\d/.test(ins.unit) ? 'apartment ' : '') + ins.unit : ''}: problems found and the work needed.`;
 const insPhotoNo = id => ins.photos.findIndex(p => p.id === id) + 1;
 const insItemsFor = id => insKeep().map((x, i) => [x, i + 1]).filter(([x]) => x.photo === id);
 const INSP_HEX = { urgent: 'C2533F', high: 'E08A3C', medium: 'C9932F', low: '4F9E6B' };
@@ -4082,33 +4082,28 @@ async function insDocx() {
   body += par(run(ins.bld || 'Building address', { b: true, sz: 20, color: ACC }), { before: 160, after: ins.unit ? 40 : 200 });
   if (ins.unit) body += par(run((/^\d|^[A-Z]{0,2}\d/i.test(ins.unit) ? 'Apartment / area ' : '') + ins.unit, { sz: 14, color: '374151' }), { after: 200 });
   if (cov) body += par(img(cov, 7.3, 3.5), { align: 'center', before: 120, after: 200 });
-  const det = [['Report for', insPurpose()], ['Inspection date', insDateTxt()], ['Prepared by', ins.by || ''], ['Photos', String(ins.photos.length)], ['Items found', `${keep.length} total: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low`]].filter(r => r[1]);
+  const det = [['Report for', insPurpose()], ['Date', insDateTxt()], ['Prepared by', ins.by || '']].filter(r => r[1]);
   body += table([2300, FULL - 2300], det.map(([k, v]) => row([cell(2300, par(run(k, { b: true, sz: 10, color: MUTED }), { after: 0 }), { fill: 'F3F4F6' }), cell(FULL - 2300, par(run(v, { sz: 10.5 }), { after: 0 }))])), { lineColor: 'E5E7EB' });
   body += pageBreak;
   // Summary and work list
-  body += par(run('Summary', { b: true, sz: 16, color: ACC }), { after: 100, border: ['C9932F', 8] });
-  body += par(run(ins.summary || 'No summary.', { sz: 10.5 }), { after: 120 });
-  if (ins.notes) body += par(run('Manager notes: ', { b: true, sz: 10.5 }) + run(ins.notes, { sz: 10.5 }), { after: 120 });
-  body += table([2628, 2628, 2628, 2628], [row(['urgent', 'high', 'medium', 'low'].map(s => cell(2628, par(run(INSP_SEV[s][0], { b: true, sz: 9, color: INSP_HEX[s], caps: true }), { after: 0, align: 'center' }) + par(run(String(cnt(s)), { b: true, sz: 20 }), { after: 0, align: 'center' }), { fill: INSP_TINT[s] })))], { lineColor: 'FFFFFF', pad: 100 });
-  body += par(run('Work list', { b: true, sz: 16, color: ACC }), { before: 280, after: 100, border: ['C9932F', 8], keep: true });
-  const W = [450, 1050, 1500, 4612, 2100, 800];
-  const head = row(['#', 'Urgency', 'Location', 'Problem and action', 'Assigned to', 'Photo'].map((h, i) => cell(W[i], par(run(h, { b: true, sz: 9, color: 'FFFFFF' }), { after: 0 }), { fill: ACC })), { head: true });
+  body += par(run('Work list', { b: true, sz: 16, color: ACC }), { after: 100, border: ['C9932F', 8], keep: true });
+  const W = [450, 1700, 5462, 2100, 800];
+  const head = row(['#', 'Location', 'Problem and action', 'Assigned to', 'Photo'].map((h, i) => cell(W[i], par(run(h, { b: true, sz: 9, color: 'FFFFFF' }), { after: 0 }), { fill: ACC })), { head: true });
   body += table(W, [head].concat(keep.map((x, i) => row([
     cell(W[0], par(run(String(i + 1), { sz: 9.5 }), { after: 0 })),
-    cell(W[1], par(run(INSP_SEV[x.severity][0], { b: true, sz: 9, color: INSP_HEX[x.severity] }), { after: 0 }), { fill: INSP_TINT[x.severity] }),
-    cell(W[2], par(run(x.location, { sz: 9.5 }), { after: 0 })),
-    cell(W[3], par(run(x.issue, { b: true, sz: 9.5 }), { after: 30 }) + par(run('Action: ' + x.action, { sz: 9.5, color: '374151' }), { after: x.violation ? 30 : 0 }) + (x.violation ? par(run('Possible violation: ' + x.violation, { i: true, sz: 9, color: 'A16207' }), { after: 0 }) : '')),
-    cell(W[4], par(run(x.assign, { sz: 9.5 }), { after: 0 })),
-    cell(W[5], par(run(String(insPhotoNo(x.photo) || ''), { sz: 9.5 }), { after: 0, align: 'center' }))
+    cell(W[1], par(run(x.location, { sz: 9.5 }), { after: 0 })),
+    cell(W[2], par(run(x.issue, { b: true, sz: 9.5 }), { after: 30 }) + par(run('Action: ' + x.action, { sz: 9.5, color: '374151' }), { after: 0 })),
+    cell(W[3], par(run(x.assign, { sz: 9.5 }), { after: 0 })),
+    cell(W[4], par(run(String(insPhotoNo(x.photo) || ''), { sz: 9.5 }), { after: 0, align: 'center' }))
   ]))));
-  body += par(run('Prepared from photos with AI help and reviewed by the manager. Check each item on site before work starts, and use licensed contractors where the law requires.', { i: true, sz: 8.5, color: MUTED }), { before: 160 });
+  body += par(run('Check each item on site before work starts.', { i: true, sz: 8.5, color: MUTED }), { before: 160 });
   // Photo pages: 2 x 2 per letter page
   const CW = FULL / 2;
   for (let i = 0; i < ins.photos.length; i += 4) {
     body += pageBreak;
     const group = ins.photos.slice(i, i + 4); const rowsX = [];
     for (let r = 0; r < group.length; r += 2) rowsX.push(row([0, 1].map(c => { const p = group[r + c]; if (!p) return cell(CW, '<w:p/>'); const n = i + r + c + 1; const its = insItemsFor(p.id); const top = its.map(([x]) => x.severity).sort((a, b) => INSP_SEV[a][1] - INSP_SEV[b][1])[0];
-      return cell(CW, par(img(p, 3.4, 2.6), { align: 'center', after: 80 }) + par(run('Photo ' + n, { b: true, sz: 10.5, color: ACC }) + (top ? run('   ' + INSP_SEV[top][0], { b: true, sz: 9, color: INSP_HEX[top], caps: true }) : '') + (its.length ? run('   Item' + (its.length > 1 ? 's ' : ' ') + its.map(z => z[1]).join(', '), { sz: 9, color: MUTED }) : ''), { after: 40 }) + par(run(p.note || (its[0] ? its[0][0].issue : ''), { sz: 9.5 }), { after: 0, line: 252 }), { v: 'top' }); }), { h: 6120 }));
+      return cell(CW, par(img(p, 3.4, 2.6), { align: 'center', after: 80 }) + par(run('Photo ' + n, { b: true, sz: 10.5, color: ACC }), { after: 40 }) + par(run(p.note || (its[0] ? its[0][0].issue : ''), { sz: 9.5 }), { after: 0, line: 252 }), { v: 'top' }); }), { h: 6120 }));
     body += table([CW, CW], rowsX, { lineColor: 'E5E7EB', pad: 100 });
   }
   const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
@@ -4147,25 +4142,22 @@ async function insPdf() {
   text(ins.bld || 'Building address', 20, bold, M, CW, ACC); if (ins.unit) text('Apartment / area ' + ins.unit, 13, font, M, CW, hex('374151'));
   y -= 12; const cov = (keep[0] && ins.photos.find(p => p.id === keep[0].photo)) || ins.photos[0];
   if (cov) { try { const im = await emb(cov); const k = Math.min(CW / im.width, 250 / im.height); page.drawImage(im, { x: M + (CW - im.width * k) / 2, y: y - im.height * k, width: im.width * k, height: im.height * k }); y -= im.height * k + 20; } catch (e) {} }
-  const det = [['Report for', insPurpose()], ['Inspection date', insDateTxt()], ['Prepared by', ins.by || ''], ['Photos', String(ins.photos.length)], ['Items found', `${keep.length} total: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low`]].filter(r => r[1]);
+  const det = [['Report for', insPurpose()], ['Date', insDateTxt()], ['Prepared by', ins.by || '']].filter(r => r[1]);
   for (const [k, v] of det) { const lines = wrap(v, font, 10, CW - 130); const h = lines.length * 13 + 10; page.drawRectangle({ x: M, y: y - h, width: 120, height: h, color: hex('F3F4F6') }); page.drawRectangle({ x: M, y: y - h, width: CW, height: h, borderColor: hex('E5E7EB'), borderWidth: .6 }); page.drawText(k, { x: M + 8, y: y - 17, size: 9.5, font: bold, color: MUT }); lines.forEach((l, i) => page.drawText(l, { x: M + 130, y: y - 17 - i * 13, size: 10, font })); y -= h; }
   // Summary and work list
-  newPage(); text('Summary', 16, bold, M, CW, ACC); page.drawRectangle({ x: M, y: y + 2, width: CW, height: 1.2, color: hex('C9932F') }); y -= 8;
-  text(ins.summary || 'No summary.', 10.5, font, M, CW); if (ins.notes) text('Manager notes: ' + ins.notes, 10.5, font, M, CW); y -= 8;
-  const bw = CW / 4; ['urgent', 'high', 'medium', 'low'].forEach((s, i) => { page.drawRectangle({ x: M + i * bw + 2, y: y - 50, width: bw - 4, height: 50, color: hex(INSP_TINT[s]) }); const L = INSP_SEV[s][0].toUpperCase(); page.drawText(L, { x: M + i * bw + bw / 2 - bold.widthOfTextAtSize(L, 8.5) / 2, y: y - 18, size: 8.5, font: bold, color: hex(INSP_HEX[s]) }); const n = String(cnt(s)); page.drawText(n, { x: M + i * bw + bw / 2 - bold.widthOfTextAtSize(n, 20) / 2, y: y - 42, size: 20, font: bold }); }); y -= 72;
+  newPage();
   text('Work list', 16, bold, M, CW, ACC); page.drawRectangle({ x: M, y: y + 2, width: CW, height: 1.2, color: hex('C9932F') }); y -= 8;
-  const cols = [[22, '#'], [58, 'Urgency'], [80, 'Location'], [246, 'Problem and action'], [86, 'Assigned to'], [32, 'Photo']];
+  const cols = [[22, '#'], [100, 'Location'], [282, 'Problem and action'], [88, 'Assigned to'], [32, 'Photo']];
   const headRow = () => { page.drawRectangle({ x: M, y: y - 18, width: CW, height: 18, color: ACC }); let x = M; for (const [w, h] of cols) { page.drawText(h, { x: x + 4, y: y - 12.5, size: 8.5, font: bold, color: rgb(1, 1, 1) }); x += w; } y -= 18; };
   headRow();
   keep.forEach((it, i) => {
-    const cells = [[String(i + 1)], [INSP_SEV[it.severity][0]], wrap(it.location, font, 8.5, cols[2][0] - 8), wrap(it.issue, bold, 8.5, cols[3][0] - 8).concat(wrap('Action: ' + it.action, font, 8.5, cols[3][0] - 8), it.violation ? wrap('Possible violation: ' + it.violation, font, 8, cols[3][0] - 8) : []), wrap(it.assign, font, 8.5, cols[4][0] - 8), [String(insPhotoNo(it.photo) || '')]];
+    const cells = [[String(i + 1)], wrap(it.location, font, 8.5, cols[1][0] - 8), wrap(it.issue, bold, 8.5, cols[2][0] - 8).concat(wrap('Action: ' + it.action, font, 8.5, cols[2][0] - 8)), wrap(it.assign, font, 8.5, cols[3][0] - 8), [String(insPhotoNo(it.photo) || '')]];
     const h = Math.max(...cells.map(c => c.length)) * 11 + 8; if (y - h < M + 30) { newPage(); headRow(); }
-    page.drawRectangle({ x: M + cols[0][0], y: y - h, width: cols[1][0], height: h, color: hex(INSP_TINT[it.severity]) });
-    let x = M; const nIssue = wrap(it.issue, bold, 8.5, cols[3][0] - 8).length;
-    cells.forEach((c, ci) => { c.forEach((l, li) => page.drawText(l, { x: x + 4, y: y - 12 - li * 11, size: ci === 3 && li >= nIssue && /^Possible/.test(l) ? 8 : 8.5, font: (ci === 3 && li < nIssue) || ci === 1 ? bold : font, color: ci === 1 ? hex(INSP_HEX[it.severity]) : hex('1F2937') })); x += cols[ci][0]; });
+    let x = M; const nIssue = wrap(it.issue, bold, 8.5, cols[2][0] - 8).length;
+    cells.forEach((c, ci) => { c.forEach((l, li) => page.drawText(l, { x: x + 4, y: y - 12 - li * 11, size: 8.5, font: ci === 2 && li < nIssue ? bold : font, color: hex('1F2937') })); x += cols[ci][0]; });
     page.drawLine({ start: { x: M, y: y - h }, end: { x: M + CW, y: y - h }, thickness: .5, color: hex('D9D9D9') }); y -= h;
   });
-  y -= 12; text('Prepared from photos with AI help and reviewed by the manager. Check each item on site before work starts, and use licensed contractors where the law requires.', 8, font, M, CW, MUT);
+  y -= 12; text('Check each item on site before work starts.', 8, font, M, CW, MUT);
   // Photo pages: 2 x 2 per page
   const GW = (CW - 12) / 2, GH = (Ht - 2 * M - 30 - 12) / 2;
   for (let i = 0; i < ins.photos.length; i += 4) {
@@ -4176,8 +4168,6 @@ async function insPdf() {
       let cy = gy - 8; try { const im = await emb(p); const s = Math.min((GW - 16) / im.width, 190 / im.height); page.drawImage(im, { x: gx + (GW - im.width * s) / 2, y: cy - im.height * s, width: im.width * s, height: im.height * s }); cy -= im.height * s + 8; } catch (e) { cy -= 198; }
       const its = insItemsFor(p.id); const top = its.map(([x]) => x.severity).sort((a, b) => INSP_SEV[a][1] - INSP_SEV[b][1])[0];
       let tx = gx + 8; page.drawText('Photo ' + n, { x: tx, y: cy - 11, size: 10.5, font: bold, color: ACC }); tx += bold.widthOfTextAtSize('Photo ' + n, 10.5) + 10;
-      if (top) { const L = INSP_SEV[top][0].toUpperCase(); page.drawText(L, { x: tx, y: cy - 11, size: 8.5, font: bold, color: hex(INSP_HEX[top]) }); tx += bold.widthOfTextAtSize(L, 8.5) + 10; }
-      if (its.length) page.drawText('Item' + (its.length > 1 ? 's ' : ' ') + its.map(z => z[1]).join(', '), { x: tx, y: cy - 11, size: 8.5, font, color: MUT });
       cy -= 18; const lines = wrap(p.note || (its[0] ? its[0][0].issue : ''), font, 9, GW - 16); const maxL = Math.floor((cy - (gy - GH) - 6) / 11.5);
       lines.slice(0, maxL).forEach((l, li) => page.drawText(li === maxL - 1 && lines.length > maxL ? l.replace(/\s*\S*$/, '…').replace('…', '...') : l, { x: gx + 8, y: cy - 9 - li * 11.5, size: 9, font }));
     }
@@ -4190,7 +4180,7 @@ async function insToTasks() {
   const keep = ins.items.filter(x => x.keep); let n = 0;
   const due = s => { const d = new Date(); d.setDate(d.getDate() + ({ urgent: 1, high: 7, medium: 30, low: 60 })[s]); return d.toISOString().slice(0, 10); };
   for (const x of keep) { const ok = await addTask({ title: `${x.location ? x.location + ': ' : ''}${x.issue}`.slice(0, 160), unit: ins.unit, due: due(x.severity), owner: x.assign, section: 'inspect', source: 'document', sourceLabel: insTitle() }); if (ok !== false) n++; }
-  ins.added = true; ins.status = `Added ${n} task${n === 1 ? '' : 's'} to Open Tasks (urgent due tomorrow, high in 7 days, medium in 30, low in 60).`; renderInsp();
+  ins.added = true; ins.status = `Added ${n} task${n === 1 ? '' : 's'} to Open Tasks.`; renderInsp();
 }
 function renderInsp() {
   const el = $('inspPanel'); if (!el) return;
@@ -4208,10 +4198,8 @@ function renderInsp() {
     <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">${ins.photos.length ? '+ Add more photos' : '1. Upload photos'}<input type="file" id="insFile" accept="image/*" multiple hidden></label><button class="nyc-btn" type="button" id="insGo"${!ins.photos.length || ins.busy ? ' disabled' : ''}>${ins.busy ? 'Working…' : '2. Generate report'}</button>${ins.photos.length ? '<button class="nyc-btn ghost" type="button" id="insClear">Start over</button>' : ''}</div>
     ${ins.photos.length ? `<div class="ins-photos">${ins.photos.map((p, i) => `<div class="ins-ph"><img src="${p.thumb}" alt=""><span>${i + 1}</span><button type="button" data-insdel="${p.id}" title="Remove photo">✕</button><textarea data-insnote="${p.id}" rows="3" placeholder="${ins.items.length ? 'Report note' : 'Note (optional). Claude writes the report note, you can edit it.'}">${esc(p.note)}</textarea></div>`).join('')}</div>` : ''}
     ${ins.status ? `<p class="nyc-msg">${esc(ins.status)}</p>` : ''}
-    ${ins.items.length ? `${ins.summary ? `<p class="pj-sum">${esc(ins.summary)}</p>` : ''}
-      <div class="crt-sum"><div class="rg-hi"><small>Urgent</small><b>${cnt('urgent')}</b></div><div><small>High</small><b>${cnt('high')}</b></div><div><small>Medium</small><b>${cnt('medium')}</b></div><div><small>Low</small><b>${cnt('low')}</b></div></div>
-      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it ins-${x.severity}${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div class="ins-ed"><div><input data-insf="location" data-insid="${x.id}" value="${esc(x.location)}" placeholder="Location" class="ins-loc"><input data-insf="issue" data-insid="${x.id}" value="${esc(x.issue)}" placeholder="Problem" class="ins-iss"></div><input data-insf="action" data-insid="${x.id}" value="${esc(x.action)}" placeholder="Action">${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><select data-inssev="${x.id}">${Object.entries(INSP_SEV).map(([k, v]) => `<option value="${k}"${x.severity === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
-      <p class="nyc-msg">You can edit any item above and the notes under each photo. The report has a cover page, a summary and work list, then 4 photos per page.</p>
+    ${ins.items.length ? `      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div class="ins-ed"><div><input data-insf="location" data-insid="${x.id}" value="${esc(x.location)}" placeholder="Location" class="ins-loc"><input data-insf="issue" data-insid="${x.id}" value="${esc(x.issue)}" placeholder="Problem" class="ins-iss"></div><input data-insf="action" data-insid="${x.id}" value="${esc(x.action)}" placeholder="Action">${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
+      <p class="nyc-msg">You can edit any item above and the notes under each photo. The report has a cover page, a work list, then 4 photos per page.</p>
       <div class="cal-btns"><button class="nyc-btn" type="button" id="insDocx">Download report (Word)</button><button class="nyc-btn ghost" type="button" id="insPdf">Download report (PDF)</button><button class="nyc-btn ghost" type="button" id="insXlsx">Download work list (Excel)</button><button class="nyc-btn ghost" type="button" id="insTasks"${ins.added ? ' disabled' : ''}>${ins.added ? 'Added to Open Tasks ✓' : 'Send to Open Tasks'}</button></div>
       <p class="fh-legal">Claude sees only what is in the photos. Check each item on site before work starts, and use licensed contractors where the law requires.</p>` : ''}</div>`;
 }
