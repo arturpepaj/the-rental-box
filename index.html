@@ -672,6 +672,7 @@ header {
 .pj-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
 .pj-open { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-waiting-on-resident, .pj-waiting-on-vendor { border-left-color: #c9932f; } .pj-resolved { border-left-color: #4f9e6b; }
+.pj-addr { display: grid; grid-template-columns: 1fr 110px; gap: 6px; }
 .pj-top { display: grid; grid-template-columns: 1fr 120px; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
 .pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
 .pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
@@ -1388,7 +1389,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
-  if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | resident ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
+  if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | unit ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
   if (mode === 'projects' && typeof cp !== 'undefined' && cp.list.some(x => x.name || x.timeline.length || x.docs.length)) extra.push({ name: 'Construction projects', text: cp.list.filter(x => x.name || x.timeline.length || x.docs.length).map(x => { const t = cpTotals(x); return `Project: ${x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\nProposed ${t.prop}, change orders ${t.co}, invoiced ${t.inv}, paid ${t.paid}\n${x.summary}\nFiles: ` + x.docs.map(d => `${d.type} ${d.vendor} ${d.number} ${d.date} ${d.amount ?? ''} ${d.scope}`).join('; ') + '\n' + x.timeline.map(e => `${e.date}: ${e.event}`).join('\n'); }).join('\n\n'), where: 'Project Management' });
   if (mode === 'legal' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
@@ -3596,19 +3597,19 @@ function pjTools(onStatus) {
 }
 async function pjRoar(p) {
   if (!sample || !mcp) { pj.status[p.id] = 'Open this page on claude.ai and connect Microsoft 365 (and Gmail if you use it).'; renderPj(); return; }
-  if (!p.name.trim() && !p.keys.trim() && !String(p.unit || '').trim()) { pj.status[p.id] = 'Give the matter a name, the resident or some keywords first.'; renderPj(); return; }
+  if (!p.name.trim() && !p.keys.trim() && !String(p.unit || '').trim()) { pj.status[p.id] = 'Give the matter a name, a unit or some keywords first.'; renderPj(); return; }
   pj.busy[p.id] = true; pj.status[p.id] = 'Roar is searching your email…'; renderPj();
   const set = s => { pj.status[p.id] = s; renderPj(); };
   try {
     const boxes = pjBoxes();
     const prompt = `Build a timeline of events for this RESIDENT MATTER (a tenant issue, not a construction project) by searching the user's email.
 Matter: ${p.name || '(no name)'}
-Resident and apartment: ${p.unit || 'not given'}
+Apartment: ${p.unit || 'not given'}
 Building: ${p.bld || $('propertyName').value.trim() || 'not given'}
 Keywords, people, vendors: ${p.keys || 'none'}
 Mailboxes to search: the user's own Outlook${boxes.length ? ', and these delegate (surrogate) mailboxes: ' + boxes.join(', ') : ''}${', plus Gmail if it is connected'}.
 ${p.timeline && p.timeline.length ? 'Timeline found before (keep these events, add new ones): ' + JSON.stringify(p.timeline.slice(0, 40).map(t => ({ date: t.date, event: t.event }))) : ''}
-Steps: search every mailbox with 2-4 different searches (resident name, apartment number with the building, the issue words like leak, noise, heat, repair, complaint, payment, lease, renewal, notice, violation, accommodation). Read the important emails: the resident's complaints and requests, our replies, work orders and repairs, access and appointments, notices, payments, attorney or court steps. Use at most about 15 tool calls.
+Steps: search every mailbox with 2-4 different searches (apartment number with the building, the issue words like leak, noise, heat, repair, complaint, payment, lease, renewal, notice, violation, accommodation). Read the important emails: the resident's complaints and requests, our replies, work orders and repairs, access and appointments, notices, payments, attorney or court steps. Use at most about 15 tool calls.
 Then reply with only JSON, no other text:
 {"summary": "2-3 short sentences: where the matter stands now and what the resident is waiting for", "state": one of ${JSON.stringify(PJ_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
 Sort the timeline oldest first. Only include events you saw in an email. Never guess dates.`;
@@ -3634,8 +3635,7 @@ function renderPj() {
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
       <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
-      <input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Resident name and apartment, e.g. Maria Lopez, 5B">
-      <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address">
+      <div class="pj-addr"><input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit (optional)"></div>
       <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
       <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
