@@ -367,7 +367,7 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
+  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -456,13 +456,13 @@ header {
     padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
   .tasks.open { transform: translateX(0); }
-  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(7, minmax(0, 1fr)); }
   .tasks-toggle { display: grid; }
   .tasks-close { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
-  .bottom-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .nav-btn { font-size: 10px; padding: 6px 2px; overflow-wrap: anywhere; }
   .library {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
@@ -697,6 +697,18 @@ header {
 @media (prefers-reduced-motion: reduce) { .nyc-btn.pj-roar { animation: none; } } .pj-del { margin-left: auto; padding: 4px 10px !important; }
 .pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
 .pj-add b { font-size: 14px; } .pj-add span { color: var(--muted); font-size: 12.5px; } .pj-add:hover { border-color: var(--ask); }
+.ins-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.ins-ph { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.ins-ph img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.ins-ph span { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; border-radius: 6px; padding: 0 5px; }
+.ins-ph button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.6); color: #fff; border: 0; border-radius: 6px; font-size: 11px; cursor: pointer; }
+.ins-ph input { height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 12px var(--sans); padding: 0 6px; }
+.ins-items { display: flex; flex-direction: column; gap: 6px; }
+.ins-it { display: grid; grid-template-columns: 18px 72px 1fr 170px; gap: 10px; align-items: center; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 13px; color: var(--ink); }
+.ins-it img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; } .ins-it small { display: block; color: var(--muted); font-size: 12px; } .ins-it .ins-v { color: #e0b56a; }
+.ins-urgent { border-left-color: #c2533f; } .ins-high { border-left-color: #e08a6a; } .ins-medium { border-left-color: #c9932f; } .ins-low { border-left-color: #4f9e6b; } .ins-off { opacity: .45; }
+.ins-ctl { display: flex; flex-direction: column; gap: 4px; } .ins-ctl select, .ins-ctl input { height: 28px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 12px var(--sans); padding: 0 6px; }
+@media (max-width: 760px) { .ins-it { grid-template-columns: 18px 60px 1fr; } .ins-ctl { grid-column: 2 / -1; flex-direction: row; } }
 .cp-docs { display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
 .cp-doc { display: grid; grid-template-columns: 92px 1fr auto 22px; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 4px 8px; }
 .cp-doc button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 11px; }
@@ -966,6 +978,7 @@ header {
         <div id="emgPanel" class="emg" hidden></div>
         <div id="pjPanel" class="emg" hidden></div>
         <div id="cpPanel" class="emg" hidden></div>
+        <div id="inspPanel" class="emg" hidden></div>
         <div id="coiPanel" class="emg" hidden></div>
         <div id="crtPanel" class="emg" hidden></div>
         <div id="regPanel" class="emg" hidden></div>
@@ -1076,6 +1089,7 @@ const ICONS = {
   mechanical: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 10l3-3 3 3M9 14l3 3 3-3"/>',
   records: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   emergency: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
+  inspect: '<path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/><path d="M17.5 17.5l3 3" stroke-width="1.2"/>',
   projects: '<path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/><path d="M2 11l10-7 10 7" stroke-width="1.2"/>',
   inbox: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><path d="M14 17l2.5-2.5M14 17l2.5 2.5M14 17h6" stroke-width="1.2"/>',
   regs: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/><path d="M13 14l2 2 3-4"/>',
@@ -1093,6 +1107,7 @@ const SECTIONS = [
   { key:'vendors', yardi:true, title:'Vendors, Invoices & Insurance', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates. Includes an Insurance (COI) check: set your requirements and see if a vendor’s certificate has enough coverage.', samples:['Which vendor insurance certificates expire soon?','Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
   { key:'systems', title:'Plumbing & Electrical', desc:'Plumbing and electric: risers, booster pumps and pressure zones, hot water heaters, panels, apartment submeters, generators, violations and maintenance records. The NYC Plumbing Code is connected: ask what the code says and get the section with a link.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','All leak reports for unit 1005','Recent leak history?','How do the water booster pumps and pressure zones work?','Which apartments show unusual electric submeter use?','When was the generator last tested?'] },
   { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts. Send and Roar here also look up the NYC code and find manufacturer manuals and spec sheets.', samples:['What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
+  { key:'inspect', title:'Inspections', desc:'Upload photos from a building or apartment inspection. Claude finds the problems in each photo, rates how urgent they are, and assigns each one to maintenance staff or a contractor. Download a PDF report with the photos, an Excel work list, or send the items to Open Tasks.', samples:['Which inspection items are urgent?','Write a work order for the super from this report','Which items could be HPD violations?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'emergency', title:'Emergency Prep', desc:'Step-by-step plans for fire, flood, gas leak or shut-off, power outage, no heat, elevator entrapment and more. Save emergency contacts for each building and download printable checklists.',
@@ -1410,6 +1425,7 @@ function buildContext(question, budget) {
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
   if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | unit ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
+  if (mode === 'inspect' && typeof ins !== 'undefined' && ins.items.length) extra.push({ name: 'Inspection report: ' + insTitle(), text: (ins.summary || '') + '\n' + ins.items.filter(x => x.keep).map((x, i) => `${i + 1}. [${x.severity}] ${x.location}: ${x.issue}. Action: ${x.action}. Assigned: ${x.assign}.${x.violation ? ' Possible violation: ' + x.violation : ''}`).join('\n'), where: 'Inspections' });
   if (mode === 'projects' && typeof cp !== 'undefined' && cp.list.some(x => x.name || x.timeline.length || x.docs.length)) extra.push({ name: 'Construction projects', text: cp.list.filter(x => x.name || x.timeline.length || x.docs.length).map(x => { const t = cpTotals(x); return `Project: ${x.keys || x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\nProposed ${t.prop}, change orders ${t.co}, invoiced ${t.inv}, paid ${t.paid}\n${x.summary}\nFiles: ` + x.docs.map(d => `${d.type} ${d.vendor} ${d.number} ${d.date} ${d.amount ?? ''} ${d.scope}`).join('; ') + '\n' + x.timeline.map(e => `${e.date}: ${e.event}`).join('\n'); }).join('\n\n'), where: 'Project Management' });
   if (mode === 'legal' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
@@ -2653,7 +2669,7 @@ function setMode(key) {
   $('mechLink').hidden = key !== 'mechanical';
   $('hstpaLink').hidden = key !== 'legal';
   $('rohnQuote').hidden = key !== 'desk';
-  $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
+  $('tabDrop').hidden = key === 'forms' || key === 'inspect'; $('tabNote').hidden = key === 'forms' || key === 'inspect';
   $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
   $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + `<div class="sample-row">${s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('')}</div>`;
@@ -2669,6 +2685,7 @@ function setMode(key) {
   if (typeof renderReg === 'function') { try { renderReg(); } catch (e) {} }
   if (typeof renderPj === 'function') { try { renderPj(); } catch (e) {} }
   if (typeof renderCp === 'function') { try { renderCp(); } catch (e) {} }
+  if (typeof renderInsp === 'function') { try { renderInsp(); } catch (e) {} }
   if (typeof renderForms === 'function') { try { renderForms(); } catch (e) {} }
 }
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
@@ -3894,6 +3911,150 @@ $('cpPanel').addEventListener('click', async e => {
     if ((p.name || p.timeline.length) && !confirmInline(d, 'Remove?')) return;
     cp.list = cp.list.filter(x => x !== p); cpLocal(); if (cp.store === 'db') { try { await db.doc(`emc/${myId}/cproj/${p.id}`).delete(); } catch (err) {} } renderCp();
   }
+});
+
+/* ---------- Inspections: photos -> inspection report and work list ---------- */
+const INSP_TYPES = ['Apartment inspection', 'Move-out inspection', 'Move-in inspection', 'Building walk-through', 'Common areas', 'Roof and facade', 'Boiler and mechanical room', 'Violation follow-up'];
+const INSP_SEV = { urgent: ['Urgent', 0], high: ['High', 1], medium: ['Medium', 2], low: ['Low', 3] };
+const ins = { photos: [], items: [], type: INSP_TYPES[0], bld: '', unit: '', notes: '', date: '', status: '', busy: false, summary: '', added: false, bldEdited: false };
+const insId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+async function insShrink(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+    const k = Math.min(1, 1400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8));
+    return { blob, thumb: c.toDataURL('image/jpeg', 0.5), w: c.width, h: c.height };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function insAdd(files) {
+  const imgs = files.filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name)).slice(0, Math.max(0, 60 - ins.photos.length));
+  if (!imgs.length) { ins.status = 'Choose photos (JPG or PNG). Up to 60 per report.'; renderInsp(); return; }
+  ins.busy = true; renderInsp();
+  for (const [i, f] of imgs.entries()) {
+    ins.status = `Adding photo ${i + 1} of ${imgs.length}…`; renderInsp();
+    try { const s = await insShrink(f); ins.photos.push(Object.assign({ id: insId(), name: f.name, note: '' }, s)); } catch (e) { ins.status = `Could not open ${f.name}. iPhone HEIC photos may need to be saved as JPG first.`; }
+  }
+  ins.busy = false; if (/^Adding/.test(ins.status)) ins.status = `${ins.photos.length} photo${ins.photos.length === 1 ? '' : 's'} ready. Add notes if you want, then press Generate report.`; renderInsp();
+}
+async function insGenerate() {
+  if (!sample) { ins.status = 'Claude is not available on this view. Open this page on claude.ai.'; renderInsp(); return; }
+  if (!ins.photos.length) { ins.status = 'Add photos first.'; renderInsp(); return; }
+  ins.busy = true; ins.items = []; ins.added = false; renderInsp();
+  const per = Math.max(1, Math.min(6, (limits && limits.images && limits.images.maxCount) || 4));
+  const summaries = [];
+  try {
+    for (let i = 0; i < ins.photos.length; i += per) {
+      const group = ins.photos.slice(i, i + per);
+      ins.status = `Looking at photos ${i + 1}–${i + group.length} of ${ins.photos.length}…`; renderInsp();
+      const j = await sample.json(`You are an experienced NYC residential building inspector helping a property manager. Look at each attached photo from a ${ins.type.toLowerCase()} at ${ins.bld || 'the building'}${ins.unit ? ', apartment/area ' + ins.unit : ''}.
+${ins.notes ? 'Manager notes: ' + ins.notes + '\n' : ''}Photos in order (number: file name, manager note):
+${group.map((p, k) => `${i + k + 1}: ${p.name}${p.note ? ' - ' + p.note : ''}`).join('\n')}
+For every problem you can actually see, list one item. Look for: leaks and water stains, mold, peeling or chipped paint (lead paint risk in pre-1960 buildings with children under 6), cracks, broken tiles, damaged floors, doors and locks, windows and window guards, missing or broken smoke/CO detectors, exposed wires, missing covers, outlets, plumbing fixtures, caulking, pests and droppings, holes, trip hazards, blocked exits or fire escapes, trash, facade or roof damage, rust, boiler room issues, and anything that could be an HPD, DOB or FDNY violation.
+Do not invent problems you cannot see. If a photo shows no problem, do not list it.
+Severity: "urgent" (safety hazard, active leak, no heat or hot water, fire or life safety, likely HPD Class C), "high" (likely violation or damage that will get worse), "medium" (repair soon), "low" (cosmetic or routine).
+Assign: "Maintenance staff" for work the super or porter can do (paint, caulk, patch, replace a fixture, detector, door hardware, cleaning, pest bait), or "Contractor: <trade>" for licensed or bigger work (Contractor: Plumber, Electrician, Exterminator, Mason, Roofer, Window, Elevator, Boiler, Mold remediation, Lead abatement, General contractor).
+Return only JSON: {"summary": "1-2 short sentences about what these photos show overall", "items": [{"photo": photo number, "location": "room or area", "issue": "what is wrong, short, simple English", "action": "what to do", "severity": "urgent|high|medium|low", "assign": "Maintenance staff or Contractor: trade", "violation": "possible HPD/DOB/FDNY issue in a few words, or empty"}]}`, { images: group.map(p => p.blob), modelTier: 'default', cache: false });
+      if (j && j.summary) summaries.push(String(j.summary));
+      for (const it of ((j && j.items) || [])) {
+        const n = parseInt(it.photo, 10); const ph = ins.photos[n - 1] && n - 1 >= i && n - 1 < i + group.length ? ins.photos[n - 1] : group[0];
+        ins.items.push({ id: insId(), photo: ph.id, location: String(it.location || '').slice(0, 80), issue: String(it.issue || '').slice(0, 240), action: String(it.action || '').slice(0, 240), severity: INSP_SEV[it.severity] ? it.severity : 'medium', assign: String(it.assign || 'Maintenance staff').slice(0, 60), violation: String(it.violation || '').slice(0, 120), keep: true });
+      }
+    }
+    ins.items.sort((a, b) => INSP_SEV[a.severity][1] - INSP_SEV[b.severity][1]);
+    ins.summary = summaries.join(' ');
+    ins.status = ins.items.length ? `Found ${ins.items.length} item${ins.items.length === 1 ? '' : 's'} to address. Check them, change anything, then download the report or send them to Open Tasks.` : 'No problems were seen in these photos.';
+  } catch (e) { ins.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Could not finish the report. Try again, or with fewer photos.'; }
+  ins.busy = false; renderInsp();
+}
+const insTitle = () => [ins.type, ins.bld, ins.unit ? 'Apt/area ' + ins.unit : '', ins.date || new Date().toISOString().slice(0, 10)].filter(Boolean).join(' - ');
+async function insExcel() {
+  await loadScript(LIBS.xlsx);
+  const rows = [[insTitle()], [ins.summary || ''], [], ['#', 'Severity', 'Location', 'Issue', 'Action', 'Assigned to', 'Possible violation', 'Photo', 'Done']];
+  ins.items.filter(x => x.keep).forEach((x, i) => { const p = ins.photos.find(y => y.id === x.photo); rows.push([i + 1, INSP_SEV[x.severity][0], x.location, x.issue, x.action, x.assign, x.violation, p ? p.name : '', '']); });
+  const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = [{ wch: 4 }, { wch: 9 }, { wch: 18 }, { wch: 45 }, { wch: 45 }, { wch: 22 }, { wch: 28 }, { wch: 22 }, { wch: 8 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Inspection');
+  const by = {}; ins.items.filter(x => x.keep).forEach(x => (by[x.assign] = by[x.assign] || []).push(x));
+  for (const [who, list] of Object.entries(by).slice(0, 12)) { const w = XLSX.utils.aoa_to_sheet([[who], ['Severity', 'Location', 'Issue', 'Action', 'Done']].concat(list.map(x => [INSP_SEV[x.severity][0], x.location, x.issue, x.action, '']))); w['!cols'] = [{ wch: 9 }, { wch: 18 }, { wch: 45 }, { wch: 45 }, { wch: 8 }]; XLSX.utils.book_append_sheet(wb, w, who.replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31)); }
+  await crtSave(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), insTitle() + '.xlsx');
+}
+async function insPdf() {
+  await loadScript(PDFLIB);
+  const doc = await PDFLib.PDFDocument.create(); const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica); const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  const W = 612, H = 792, M = 44; let page = doc.addPage([W, H]); let y = H - M;
+  const wrap = (t, f, sz, w) => { const out = []; let line = ''; for (const word of fmSafe(t).split(/\s+/)) { const tryL = line ? line + ' ' + word : word; if (f.widthOfTextAtSize(tryL, sz) > w && line) { out.push(line); line = word; } else line = tryL; } if (line) out.push(line); return out; };
+  const text = (t, sz, f, x, w) => { for (const l of wrap(t, f, sz, w)) { if (y < M + 20) { page = doc.addPage([W, H]); y = H - M; } page.drawText(l, { x, y, size: sz, font: f }); y -= sz + 3; } };
+  text(insTitle(), 15, bold, M, W - 2 * M); y -= 4;
+  if (ins.summary) { text(ins.summary, 10, font, M, W - 2 * M); y -= 6; }
+  const keep = ins.items.filter(x => x.keep);
+  const cnt = s => keep.filter(x => x.severity === s).length;
+  text(`${keep.length} items: ${cnt('urgent')} urgent, ${cnt('high')} high, ${cnt('medium')} medium, ${cnt('low')} low.`, 10, bold, M, W - 2 * M); y -= 8;
+  const imgCache = {};
+  for (const [i, x] of keep.entries()) {
+    const p = ins.photos.find(z => z.id === x.photo);
+    const boxH = 118; if (y - boxH < M) { page = doc.addPage([W, H]); y = H - M; }
+    const top = y; page.drawLine({ start: { x: M, y: top + 6 }, end: { x: W - M, y: top + 6 }, thickness: .5, color: PDFLib.rgb(.75, .75, .75) });
+    if (p) { try { imgCache[p.id] = imgCache[p.id] || await doc.embedJpg(new Uint8Array(await p.blob.arrayBuffer())); const im = imgCache[p.id]; const k = Math.min(140 / im.width, 105 / im.height); page.drawImage(im, { x: M, y: top - 105 * 1 + (105 - im.height * k), width: im.width * k, height: im.height * k }); } catch (e) {} }
+    const tx = M + 152, tw = W - M - tx; y = top - 2;
+    text(`${i + 1}. [${INSP_SEV[x.severity][0]}] ${x.location ? x.location + ': ' : ''}${x.issue}`, 10.5, bold, tx, tw);
+    text('Action: ' + x.action, 9.5, font, tx, tw);
+    text('Assigned to: ' + x.assign + (x.violation ? '   Possible violation: ' + x.violation : ''), 9.5, font, tx, tw);
+    y = Math.min(y, top - 112);
+  }
+  y -= 10; text('Prepared from photos with AI help. Check each item on site before work starts.', 8.5, font, M, W - 2 * M);
+  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), insTitle() + '.pdf');
+}
+async function insToTasks() {
+  const keep = ins.items.filter(x => x.keep); let n = 0;
+  const due = s => { const d = new Date(); d.setDate(d.getDate() + ({ urgent: 1, high: 7, medium: 30, low: 60 })[s]); return d.toISOString().slice(0, 10); };
+  for (const x of keep) { const ok = await addTask({ title: `${x.location ? x.location + ': ' : ''}${x.issue}`.slice(0, 160), unit: ins.unit, due: due(x.severity), owner: x.assign, section: 'inspect', source: 'document', sourceLabel: insTitle() }); if (ok !== false) n++; }
+  ins.added = true; ins.status = `Added ${n} task${n === 1 ? '' : 's'} to Open Tasks (urgent due tomorrow, high in 7 days, medium in 30, low in 60).`; renderInsp();
+}
+function renderInsp() {
+  const el = $('inspPanel'); if (!el) return;
+  el.hidden = mode !== 'inspect'; if (el.hidden) return;
+  if (!ins.bldEdited) ins.bld = $('propertyName').value.trim() || ins.bld;
+  const keep = ins.items.filter(x => x.keep); const cnt = s => keep.filter(x => x.severity === s).length;
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Inspection report from photos</b>${ins.photos.length ? `<span class="nyc-msg">${ins.photos.length} photo${ins.photos.length === 1 ? '' : 's'}</span>` : ''}</div>
+    <p>1. Add photos (up to 60). Add a short note under a photo if it helps. 2. Click Generate report.</p>
+    <div class="coi-grid"><label>Inspection</label><select id="insType">${INSP_TYPES.map(t => `<option${ins.type === t ? ' selected' : ''}>${t}</option>`).join('')}</select>
+      <label>Building</label><div class="pj-addr"><input id="insBld" value="${esc(ins.bld)}" placeholder="Building address"><input id="insUnit" value="${esc(ins.unit)}" placeholder="Unit or area (optional)"></div>
+      <label>Date</label><input id="insDate" type="date" value="${esc(ins.date || new Date().toISOString().slice(0, 10))}">
+      <label>Notes (optional)</label><input id="insNotes" value="${esc(ins.notes)}" placeholder="e.g. tenant moving out, check bathroom leak from 6B"></div>
+    <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">${ins.photos.length ? '+ Add more photos' : '1. Upload photos'}<input type="file" id="insFile" accept="image/*" multiple hidden></label><button class="nyc-btn" type="button" id="insGo"${!ins.photos.length || ins.busy ? ' disabled' : ''}>${ins.busy ? 'Working…' : '2. Generate report'}</button>${ins.photos.length ? '<button class="nyc-btn ghost" type="button" id="insClear">Start over</button>' : ''}</div>
+    ${ins.photos.length ? `<div class="ins-photos">${ins.photos.map((p, i) => `<div class="ins-ph"><img src="${p.thumb}" alt=""><span>${i + 1}</span><button type="button" data-insdel="${p.id}" title="Remove photo">✕</button><input data-insnote="${p.id}" value="${esc(p.note)}" placeholder="Note"></div>`).join('')}</div>` : ''}
+    ${ins.status ? `<p class="nyc-msg">${esc(ins.status)}</p>` : ''}
+    ${ins.items.length ? `${ins.summary ? `<p class="pj-sum">${esc(ins.summary)}</p>` : ''}
+      <div class="crt-sum"><div class="rg-hi"><small>Urgent</small><b>${cnt('urgent')}</b></div><div><small>High</small><b>${cnt('high')}</b></div><div><small>Medium</small><b>${cnt('medium')}</b></div><div><small>Low</small><b>${cnt('low')}</b></div></div>
+      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it ins-${x.severity}${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div><b>${esc(x.location ? x.location + ': ' : '')}${esc(x.issue)}</b><small>${esc(x.action)}</small>${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><select data-inssev="${x.id}">${Object.entries(INSP_SEV).map(([k, v]) => `<option value="${k}"${x.severity === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
+      <div class="cal-btns"><button class="nyc-btn" type="button" id="insPdf">Download report (PDF)</button><button class="nyc-btn ghost" type="button" id="insXlsx">Download work list (Excel)</button><button class="nyc-btn ghost" type="button" id="insTasks"${ins.added ? ' disabled' : ''}>${ins.added ? 'Added to Open Tasks ✓' : 'Send to Open Tasks'}</button></div>
+      <p class="fh-legal">Claude sees only what is in the photos. Check each item on site before work starts, and use licensed contractors where the law requires.</p>` : ''}</div>`;
+}
+$('inspPanel').addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'insFile' && t.files.length) { insAdd([...t.files]); return; }
+  if (t.id === 'insType') ins.type = t.value;
+  if (t.id === 'insDate') ins.date = t.value;
+  if (t.dataset.inskeep) { const x = ins.items.find(y => y.id === t.dataset.inskeep); if (x) x.keep = t.checked; renderInsp(); }
+  if (t.dataset.inssev) { const x = ins.items.find(y => y.id === t.dataset.inssev); if (x) x.severity = t.value; renderInsp(); }
+});
+$('inspPanel').addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'insBld') { ins.bld = t.value.slice(0, 200); ins.bldEdited = !!t.value.trim(); }
+  if (t.id === 'insUnit') ins.unit = t.value.slice(0, 40);
+  if (t.id === 'insNotes') ins.notes = t.value.slice(0, 400);
+  if (t.dataset.insnote) { const p = ins.photos.find(y => y.id === t.dataset.insnote); if (p) p.note = t.value.slice(0, 120); }
+  if (t.dataset.insas) { const x = ins.items.find(y => y.id === t.dataset.insas); if (x) x.assign = t.value.slice(0, 60); }
+});
+$('inspPanel').addEventListener('click', e => {
+  if (e.target.closest('#insGo')) insGenerate();
+  if (e.target.closest('#insClear')) { Object.assign(ins, { photos: [], items: [], status: '', summary: '', added: false }); renderInsp(); }
+  const d = e.target.closest('[data-insdel]'); if (d) { ins.photos = ins.photos.filter(p => p.id !== d.dataset.insdel); ins.items = ins.items.filter(x => x.photo !== d.dataset.insdel); renderInsp(); }
+  if (e.target.closest('#insPdf')) insPdf().catch(() => { ins.status = 'Could not make the PDF.'; renderInsp(); });
+  if (e.target.closest('#insXlsx')) insExcel().catch(() => { ins.status = 'Could not make the Excel file.'; renderInsp(); });
+  if (e.target.closest('#insTasks')) insToTasks();
 });
 
 /* ---------- Insurance: COI requirements and vendor COI check ---------- */
