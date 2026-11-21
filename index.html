@@ -1492,6 +1492,7 @@ How to answer:
   2. Search Outlook for the rest of the thread and earlier emails on the same topic (same subject words, the building, the people named, e.g. the accountant or board member), and read the important ones.
   3. Search SharePoint for the files the emails talk about (budget drafts and worksheets, prior-year actuals, GL detail, proposals, quotes, contracts, insurance renewals, board packages) and read them. Also check Teams.
   4. Answer every point one by one with the exact numbers, names, dates and line items you found, and cite each source. Show your math when you compare numbers.
+  When you draft a reply, also look at HISTORY: find similar past emails (same sender, building or kind of request) and how the user answered them (search_email with sentOnly: true). Reuse those facts and that way of answering, updated for today. If there is no history, say at the top: "No history of similar emails found, so this is a general reply." 
   5. If something is truly not in email or SharePoint, say exactly what you searched for and what is missing. Do not write filler like "we need quotes" or "we will review" when the documents have the answer.
   Use as many searches and reads as you need (up to about 25). Depth and accuracy matter more than speed here.
 - When you draft an email reply: plain text, casual and knowledgeable but not expert-sounding, simple short sentences. Greeting line, one blank line between paragraphs, numbered items with no blank lines between them, one blank line before "Thank you," and end there (no name or signature). Answer each item the sender raised with the real figures you found. The short 1-2 paragraph rule does not apply to drafts or to point-by-point answers the user asked for.
@@ -1581,10 +1582,12 @@ function emailTools(bot) {
         sender: { type: 'string', description: 'Sender email address or full display name' },
         afterDateTime: { type: 'string', description: 'Only emails after this date, e.g. 2026-01-01' },
         beforeDateTime: { type: 'string', description: 'Only emails before this date' },
-        offset: { type: 'number', description: 'nextOffset from a previous call' } } },
+        offset: { type: 'number', description: 'nextOffset from a previous call' },
+        sentOnly: { type: 'boolean', description: "true to search only the user's Sent Items, to see how the user answered similar emails before" } } },
       async execute(input, ctx) {
         const args = { limit: 25, offset: Math.max(0, Number(input.offset) || 0) };
         for (const k of ['query', 'sender', 'afterDateTime', 'beforeDateTime']) if (input[k]) args[k] = String(input[k]).slice(0, 300);
+        if (input.sentOnly) { args.folderName = 'Sent Items'; if (args.query) { delete args.afterDateTime; delete args.beforeDateTime; } }
         if (!args.query && !args.sender && !args.afterDateTime && !args.beforeDateTime) throw new Error('Give a query, sender or date.');
         if (args.query && args.sender) { /* allowed in own mailbox */ }
         say('Searching Outlook: ' + (args.query || args.sender || 'by date') + (args.offset ? ' (more results)' : '') + '…');
@@ -4708,8 +4711,10 @@ Rules:
   1. Read every attachment and linked file in this email (read_attachment${src === 'gmail' ? '' : ' or read_email'}).
   2. Search Outlook${src === 'gmail' ? ' and Gmail' : ''} for the rest of this thread and earlier emails on the same topic (subject words, building, the people named) and read the important ones.
   3. Search SharePoint (and Teams) for the files the email talks about (budget drafts and worksheets, prior-year actuals, GL detail, proposals, quotes, contracts, insurance renewals, leases, work orders) and read them.
-  4. Use up to about 20 searches and reads. Then answer every question or item the sender raised, one by one, with the exact numbers, names and dates you found.
-  5. If something is truly not in email or SharePoint, put it in [brackets] for the manager and say in the note what you searched for.
+  4. Look at HISTORY: find similar emails from before (same sender, same building, same kind of request) and how the manager answered them. Search Sent Items with search_email and sentOnly: true. Read 2-3 of the closest past replies and reuse their facts, steps, prices, contacts and way of answering, updated for today.
+  5. Use up to about 20 searches and reads. Then answer every question or item the sender raised, one by one, with the exact numbers, names and dates you found.
+  6. If something is truly not in email or SharePoint, put it in [brackets] for the manager and say in the note what you searched for.
+  7. If you found NO history of similar emails, still write a good reply, but start the note with: "No history of similar emails found, so this is a general reply." 
 - Plain text only. No markdown, no bold, no headings.
 - Casual, friendly tone. Knowledgeable but not expert-sounding. It must not read like AI wrote it.
 - Simple English, short sentences. The manager's first language is not English.
