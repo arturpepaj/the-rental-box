@@ -673,7 +673,7 @@ header {
 .pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
 .pj-open { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-waiting-on-resident, .pj-waiting-on-vendor { border-left-color: #c9932f; } .pj-resolved { border-left-color: #4f9e6b; }
 .pj-addr { display: grid; grid-template-columns: 1fr 110px; gap: 6px; }
-.pj-top { display: grid; grid-template-columns: 1fr 120px; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
+.pj-top { display: grid; grid-template-columns: 1fr; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
 .pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
 .pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
 .pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
@@ -3633,8 +3633,8 @@ function renderPj() {
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Resident Matters</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
     <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
-    <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
-      <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+    <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card">
+      <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"></div>
       <div class="pj-addr"><input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit (optional)"></div>
       <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
@@ -3786,8 +3786,8 @@ function renderCp() {
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Construction projects</b><span class="nyc-msg">${cp.list.length} tracked</span></div>
     <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline and compares invoices with proposals.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="cpBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
-    <div class="pj-grid">${cp.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
-      <div class="pj-top"><input class="pj-name" data-cp="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"><select data-cp="${p.id}" data-f="state">${CP_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+    <div class="pj-grid">${cp.list.map((p, i) => `<div class="pj-card">
+      <div class="pj-top"><input class="pj-name" data-cp="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"></div>
       <input data-cp="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
       <input data-cp="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
