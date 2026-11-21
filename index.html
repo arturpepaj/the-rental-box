@@ -156,6 +156,9 @@ header {
 .conn-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
 .conn-name { min-width: 0; }
 .conn-name small { display: block; font-size: 10.5px; color: var(--subtle); }
+.task-more { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0 4px; font-size: 12px; color: var(--muted); }
+.task-more button { font: 600 12.5px var(--sans); color: var(--on-ask); background: var(--ask); border: 0; border-radius: 14px; padding: 6px 14px; cursor: pointer; }
+.task-more button:hover { background: var(--ask-hover); }
 .conn-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .conn-go { font: 600 11.5px var(--sans); color: var(--on-ask); background: var(--ask); border: 0; border-radius: 12px; padding: 3px 10px; cursor: pointer; text-decoration: none; }
 .conn-go:hover { background: var(--ask-hover); } .conn-go:disabled { opacity: .7; cursor: default; }
@@ -3343,7 +3346,7 @@ $('discBack').addEventListener('click', e => { if (e.target.id === 'discBack') $
 
 /* ---------- Open Tasks (shared, live) ---------- */
 let tasks = [];            // [{id, title, unit, due, owner, section, done, createdBy, createdAt, doneAt}]
-let taskFilter = 'todo';
+let taskFilter = 'todo', taskShow = 10;
 const DONE_KEEP_MS = 30 * 24 * 3600000;
 let taskCol = null;
 const todayStr = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
@@ -3366,7 +3369,8 @@ function renderTasks() {
   $('fnTodo').textContent = counts.todo || ''; $('fnDoing').textContent = counts.doing || ''; $('fnDone').textContent = counts.done || '';
   let list = taskFilter === 'done' ? recentDone : open.filter(x => x.status === taskFilter);
   list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
-    : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0))).slice(0, 200);
+    : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0)));
+  const totalN = list.length; list = list.slice(0, taskShow);
   $('taskList').innerHTML = list.map(t => {
     const due = fmtDue(t.due);
     const sec = byKey[t.section] ? byKey[t.section].title : '';
@@ -3384,13 +3388,14 @@ function renderTasks() {
       ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
       <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : canFind ? `<button type="button" class="task-link task-find" ${finding.has(t.id) ? 'disabled' : ''}>${finding.has(t.id) ? 'Finding the link…' : findFailed.has(t.id) ? 'Link not found. Try again' : 'Link to Source ↗'}</button>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + (totalN > list.length ? `<div class="task-more"><span>Showing the ${list.length} most important of ${totalN}.</span><button type="button" id="taskMore">Show ${Math.min(10, totalN - list.length)} more</button></div>` : '');
   const st = $('taskStatus');
   if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No tasks completed in the last 30 days.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No tasks waiting to start. Press ✦ Scan now to look again.'); }
   else if (taskFilter === 'done' && !scanMsg) { st.classList.remove('warn'); st.textContent = 'Completed tasks stay here for 30 days.'; }
   else if (!taskCol) { st.classList.add('warn'); st.textContent = 'Tasks stay for this visit only. Sign in to claude.ai to share them with your team.'; }
   else { st.classList.remove('warn'); st.textContent = scanMsg; }
 }
+$('taskList').addEventListener('click', e => { if (e.target.closest('#taskMore')) { taskShow += 10; renderTasks(); } });
 async function addTask(t) {
   const doc = { title: String(t.title || '').slice(0, 160), unit: String(t.unit || '').slice(0, 12), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '', owner: String(t.owner || '').slice(0, 40), section: byKey[t.section] ? t.section : mode, status: 'todo', done: false, source: String(t.source || '').slice(0, 20), sourceLabel: String(t.sourceLabel || '').slice(0, 120), sourceDate: String(t.sourceDate || '').slice(0, 10), sourceUrl: safeLink(t.sourceUrl), key: taskKey(t), createdBy: myId || '', createdAt: Date.now(), doneAt: 0 };
   if (!doc.title.trim()) return false;
@@ -3462,7 +3467,7 @@ async function tasksFromAnswer(text) {
 }
 $('taskFilters').addEventListener('click', e => {
   const b = e.target.closest('button[data-f]'); if (!b) return;
-  taskFilter = b.dataset.f;
+  taskFilter = b.dataset.f; taskShow = 10;
   document.querySelectorAll('#taskFilters button').forEach(x => x.classList.toggle('on', x === b));
   renderTasks();
 });
