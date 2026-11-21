@@ -2711,7 +2711,7 @@ $('connRefresh').addEventListener('click', () => { slackTools = null; zillowTool
 let buildings = [], bldStore = 'local', bldBulkOpen = false, bldBulkDraft = '', bldBulkMsg = '';
 const bldKeyOld = a => String(a || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 // same building with or without ", NY 11368" at the end
-const bldKey = a => bldKeyOld(a).replace(/(\s+(NY|NEW YORK STATE))?(\s+\d{5}(\s+\d{4})?)?$/, '').replace(/\s+NY$/, '').trim();
+const bldKey = a => bldKeyOld(fmtAddr(String(a || ''))).replace(/(\s+(NY|NEW YORK STATE))?(\s+\d{5}(\s+\d{4})?)?$/, '').replace(/\s+NY$/, '').trim();
 const ADDR_CITY = { MANHATTAN: 'Manhattan', 'NEW YORK': 'New York', BRONX: 'Bronx', 'THE BRONX': 'Bronx', BROOKLYN: 'Brooklyn', QUEENS: 'Queens', 'STATEN ISLAND': 'Staten Island' };
 function addrWord(w) {
   if (!w) return w;
@@ -2719,7 +2719,19 @@ function addrWord(w) {
   if (/^(NY|NJ|CT|PO|NYC|USA)$/i.test(w)) return w.toUpperCase();
   return w.split(/([-'])/).map(x => /^[-']$/.test(x) ? x : x.charAt(0).toUpperCase() + x.slice(1).toLowerCase()).join('');
 }
-// "102-43 corona ave, queens, ny" -> "102-43 Corona Ave, Queens, NY 11368"
+// spell out street words: Ave -> Avenue, St -> Street, E -> East
+const ADDR_SUFFIX = { AVE: 'Avenue', AV: 'Avenue', AVENU: 'Avenue', ST: 'Street', STR: 'Street', BLVD: 'Boulevard', PL: 'Place', RD: 'Road', DR: 'Drive', PKWY: 'Parkway', PKY: 'Parkway', LN: 'Lane', CT: 'Court', TER: 'Terrace', TERR: 'Terrace', HWY: 'Highway', EXPY: 'Expressway', SQ: 'Square', CIR: 'Circle', PLZ: 'Plaza', TPKE: 'Turnpike', CRES: 'Crescent', BCH: 'Beach', ALY: 'Alley' };
+const ADDR_DIR = { E: 'East', W: 'West', N: 'North', S: 'South' };
+function addrStreet(q) {
+  const w = q.split(' ').filter(Boolean);
+  return w.map((x, k) => {
+    const u = x.replace(/\.$/, '').toUpperCase();
+    if (ADDR_DIR[u] && k > 0 && k < w.length - 1 && /^\d/.test(w[0])) return ADDR_DIR[u];
+    if (ADDR_SUFFIX[u] && k === w.length - 1 && k > 1) return ADDR_SUFFIX[u];
+    return addrWord(x.replace(/\.$/, ''));
+  }).join(' ');
+}
+// "102-43 corona ave, queens, ny" -> "102-43 Corona Avenue, Queens, NY 11368" 
 function fmtAddr(raw, zip, boroName) {
   const t = String(raw || '').replace(/\s+/g, ' ').trim();
   if (!t || !/[a-z]/i.test(t) || !/\d/.test(t)) return t;            // BIN/BBL or not an address
@@ -2731,7 +2743,7 @@ function fmtAddr(raw, zip, boroName) {
     if (i > 0 && m && (m[1] || m[2])) { if (m[2] && !z) z = m[2]; return; }
     const zz = p.match(/\b(\d{5})(?:-\d{4})?$/); let q = p;
     if (i > 0 && zz) { if (!z) z = zz[1]; q = p.replace(/\s*\b\d{5}(?:-\d{4})?$/, '').replace(/\s+(NY|N\.Y\.)$/i, '').trim(); if (!q) return; }
-    keep.push(i === 0 ? q.split(' ').map(addrWord).join(' ') : (ADDR_CITY[q.toUpperCase()] || q.split(' ').map(addrWord).join(' ')));
+    keep.push(i === 0 ? addrStreet(q) : (ADDR_CITY[q.toUpperCase()] || q.split(' ').map(addrWord).join(' ')));
   });
   if (keep.length === 1 && boroName) keep.push(boroName);
   if (keep.length === 1) return keep[0] + (z ? ', NY ' + z : '');
@@ -2777,6 +2789,7 @@ let bldFixing = false;
 async function bldFixAll() {
   if (bldFixing) return; bldFixing = true;
   try {
+    { const f = $('propertyName'); const v = f.value.trim(); if (v && document.activeElement !== f) { let full = fmtAddr(v); if (mcp && !addrHasZip(full)) { const z = await addrZip(full); if (z) full = fmtAddr(full, z.zip, z.boro); } if (full !== v && f.value.trim() === v) { f.value = full; try { localStorage.setItem('rb-building', full); } catch (e) {} if (nyc.key === v.toUpperCase()) nyc.key = full.toUpperCase(); } } }
     for (const b of buildings.slice()) { const f = fmtAddr(b.addr); if (f !== b.addr) await bldRename(b, f); }
     if (mcp) for (const b of buildings.slice(0, 60)) {
       if (addrHasZip(b.addr)) continue;
@@ -3556,7 +3569,7 @@ function startTasks() {
 }
 
 /* ---------- Building name (remembered in this browser only) ---------- */
-try { const v = localStorage.getItem('rb-building'); if (v) $('propertyName').value = v; } catch (e) {}
+try { const v = localStorage.getItem('rb-building'); if (v) $('propertyName').value = typeof fmtAddr === 'function' ? fmtAddr(v) : v; } catch (e) {}
 $('propertyName').addEventListener('change', e => { try { localStorage.setItem('rb-building', e.target.value); } catch (err) {} });
 
 /* ---------- Clock ---------- */
