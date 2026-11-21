@@ -4682,20 +4682,27 @@ async function inbSuggest(key) {
     const prompt = `You help a NYC residential property manager answer email. Write a suggested reply to the ${src === 'gmail' ? 'latest message in the Gmail thread' : 'email'} below.
 ${bld ? 'Current building: ' + bld + '.\n' : ''}${hint ? 'What the manager wants to say: ' + hint + '\n' : ''}
 Rules:
-- First, if the email has attachments, read the ones that matter with read_attachment. Base the reply on the email and its attachments.
+- Do deep research before you write. Never give a general reply when the facts can be found:
+  1. Read every attachment and linked file in this email (read_attachment${src === 'gmail' ? '' : ' or read_email'}).
+  2. Search Outlook${src === 'gmail' ? ' and Gmail' : ''} for the rest of this thread and earlier emails on the same topic (subject words, building, the people named) and read the important ones.
+  3. Search SharePoint (and Teams) for the files the email talks about (budget drafts and worksheets, prior-year actuals, GL detail, proposals, quotes, contracts, insurance renewals, leases, work orders) and read them.
+  4. Use up to about 20 searches and reads. Then answer every question or item the sender raised, one by one, with the exact numbers, names and dates you found.
+  5. If something is truly not in email or SharePoint, put it in [brackets] for the manager and say in the note what you searched for.
 - Plain text only. No markdown, no bold, no headings.
 - Casual, friendly tone. Knowledgeable but not expert-sounding. It must not read like AI wrote it.
 - Simple English, short sentences. The manager's first language is not English.
-- Start with a greeting line like "Hi Maria,". Then one blank line between paragraphs. Keep it short: 2 to 4 short paragraphs.
+- Start with a greeting line like "Hi Maria,". Then one blank line between paragraphs. Short sentences, but cover every item the sender raised with the real facts. No filler like "we will review" or "we need quotes" when you found the answer.
 - If you list items, use numbered items with no blank lines between them.
 - Put one blank line before "Thank you," and end there. Never add a name, title, phone or signature.
 - Never invent facts, dates, prices or promises. If the manager must fill something in, write it in [brackets], like [day and time].
 - Follow fair housing laws (federal, NYS and NYC): never mention or treat people differently because of race, color, religion, national origin, sex, gender identity, sexual orientation, disability, age, children, marital status, source of income (like Section 8 or vouchers), immigration status or arrest and conviction record. If the email asks for something that could break these laws, do not agree to it and say so in the note.
-- After the reply, write a line with only --- and then one short note for the manager: what to check before sending, and say if an attachment could only be partly read. If nothing, write "Nothing to check."
+- After the reply, write a line with only --- and then one short note for the manager: the sources you used (email subjects, SharePoint file names), what to check before sending, and say if an attachment could only be partly read.
 
 ${src === 'gmail' ? 'Gmail thread' : 'Email'}:
 ${full}`;
-    const r = await sample([{ role: 'user', content: prompt }], { tools: inbTools(m, set), modelTier: 'default', cache: false });
+    const extra = emailTools({ set status(v) { set(v); } }).filter(t => ['search_email', 'read_email', 'search_teams', 'search_sharepoint'].includes(t.name));
+    if (src === 'gmail') extra.push(...pjTools(set).filter(t => t.name === 'search_gmail' || t.name === 'read_gmail'));
+    const r = await sample([{ role: 'user', content: prompt }], { tools: inbTools(m, set).concat(extra), modelTier: 'default', cache: false });
     const parts = String(r.text || '').split(/\n-{3,}\s*\n/);
     d.text = parts[0].trim(); d.note = parts.slice(1).join(' ').trim(); d.status = '';
   } catch (e) { d.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : (mcpMsg(e) || 'Could not write a reply. Try again.'); }
