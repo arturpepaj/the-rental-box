@@ -2215,6 +2215,7 @@ async function nycLoad(force) {
 }
 async function nycLoadBuilding(b, myKey) {
   myKey = myKey || nyc.key;
+  try { const f = $('propertyName'); if (b.zip && !addrHasZip(f.value) && bldKey(f.value) && f.value.toUpperCase() === myKey) { const full = fmtAddr(f.value, b.zip, ADDR_CITY[(NYC_BORO[b.boroid] || [''])[0]]); f.value = full; nyc.key = myKey = full.toUpperCase(); const sb = buildings.find(x => bldKey(x.addr) === bldKey(full)); if (sb) bldRename(sb, full).then(renderBuildings); } } catch (e) {}
   nyc.bld = b; nyc.picks = null; nyc.loading = true; renderNyc();
   const bid = sq(b.buildingid), bin = sq(b.bin || ''), boro = NYC_BORO[b.boroid] || ['', ''];
   const blk5 = String(b.block).padStart(5, '0'), lot5 = String(b.lot).padStart(5, '0');
@@ -2652,7 +2653,41 @@ $('connRefresh').addEventListener('click', () => { slackTools = null; zillowTool
 
 /* ---------- My Buildings (saved addresses, one list per person) ---------- */
 let buildings = [], bldStore = 'local', bldBulkOpen = false, bldBulkDraft = '', bldBulkMsg = '';
-const bldKey = a => String(a || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+const bldKeyOld = a => String(a || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+// same building with or without ", NY 11368" at the end
+const bldKey = a => bldKeyOld(a).replace(/(\s+(NY|NEW YORK STATE))?(\s+\d{5}(\s+\d{4})?)?$/, '').replace(/\s+NY$/, '').trim();
+const ADDR_CITY = { MANHATTAN: 'Manhattan', 'NEW YORK': 'New York', BRONX: 'Bronx', 'THE BRONX': 'Bronx', BROOKLYN: 'Brooklyn', QUEENS: 'Queens', 'STATEN ISLAND': 'Staten Island' };
+function addrWord(w) {
+  if (!w) return w;
+  if (/^\d/.test(w)) return w.toLowerCase();                       // 102-43, 72nd
+  if (/^(NY|NJ|CT|PO|NYC|USA)$/i.test(w)) return w.toUpperCase();
+  return w.split(/([-'])/).map(x => /^[-']$/.test(x) ? x : x.charAt(0).toUpperCase() + x.slice(1).toLowerCase()).join('');
+}
+// "102-43 corona ave, queens, ny" -> "102-43 Corona Ave, Queens, NY 11368"
+function fmtAddr(raw, zip, boroName) {
+  const t = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (!t || !/[a-z]/i.test(t) || !/\d/.test(t)) return t;            // BIN/BBL or not an address
+  const parts = t.split(',').map(x => x.trim()).filter(Boolean);
+  let z = zip || '';
+  const keep = [];
+  parts.forEach((p, i) => {
+    const m = p.match(/^(?:(NY|N\.Y\.|NEW YORK STATE)\s*)?(\d{5}(?:-\d{4})?)?$/i);
+    if (i > 0 && m && (m[1] || m[2])) { if (m[2] && !z) z = m[2]; return; }
+    const zz = p.match(/\b(\d{5})(?:-\d{4})?$/); let q = p;
+    if (i > 0 && zz) { if (!z) z = zz[1]; q = p.replace(/\s*\b\d{5}(?:-\d{4})?$/, '').replace(/\s+(NY|N\.Y\.)$/i, '').trim(); if (!q) return; }
+    keep.push(i === 0 ? q.split(' ').map(addrWord).join(' ') : (ADDR_CITY[q.toUpperCase()] || q.split(' ').map(addrWord).join(' ')));
+  });
+  if (keep.length === 1 && boroName) keep.push(boroName);
+  if (keep.length === 1) return keep[0] + (z ? ', NY ' + z : '');
+  return keep.join(', ') + ', NY' + (z ? ' ' + z : '');
+}
+const addrHasZip = a => /\b\d{5}(-\d{4})?\s*$/.test(String(a || '').trim());
+// look up the ZIP code (and borough) from HPD's building list
+async function addrZip(addr) {
+  if (!mcp || addrHasZip(addr)) return null;
+  try { const list = await nycFindBuilding(addr); const b = list && list[0]; if (b && b.zip) return { zip: b.zip, boro: ADDR_CITY[(NYC_BORO[b.boroid] || [''])[0]] || '' }; } catch (e) {}
+  return null;
+}
 const bldId = a => bldKey(a).replace(/ /g, '-').slice(0, 80) || 'x';
 function bldLocalSave() { try { localStorage.setItem('rb-buildings', JSON.stringify(buildings)); } catch (e) {} }
 async function loadBuildings() {
@@ -2669,17 +2704,36 @@ async function loadBuildings() {
   } else buildings = local;
   buildings.sort((a, b) => a.addr.localeCompare(b.addr));
   bldLocalSave(); renderBuildings();
+  setTimeout(bldFixAll, 1500);
 }
 async function bldPut(b) {
   if (bldStore !== 'db') return;
   await db.doc(`bldg/${myId}`).set({ uid: myId, at: Date.now() });
   const { factsTried, ...rec } = b; await db.doc(`bldg/${myId}/items/${bldId(b.addr)}`).set(rec);
 }
+async function bldRename(b, addr) {
+  if (!addr || addr === b.addr) return;
+  const oldId = bldId(b.addr), oldId2 = bldKeyOld(b.addr).replace(/ /g, '-').slice(0, 80) || 'x';
+  b.addr = addr; bldLocalSave();
+  if (bldStore === 'db') { try { await bldPut(b); for (const id of new Set([oldId, oldId2])) if (id !== bldId(addr)) await db.doc(`bldg/${myId}/items/${id}`).delete(); } catch (e) {} }
+}
+let bldFixing = false;
+async function bldFixAll() {
+  if (bldFixing) return; bldFixing = true;
+  try {
+    for (const b of buildings.slice()) { const f = fmtAddr(b.addr); if (f !== b.addr) await bldRename(b, f); }
+    if (mcp) for (const b of buildings.slice(0, 60)) {
+      if (addrHasZip(b.addr)) continue;
+      const z = await addrZip(b.addr); if (z) await bldRename(b, fmtAddr(b.addr, z.zip, z.boro));
+    }
+    buildings.sort((a, b) => a.addr.localeCompare(b.addr)); bldLocalSave(); renderBuildings();
+  } finally { bldFixing = false; }
+}
 async function saveBuilding() {
   const addr = $('propertyName').value.trim();
   if (!addr) { $('propertyName').focus(); showFootWarn('Type the building address first, then click Save.'); return; }
   if (buildings.some(b => bldKey(b.addr) === bldKey(addr))) { openBldMenu(true); return; }
-  const b = { addr, at: Date.now() };
+  const b = { addr: fmtAddr(addr), at: Date.now() };
   buildings.push(b); buildings.sort((x, y) => x.addr.localeCompare(y.addr)); bldLocalSave(); renderBuildings();
   try { await bldPut(b); } catch (e) { showFootWarn('Saved on this computer only. Could not save to your account.'); }
 }
@@ -2690,14 +2744,14 @@ async function saveManyBuildings(text) {
   let added = 0, skipped = 0;
   for (const addr of lines) {
     if (buildings.some(b => bldKey(b.addr) === bldKey(addr))) { skipped++; continue; }
-    const b = { addr, at: Date.now() + added };
+    const b = { addr: fmtAddr(addr), at: Date.now() + added };
     buildings.push(b); added++;
     try { await bldPut(b); } catch (e) {}
   }
   buildings.sort((x, y) => x.addr.localeCompare(y.addr)); bldLocalSave();
   bldBulkOpen = false; bldBulkDraft = '';
-  bldBulkMsg = `Added ${added} building${added === 1 ? '' : 's'}.` + (skipped ? ` ${skipped} already saved.` : '');
-  renderBuildings();
+  bldBulkMsg = `Added ${added} building${added === 1 ? '' : 's'}.` + (skipped ? ` ${skipped} already saved.` : '') + (mcp ? ' Adding ZIP codes…' : '');
+  renderBuildings(); setTimeout(bldFixAll, 500);
 }
 async function removeBuilding(addr) {
   buildings = buildings.filter(b => bldKey(b.addr) !== bldKey(addr)); bldLocalSave(); renderBuildings();
@@ -2743,6 +2797,10 @@ $('bldMenu').addEventListener('click', e => {
 });
 document.addEventListener('click', e => { if (!$('bldMenu').hidden && !e.target.closest('#propWrap')) openBldMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bldMenu').hidden) openBldMenu(false); });
+$('propertyName').addEventListener('change', e => {
+  const f = e.target, v = f.value.trim(), nice = fmtAddr(v); if (nice && nice !== v) f.value = nice;
+  if (!addrHasZip(f.value)) { const ask = f.value; addrZip(ask).then(z => { if (!z || f.value !== ask) return; const full = fmtAddr(ask, z.zip, z.boro); f.value = full; if (nyc.key === ask.toUpperCase()) nyc.key = full.toUpperCase(); try { localStorage.setItem('rb-building', full); } catch (err) {} const sb = buildings.find(b => bldKey(b.addr) === bldKey(full)); if (sb) bldRename(sb, full).then(renderBuildings); else renderBuildings(); }); }
+}, true);
 $('propertyName').addEventListener('input', renderBuildings);
 $('propertyName').addEventListener('change', renderBuildings);
 
