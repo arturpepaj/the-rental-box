@@ -667,6 +667,12 @@ header {
 .fh-flag > div { font-weight: 600; }
 .fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
+.rohn { margin: 4px auto 14px; max-width: 560px; text-align: center; }
+.rohn blockquote { margin: 0; font: italic 400 18px/1.45 var(--serif); color: var(--ink); }
+.rohn figcaption { margin-top: 6px; font-size: 12.5px; color: var(--muted); display: flex; gap: 10px; justify-content: center; align-items: center; }
+.rohn button { background: none; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font: 11.5px var(--sans); padding: 2px 9px; cursor: pointer; }
+.rohn button:hover { color: var(--ask); border-color: var(--ask); }
+.rohn[hidden] { display: none; }
 .pj-mb { display: grid; grid-template-columns: minmax(200px, auto) 1fr; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); }
 .pj-mb input, .pj-card input, .pj-card select { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 10px; width: 100%; box-sizing: border-box; }
 .pj-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -938,6 +944,7 @@ header {
           <h1 class="ask-title" id="askTitle">Manager’s Desk</h1>
           <button class="new-chat" id="newChat" type="button">New chat</button>
           <p class="ask-sub" id="askSub"></p>
+          <figure class="rohn" id="rohnQuote" hidden><blockquote id="rohnText"></blockquote><figcaption>— Jim Rohn <button type="button" id="rohnNext" aria-label="Next quote">Next ↻</button></figcaption></figure>
           <button class="tab-drop" id="tabDrop" type="button">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
             <span id="tabDropLabel">Drop a file here or click to upload</span>
@@ -2636,6 +2643,7 @@ function setMode(key) {
   $('budgetNote').hidden = key !== 'budgeting';
   $('mechLink').hidden = key !== 'mechanical';
   $('hstpaLink').hidden = key !== 'legal';
+  $('rohnQuote').hidden = key !== 'desk';
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
@@ -3554,6 +3562,13 @@ function updateClock() {
   catch (e) { $('clock').textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 }
 setInterval(updateClock, 30000); updateClock();
+
+/* ---------- Jim Rohn quote of the day (Manager's Desk) ---------- */
+const ROHN = ['Either you run the day or the day runs you.', 'Discipline is the bridge between goals and accomplishment.', 'Success is nothing more than a few simple disciplines, practiced every day.', "Don't wish it were easier. Wish you were better.", 'If you are not willing to risk the usual, you will have to settle for the ordinary.', 'Work harder on yourself than you do on your job.', "If you really want to do something, you'll find a way. If you don't, you'll find an excuse.", 'Formal education will make you a living; self-education will make you a fortune.', 'Success is not to be pursued; it is to be attracted by the person you become.', 'Learn how to be happy with what you have while you pursue all that you want.', "Take care of your body. It's the only place you have to live.", 'Time is more valuable than money. You can get more money, but you cannot get more time.', 'You are the average of the five people you spend the most time with.', "Don't join an easy crowd; you won't grow. Go where the expectations and the demands to perform are high."];
+let rohnI = Math.floor(Date.now() / 864e5) % ROHN.length;
+function showRohn() { $('rohnText').textContent = '“' + ROHN[rohnI] + '”'; }
+showRohn();
+$('rohnNext').addEventListener('click', () => { rohnI = (rohnI + 1) % ROHN.length; showRohn(); });
 
 /* ---------- Resident Matters tracker (Manager's Desk) ---------- */
 const PJ_STATUS = ['Open', 'In progress', 'Waiting on resident', 'Waiting on vendor', 'Resolved'];
