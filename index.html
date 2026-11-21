@@ -156,6 +156,9 @@ header {
 .conn-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
 .conn-name { min-width: 0; }
 .conn-name small { display: block; font-size: 10.5px; color: var(--subtle); }
+.conn-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.conn-go { font: 600 11.5px var(--sans); color: var(--on-ask); background: var(--ask); border: 0; border-radius: 12px; padding: 3px 10px; cursor: pointer; text-decoration: none; }
+.conn-go:hover { background: var(--ask-hover); } .conn-go:disabled { opacity: .7; cursor: default; }
 .conn-state { font-size: 11px; font-weight: 700; white-space: nowrap; }
 .conn-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--subtle); }
 .conn-dot[data-s="on"] { background: #6fbf68; box-shadow: 0 0 6px rgba(111,191,104,0.6); }
@@ -2701,9 +2704,21 @@ async function renderConnections() {
       else st = 'ask';
     }
     const txt = c.manual || CONN_TEXT[st];
-    return `<div class="conn-row"><span class="conn-dot" data-s="${st}"></span><span class="conn-name">${esc(c.label)}<small>${esc(c.sub)}</small></span><span class="conn-state" data-s="${st}">${esc(txt)}</span></div>`;
+    const sv = servers.find(x => x.server === c.server);
+    const tool = sv && sv.tools && sv.tools[0] ? (sv.tools[0].name || sv.tools[0]) : '';
+    const btn = c.manual ? '' : st === 'ask' && tool ? `<button type="button" class="conn-go" data-conn="${esc(c.server)}" data-tool="${esc(tool)}">Connect</button>`
+      : st === 'reauth' || st === 'off' ? `<a class="conn-go" href="https://claude.ai/settings/connectors" target="_blank" rel="noopener">Connect ↗</a>` : '';
+    return `<div class="conn-row"><span class="conn-dot" data-s="${st}"></span><span class="conn-name">${esc(c.label)}<small>${esc(c.sub)}</small></span><span class="conn-side"><span class="conn-state" data-s="${st}">${esc(txt)}</span>${btn}</span></div>`;
   }).join('');
 }
+// "Connect": ask claude.ai for permission now (it shows its Allow prompt), instead of waiting for the first use
+$('connList').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-conn]'); if (!b || !mcp) return;
+  b.disabled = true; b.textContent = 'Connecting…';
+  try { await mcp.callTool(b.dataset.conn, b.dataset.tool, {}, { cache: false }); }
+  catch (err) { if (err && (err.code === 'not_granted' || err.code === 'consent_required' || err.code === 'denied')) { b.textContent = 'Not allowed'; setTimeout(renderConnections, 2500); return; } }
+  slackTools = null; zillowTools = null; legalTools = null; mechReady = null; renderConnections();
+});
 $('connRefresh').addEventListener('click', () => { slackTools = null; zillowTools = null; legalTools = null; mechReady = null; renderConnections(); });
 
 
