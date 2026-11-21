@@ -478,6 +478,11 @@ header {
 /* ---- NYC records (Compliance & Violations) ---- */
 .nyc { width: 100%; display: flex; flex-direction: column; gap: 14px; }
 .nyc[hidden] { display: none; }
+.nyc-reg { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 14px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: -4px 0 12px; font-size: 13px; color: var(--ink); }
+.nyc-reg small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 2px; }
+.nyc-reg b { font-weight: 600; } .nyc-reg i { font-style: normal; font-weight: 400; color: var(--muted); } .nyc-reg b span { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.nyc-reg .nyc-none { color: var(--subtle); font-weight: 400; }
+.nyc-reg-foot { grid-column: 1 / -1; margin: 0; font-size: 11.5px; color: var(--subtle); } .nyc-reg-foot a { color: var(--ask); } .nyc-exp { color: #e08a6a; font-weight: 600; }
 .nyc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
 .nyc-bld { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nyc-bld b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--ink); line-height: 1.1; }
@@ -2003,7 +2008,9 @@ const NYC_DS = {
   acris: { id: 'bnx9-e6tj', name: 'ACRIS Real Property' },
   acrisL: { id: '8h5j-fqxa', name: 'ACRIS Legals' },
   acrisP: { id: '636b-3b5g', name: 'ACRIS Parties' },
-  acrisT: { id: '7isb-wh4c', name: 'ACRIS Document Types' }
+  acrisT: { id: '7isb-wh4c', name: 'ACRIS Document Types' },
+  reg:   { id: 'tesw-yqqr', name: 'HPD Multiple Dwelling Registrations' },
+  regc:  { id: 'feu5-w2e2', name: 'HPD Registration Contacts' }
 };
 const NYC_ROOT = 'https://data.cityofnewyork.us/resource/';
 const nycPage = k => k === 'acris' ? 'https://a836-acris.nyc.gov/DS/DocumentSearch/BBL' : `https://data.cityofnewyork.us/d/${NYC_DS[k].id}`;
@@ -2291,8 +2298,45 @@ async function nycLoadBuilding(b, myKey) {
   try { const sb = buildings.find(x => bldKey(x.addr) === bldKey($('propertyName').value)); if (sb) { sb.facts = { cd: facts.cd, block: facts.block, area: facts.area, floors: facts.floors, units: facts.units }; bldPut(sb).catch(() => {}); } } catch (e) {}
   nyc.summary = nycSummaryText();
   renderNyc();
+  nycLoadContacts(b, myKey);
 }
 
+
+// ---- HPD registration contacts: head officer, managing agent, site manager ----
+async function nycLoadContacts(b, myKey) {
+  const res = nyc.res; if (!res || !b) return;
+  res.reg = { loading: true }; renderNyc();
+  try {
+    const uR = nycUrl('reg', { $select: 'registrationid,lastregistrationdate,registrationenddate', $where: `buildingid='${sq(b.buildingid)}'`, $order: 'lastregistrationdate DESC', $limit: 1 });
+    const r1 = await nycFetch([uR]); if (myKey !== nyc.key) return;
+    const reg = Array.isArray(r1[uR]) ? r1[uR][0] : null;
+    if (!reg) { res.reg = { none: true }; renderNyc(); return; }
+    const uC = nycUrl('regc', { $select: 'type,corporationname,title,firstname,lastname,businesshousenumber,businessstreetname,businessapartment,businesscity,businessstate,businesszip', $where: `registrationid='${sq(reg.registrationid)}'`, $limit: 50 });
+    const r2 = await nycFetch([uC]); if (myKey !== nyc.key) return;
+    const rows = Array.isArray(r2[uC]) ? r2[uC] : [];
+    const nm = c => [c.firstname, c.lastname].filter(Boolean).map(x => x.trim()).join(' ');
+    const addr = c => [[c.businesshousenumber, c.businessstreetname].filter(Boolean).join(' '), c.businessapartment, c.businesscity, [c.businessstate, c.businesszip].filter(Boolean).join(' ')].filter(x => x && String(x).trim()).join(', ');
+    const pick = t => rows.filter(c => c.type === t);
+    const ho = pick('HeadOfficer'), ag = pick('Agent'), sm = pick('SiteManager'), co = pick('CorporateOwner'), io = pick('IndividualOwner');
+    res.reg = { id: reg.registrationid, last: nycDate(reg.lastregistrationdate), end: nycDate(reg.registrationenddate),
+      head: ho.map(c => ({ name: nm(c) || c.corporationname || '', title: c.title || '' })),
+      agent: ag.map(c => ({ name: c.corporationname || nm(c), person: c.corporationname ? nm(c) : '', addr: addr(c) })),
+      site: sm.map(c => ({ name: nm(c) || c.corporationname || '', addr: addr(c) })),
+      owner: co.map(c => c.corporationname).concat(io.map(nm)).filter(Boolean) };
+  } catch (e) { res.reg = { err: nycConnMsg(e) }; }
+  if (res.reg && res.reg.id) { const g = res.reg; nyc.summary = (nyc.summary || '') + `\nHPD registration contacts: head officer ${g.head.map(x => x.name).join(', ') || 'not listed'}; managing agent ${g.agent.map(x => x.name + (x.person ? ' (' + x.person + ')' : '')).join(', ') || 'not listed'}; site manager ${g.site.map(x => x.name).join(', ') || 'not listed'}; owner ${g.owner.join(', ') || 'not listed'}; registration valid until ${g.end ? g.end.toLocaleDateString('en-US') : 'unknown'}.`; }
+  renderNyc();
+}
+function nycRegHtml(r) {
+  if (!r) return '';
+  if (r.loading) return '<div class="nyc-reg"><span class="nyc-msg" style="padding:0">Loading HPD registration contacts…</span></div>';
+  if (r.err) return `<div class="nyc-reg"><span class="nyc-msg warn" style="padding:0">${esc(r.err)}</span></div>`;
+  if (r.none) return '<div class="nyc-reg"><span class="nyc-msg warn" style="padding:0">No HPD registration found for this building.</span></div>';
+  const t = new Date(); const expired = r.end && r.end < t;
+  const line = (lab, list, f) => list.length ? `<div><small>${lab}</small><b>${list.map(f).join('<br>')}</b></div>` : `<div><small>${lab}</small><b class="nyc-none">Not listed</b></div>`;
+  return `<div class="nyc-reg">${line('Head officer', r.head, x => esc(x.name) + (x.title ? ` <i>${esc(x.title)}</i>` : ''))}${line('Management company (managing agent)', r.agent, x => esc(x.name) + (x.person ? ` <i>${esc(x.person)}</i>` : '') + (x.addr ? `<span>${esc(x.addr)}</span>` : ''))}${line('Site manager', r.site, x => esc(x.name) + (x.addr ? `<span>${esc(x.addr)}</span>` : ''))}${r.owner.length ? `<div><small>Owner</small><b>${r.owner.map(esc).join('<br>')}</b></div>` : ''}
+    <p class="nyc-reg-foot">From HPD's registration${r.last ? ' filed ' + esc(r.last.toLocaleDateString('en-US')) : ''}${r.end ? `, valid until <span class="${expired ? 'nyc-exp' : ''}">${esc(r.end.toLocaleDateString('en-US'))}${expired ? ' (expired: renew with HPD)' : ''}</span>` : ''}. <a href="https://hpdonline.nyc.gov/hpdonline/" target="_blank" rel="noopener">HPD Online ↗</a></p></div>`;
+}
 
 // ---- ACRIS (deeds, mortgages, liens) — loads when the card is opened ----
 const ACRIS_LIEN = ['FL', 'FTL', 'NTXL', 'CNFL', 'AMFL', 'LOCC', 'JUDG', 'TLS', 'ATL', 'AMTL', 'VAC', 'CODP', 'LIS'];
@@ -2436,7 +2480,7 @@ function renderNyc() {
   else if (nyc.loading) body = `<div class="nyc-sum">${'<div class="nyc-stat nyc-grey"><div class="nyc-skel" style="width:60%"></div><div class="nyc-skel" style="height:22px"></div></div>'.repeat(5)}</div><p class="nyc-msg">Getting records from 11 city datasets. This takes about 20 seconds.</p>`;
   else if (!nyc.res) body = `<p class="nyc-msg">Click Look up to load the city records for this building.</p>`;
   else body = nycBody(nyc.res);
-  el.innerHTML = head + body;
+  el.innerHTML = head + (nyc.res && !nyc.loading && !nyc.err ? nycRegHtml(nyc.res.reg) : '') + body;
 }
 function nycBody(r) {
   const c = r.cards, y = new Date().getFullYear();
