@@ -345,6 +345,8 @@ header {
 .icon-btn.send:disabled { opacity: 0.45; cursor: default; }
 .icon-btn.stop { background: var(--danger); border-color: var(--danger); color: var(--on-ask); }
 .samples { display: flex; flex-wrap: wrap; gap: 6px; }
+.sample-row { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; width: 100%; scrollbar-width: thin; padding-bottom: 2px; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.sample-row .sample-q { flex: 0 0 auto; white-space: nowrap; padding: 5px 11px; }
 .sample-q { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
 .action-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); }
 .action-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ask); margin-right: 2px; }
@@ -2583,7 +2585,7 @@ function setMode(key) {
   $('tabDrop').hidden = key === 'forms'; $('tabNote').hidden = key === 'forms';
   $('tabDrop').classList.toggle('big', key === 'budgeting');
   $('chatInput').placeholder = s.key === 'desk' ? 'Ask anything about your building…' : `Ask about ${s.title.toLowerCase()}…`;
-  $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('');
+  $('samples').innerHTML = (s.action ? `<div class="action-group"><span class="action-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>${esc(s.action.label)}:</span>${s.action.periods.map(p => `<button class="sample-q action-q" data-period="${p}">${p}</button>`).join('')}<span class="action-note">${esc(s.action.note)}</span></div>` : '') + `<div class="sample-row">${s.samples.map(q => `<button class="sample-q">${esc(q)}</button>`).join('')}</div>`;
   renderChips(); render(); if (typeof renderTasks === 'function' && $('taskList')) renderTasks();
   renderNyc(); if (key === 'records' && $('propertyName').value.trim() && mcp) nycLoad(false);
   if (typeof renderCal === 'function') { try { renderCal(); } catch (e) {} }
