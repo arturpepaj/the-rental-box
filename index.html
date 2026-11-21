@@ -677,6 +677,9 @@ header {
 .rd-need { color: #e0b56a !important; font-weight: 600; }
 .crt-g.rd-row { grid-template-columns: 18px 120px 1fr auto; cursor: default; }
 .rg-hi { border-color: rgba(220,90,70,.7) !important; background: rgba(220,90,70,.08); }
+.rg-queue { display: flex; flex-wrap: wrap; gap: 6px; }
+.rg-queue span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 3px 6px 3px 10px; }
+.rg-queue button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 11px; }
 .coi-rows.rg-rows { grid-template-columns: 22px minmax(110px, 140px) 1fr 1fr; }
 .fh-box p a { color: var(--ask); }
 .rd-row select { height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 12px var(--sans); }
@@ -4011,7 +4014,7 @@ $('riderPanel').addEventListener('input', e => { if (e.target.dataset.rd && e.ta
 // NYC Rent Guidelines Board renewal rates by lease start (Oct 1 - Sep 30): [1-year %, 2-year % (total over both years)]
 const RGB_NYC = { 2010: [2.25, 4.5], 2011: [3.75, 7.25], 2012: [2, 4], 2013: [4, 7.75], 2014: [1, 2.75], 2015: [0, 2], 2016: [0, 2], 2017: [1.25, 2], 2018: [1.5, 2.5], 2019: [1.5, 2.5], 2020: [0, 1], 2021: [1.5, 2.5], 2022: [3.25, 5], 2023: [3, 6.04], 2024: [2.75, 5.25], 2025: [3, 4.5], 2026: [0, 0] };
 const HSTPA_DATE = '2019-06-14';
-const rg = { files: [], rows: [], flags: [], years: [], units: 0, lookFrom: 0, status: '', busy: false, filter: 'all' };
+const rg = { files: [], queue: [], rows: [], flags: [], years: [], units: 0, lookFrom: 0, status: '', busy: false, filter: 'all' };
 const rgNum = v => { const n = parseFloat(String(v == null ? '' : v).replace(/[$,\s]/g, '')); return isFinite(n) ? n : 0; };
 const rgMoney = n => '$' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function rgGuideYear(dateStr, regYear) { // guideline year (Oct-Sep) of a lease start; fallback: lease likely began in the year before the April 1 registration
@@ -4120,18 +4123,26 @@ function renderReg() {
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Rent Registration Review</b>${rg.address ? `<span class="nyc-msg">${esc(rg.address)}</span>` : ''}</div>
     <p>Upload up to 10 full-year "Registered Apartment Information" reports for the building, one per year. Claude reads every apartment, compares the years, and points out possible overcharges.</p>
     <p class="coi-sum"><b>Where to get them:</b> DHCR <a href="https://hcr.ny.gov/owner-rent-regulation-applications-0" target="_blank" rel="noopener">Owner Rent Regulation Applications (ORRA) ↗</a> → <a href="https://apps.hcr.ny.gov/ORAOwnerForms/default.aspx" target="_blank" rel="noopener">log in ↗</a> → Annual Rent Registration Online (ARRO) → pick the building and year → save the registered apartment information as PDF. Need the building's registration number? Use the <a href="https://apps.hcr.ny.gov/BuildingSearch/" target="_blank" rel="noopener">Rent Regulated Building Search ↗</a>. No ORRA account yet? Request one from DHCR on the ORRA page.</p>
-    <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${rg.files.length ? 'Add more reports' : 'Upload registration reports'}<input type="file" id="rgFile" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label>${rg.files.length ? `<button class="nyc-btn ghost" type="button" id="rgClear">Start over</button>` : ''}<span class="nyc-msg" style="padding:0">${rg.files.length}/10 reports</span></div>
-    ${rg.files.length ? `<p class="coi-sum">${rg.files.map(esc).join(' · ')}</p>` : ''}
+    <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">1. ${rg.files.length || rg.queue.length ? 'Add more reports' : 'Choose registration reports'}<input type="file" id="rgFile" accept=".pdf,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label><button class="nyc-btn" type="button" id="rgStart"${!rg.queue.length || rg.busy ? ' disabled' : ''}>${rg.busy ? 'Reviewing…' : '2. Start review'}</button>${rg.files.length || rg.queue.length ? `<button class="nyc-btn ghost" type="button" id="rgClear">Start over</button>` : ''}<span class="nyc-msg" style="padding:0">${rg.files.length + rg.queue.length}/10 reports</span></div>
+    ${rg.queue.length ? `<div class="rg-queue">${rg.queue.map((f, i) => `<span>${esc(f.name)}<button type="button" data-rgx="${i}" aria-label="Remove">✕</button></span>`).join('')}</div><p class="coi-sum">Ready. Press <b>Start review</b> when all the years are added.</p>` : ''}
+    ${rg.files.length ? `<p class="coi-sum">Reviewed: ${rg.files.map(esc).join(' · ')}</p>` : ''}
     ${rg.status ? `<p class="nyc-msg">${esc(rg.status)}</p>` : ''}
     ${rg.rows.length ? `<div class="crt-sum"><div><small>Apartments</small><b>${rg.units}</b></div><div><small>Years</small><b>${rg.years.length ? rg.years[0] + (rg.years.length > 1 ? '–' + rg.years[rg.years.length - 1] : '') : '—'}</b></div><div class="${n.high ? 'rg-hi' : 'crt-owed'}"><small>Possible overcharges</small><b>${n.high}</b></div><div><small>To check</small><b>${n.medium + n.low}</b></div></div>
       <div class="cal-btns">${['all', 'high', 'medium', 'low'].map(k => `<button class="nyc-btn ${rg.filter === k ? '' : 'ghost'}" type="button" data-rgf="${k}">${k === 'all' ? `All (${rg.flags.length})` : k === 'high' ? `Likely problems (${n.high})` : k === 'medium' ? `Need paperwork (${n.medium})` : `Notes (${n.low})`}</button>`).join('')}<button class="nyc-btn ghost" type="button" id="rgXlsx">Download Excel</button></div>
       ${list.length ? `<div class="coi-rows rg-rows">${list.map(x => `<div><span class="${lv[x.level][0]}">${lv[x.level][1]}</span></div><div><b>Apt ${esc(x.apt)} · ${x.year}</b><small>${x.year < rg.lookFrom ? 'Older than the 6-year lookback' : ''}</small></div><div style="grid-column: span 2"><b>${esc(x.issue)}</b><small>${esc(x.detail)}</small></div>`).join('')}</div>` : '<p class="nyc-msg">Nothing found in this group.</p>'}
       <p class="fh-legal">These are possible issues found by comparing the registrations, not proof of an overcharge. A legal rent can rise for lawful reasons (IAI, MCI, 2-year leases, orders) that the report does not show. Check leases, riders, invoices and DHCR orders, and ask your attorney before you change any rent. NYC guideline rates used are from the Rent Guidelines Board orders.</p>` : ''}</div>`;
 }
-$('regPanel').addEventListener('change', e => { if (e.target.id === 'rgFile' && e.target.files.length) rgRead([...e.target.files]); });
+$('regPanel').addEventListener('change', e => {
+  if (e.target.id === 'rgFile' && e.target.files.length) {
+    const room = 10 - rg.files.length - rg.queue.length; const add = [...e.target.files].slice(0, Math.max(0, room));
+    rg.queue = rg.queue.concat(add); rg.status = e.target.files.length > add.length ? 'Only 10 reports in total. Some files were not added.' : ''; renderReg();
+  }
+});
 $('regPanel').addEventListener('click', e => {
   const f = e.target.closest('[data-rgf]'); if (f) { rg.filter = f.dataset.rgf; renderReg(); }
-  if (e.target.closest('#rgClear')) { Object.assign(rg, { files: [], rows: [], flags: [], years: [], units: 0, status: '', address: '', filter: 'all' }); renderReg(); }
+  const x = e.target.closest('[data-rgx]'); if (x) { rg.queue.splice(+x.dataset.rgx, 1); renderReg(); return; }
+  if (e.target.closest('#rgStart') && rg.queue.length && !rg.busy) { const q = rg.queue; rg.queue = []; rgRead(q); }
+  if (e.target.closest('#rgClear')) { Object.assign(rg, { files: [], queue: [], rows: [], flags: [], years: [], units: 0, status: '', address: '', filter: 'all' }); renderReg(); }
   if (e.target.closest('#rgXlsx')) rgExcel().catch(() => { rg.status = 'Could not make the Excel file.'; renderReg(); });
 });
 
