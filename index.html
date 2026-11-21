@@ -671,7 +671,7 @@ header {
 .pj-mb input, .pj-card input, .pj-card select { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 10px; width: 100%; box-sizing: border-box; }
 .pj-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
-.pj-planning { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-on-hold { border-left-color: #c9932f; } .pj-done { border-left-color: #4f9e6b; }
+.pj-open { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-waiting-on-resident, .pj-waiting-on-vendor { border-left-color: #c9932f; } .pj-resolved { border-left-color: #4f9e6b; }
 .pj-top { display: grid; grid-template-columns: 1fr 120px; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
 .pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
 .pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
@@ -1052,7 +1052,7 @@ const ICONS = {
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
 const SECTIONS = [
-  { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it. Track your projects below: Roar builds a timeline from your email and delegate mailboxes.', samples:['Where does the roof project stand?','Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
+  { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (Slack will be connected too), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it. Track resident matters below: Roar builds a timeline from your email and delegate mailboxes.', samples:['Where does the leak in 5B stand?','Respond to Michael’s recent email','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
   { key:'inbox', title:'Inbox Replies', desc:'Your last 10 emails from Outlook, and from Gmail if you use it too. Click “Suggest a reply” and Claude reads the email and its attachments and writes a short, plain text reply to copy into Outlook. Nothing is sent for you. Always double check each reply: it is your responsibility to fully understand it before you send it.', samples:['Which of my last emails need an answer today?','Summarize my last 10 emails'] },
   { key:'forms', title:'Fill a PDF Form', desc:'Upload a blank PDF form. Claude fills it from your notes, your Library documents and Outlook. You check every value, then download the filled PDF.', samples:['What information does this form need?','Which fields are still missing?'] },
@@ -1379,7 +1379,7 @@ function buildContext(question, budget) {
   const libDocs = library.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text, where: 'Library' }));
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
-  if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Projects', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Project: ${x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Project tracker' });
+  if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | resident ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
   if (mode === 'lease' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
@@ -3527,10 +3527,10 @@ function updateClock() {
 }
 setInterval(updateClock, 30000); updateClock();
 
-/* ---------- Project Tracker (Manager's Desk) ---------- */
-const PJ_STATUS = ['Not started', 'Planning', 'In progress', 'On hold', 'Done'];
+/* ---------- Resident Matters tracker (Manager's Desk) ---------- */
+const PJ_STATUS = ['Open', 'In progress', 'Waiting on resident', 'Waiting on vendor', 'Resolved'];
 const pj = { list: [], mailboxes: '', loaded: false, store: 'local', open: {}, busy: {}, status: {} };
-const pjNew = n => ({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', bld: '', keys: '', state: 'Not started', next: '', summary: '', timeline: [], at: Date.now(), n });
+const pjNew = n => ({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', bld: '', keys: '', unit: '', state: 'Open', next: '', summary: '', timeline: [], at: Date.now(), n });
 function pjLocal() { try { localStorage.setItem('rb-projects', JSON.stringify({ list: pj.list, mailboxes: pj.mailboxes })); } catch (e) {} }
 async function pjLoad() {
   try { const v = JSON.parse(localStorage.getItem('rb-projects') || '{}'); pj.list = v.list || []; pj.mailboxes = v.mailboxes || ''; } catch (e) {}
@@ -3542,6 +3542,7 @@ async function pjLoad() {
       pj.store = 'db';
     } catch (e) {}
   }
+  for (const p of pj.list) { if (!PJ_STATUS.includes(p.state)) p.state = 'Open'; if (p.unit == null) p.unit = ''; }
   while (pj.list.length < 4) pj.list.push(pjNew(pj.list.length));
   pj.loaded = true; pjLocal(); renderPj();
 }
@@ -3583,20 +3584,21 @@ function pjTools(onStatus) {
 }
 async function pjRoar(p) {
   if (!sample || !mcp) { pj.status[p.id] = 'Open this page on claude.ai and connect Microsoft 365 (and Gmail if you use it).'; renderPj(); return; }
-  if (!p.name.trim() && !p.keys.trim()) { pj.status[p.id] = 'Give the project a name or some keywords first.'; renderPj(); return; }
+  if (!p.name.trim() && !p.keys.trim() && !String(p.unit || '').trim()) { pj.status[p.id] = 'Give the matter a name, the resident or some keywords first.'; renderPj(); return; }
   pj.busy[p.id] = true; pj.status[p.id] = 'Roar is searching your email…'; renderPj();
   const set = s => { pj.status[p.id] = s; renderPj(); };
   try {
     const boxes = pjBoxes();
-    const prompt = `Build a timeline of events for this property management project by searching the user's email.
-Project: ${p.name || '(no name)'}
+    const prompt = `Build a timeline of events for this RESIDENT MATTER (a tenant issue, not a construction project) by searching the user's email.
+Matter: ${p.name || '(no name)'}
+Resident and apartment: ${p.unit || 'not given'}
 Building: ${p.bld || $('propertyName').value.trim() || 'not given'}
-Keywords, vendors, people: ${p.keys || 'none'}
+Keywords, people, vendors: ${p.keys || 'none'}
 Mailboxes to search: the user's own Outlook${boxes.length ? ', and these delegate (surrogate) mailboxes: ' + boxes.join(', ') : ''}${', plus Gmail if it is connected'}.
 ${p.timeline && p.timeline.length ? 'Timeline found before (keep these events, add new ones): ' + JSON.stringify(p.timeline.slice(0, 40).map(t => ({ date: t.date, event: t.event }))) : ''}
-Steps: search every mailbox with 2-4 different keyword searches (project name, building, vendor names, key words like proposal, invoice, permit, inspection, approval). Read the important emails (proposals, approvals, contracts, invoices, schedule changes, problems). Use at most about 15 tool calls.
+Steps: search every mailbox with 2-4 different searches (resident name, apartment number with the building, the issue words like leak, noise, heat, repair, complaint, payment, lease, renewal, notice, violation, accommodation). Read the important emails: the resident's complaints and requests, our replies, work orders and repairs, access and appointments, notices, payments, attorney or court steps. Use at most about 15 tool calls.
 Then reply with only JSON, no other text:
-{"summary": "2-3 short sentences: where the project stands now", "state": one of ${JSON.stringify(PJ_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
+{"summary": "2-3 short sentences: where the matter stands now and what the resident is waiting for", "state": one of ${JSON.stringify(PJ_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
 Sort the timeline oldest first. Only include events you saw in an email. Never guess dates.`;
     const r = await sample([{ role: 'user', content: prompt }], { tools: pjTools(set), modelTier: 'default', cache: false });
     const raw = String(r.text || ''); const m = raw.match(/\{[\s\S]*\}/); let j = null; try { j = JSON.parse(m ? m[0] : raw); } catch (e) {}
@@ -3614,20 +3616,22 @@ function renderPj() {
   el.hidden = mode !== 'desk'; if (el.hidden) return;
   if (!pj.loaded) { pj.loaded = true; pjLoad(); return; }
   const top = $('propertyName').value.trim();
-  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Projects</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
-    <p>Track your projects here. Press <b>✦ Roar</b> on a project and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of events and the next step.</p>
+  for (const p of pj.list) if (!p.bld && top) { p.bld = top; pjSave(p); }
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Resident Matters</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
+    <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened and the next step.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card pj-${String(p.state).toLowerCase().replace(/\s+/g, '-')}">
-      <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
-      <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
-      <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
+      <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"><select data-pj="${p.id}" data-f="state">${PJ_STATUS.map(s => `<option${p.state === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+      <input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Resident name and apartment, e.g. Maria Lopez, 5B">
+      <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address">
+      <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
       <input data-pj="${p.id}" data-f="next" value="${esc(p.next)}" placeholder="Next step">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
-      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove project">✕</button></div>
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
       ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
       ${pj.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
     </div>`).join('')}
-    <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another project</b><span>Want to keep track of more projects? Add a box.</span></button></div>
+    <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another resident matter</b><span>Want to keep track of more? Add a box.</span></button></div>
     <p class="fh-legal">Roar only reads email. Check each event against the email before you rely on it.</p></div>`;
 }
 $('pjPanel').addEventListener('input', e => {
