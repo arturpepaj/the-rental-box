@@ -382,6 +382,13 @@ header {
 .nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .nav-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rust); display: none; }
 .nav-btn.has-chat .dot { display: block; }
+.nav-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.nav-btn.nav-drag { opacity: .35; }
+.nav-btn.nav-over { box-shadow: inset 0 0 0 2px var(--ask); }
+.nav-ghost { position: fixed; z-index: 9999; pointer-events: none; opacity: .9; box-shadow: 0 8px 24px rgba(0,0,0,.45); border-radius: 8px; transform: translate(-50%, -50%) scale(1.04); }
+.nav-hint { position: fixed; z-index: 9999; left: 50%; bottom: 140px; transform: translateX(-50%); background: var(--ask); color: var(--on-ask); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; pointer-events: none; }
+.nav-reset { margin: 0 20px 6px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 6px 10px; font: 12px var(--sans); cursor: pointer; text-align: left; }
+.nav-reset:hover { color: var(--ink); background: var(--surface-2); }
 
 /* Open Tasks */
 .tasks { width: var(--taskw); flex-shrink: 0; border-left: 1px solid var(--line); padding: 20px; overflow-y: auto; background: var(--paper); display: flex; flex-direction: column; gap: 14px; }
@@ -894,6 +901,7 @@ header {
       <a href="https://www.pgworks.com" target="_blank" rel="noopener">PGW Gas</a>
     </div>
   </div>
+  <button type="button" class="nav-reset" id="navReset">↺ Reset tab order</button>
   <div class="side-copyright">© 2026 Artur Pepaj. All rights reserved.</div>
 </div>
 <div class="overlay" id="overlay"></div>
@@ -2075,9 +2083,53 @@ $('messages').addEventListener('click', async e => {
 });
 
 /* ---------- Sections UI ---------- */
-function renderNav() {
-  $('nav').innerHTML = SECTIONS.map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
+function navOrder() {
+  let saved = []; try { saved = JSON.parse(localStorage.getItem('rb-navorder') || '[]') || []; } catch (e) {}
+  const keys = SECTIONS.map(s => s.key); const out = saved.filter(k => keys.includes(k));
+  keys.forEach((k, i) => { if (!out.includes(k)) out.splice(Math.min(i, out.length), 0, k); });
+  return out.map(k => SECTIONS.find(s => s.key === k));
 }
+function renderNav() {
+  $('nav').innerHTML = navOrder().map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
+  $('nav').querySelectorAll('.nav-btn').forEach(b => b.title = 'Click to open. Hold and drag to move this tab.');
+}
+// Drag tabs to reorder (mouse: press and drag; touch: hold, then drag). Order is saved in this browser.
+(() => {
+  const nav = $('nav'); let d = null, suppress = false;
+  const save = () => { try { localStorage.setItem('rb-navorder', JSON.stringify([...nav.querySelectorAll('.nav-btn')].map(b => b.dataset.key))); } catch (e) {} };
+  const hint = t => { let h = document.querySelector('.nav-hint'); if (!t) { if (h) h.remove(); return; } if (!h) { h = document.createElement('div'); h.className = 'nav-hint'; document.body.appendChild(h); } h.textContent = t; };
+  const start = () => {
+    if (!d || d.on) return; d.on = true; d.btn.classList.add('nav-drag');
+    const r = d.btn.getBoundingClientRect(); const g = d.btn.cloneNode(true); g.classList.remove('nav-drag', 'active'); g.classList.add('nav-ghost'); g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+    document.body.appendChild(g); d.ghost = g; move(d.x, d.y); hint('Drop on another tab to swap places');
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+  };
+  const target = (x, y) => { const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.nav-btn'); return b && b !== d.btn && nav.contains(b) ? b : null; };
+  const move = (x, y) => { d.ghost.style.left = x + 'px'; d.ghost.style.top = y + 'px'; const t = target(x, y); nav.querySelectorAll('.nav-over').forEach(b => b !== t && b.classList.remove('nav-over')); if (t) t.classList.add('nav-over'); d.over = t; };
+  const end = () => {
+    if (!d) return; clearTimeout(d.timer);
+    if (d.on) {
+      if (d.over) { const a = d.btn, b = d.over, m = document.createElement('i'); a.before(m); b.before(a); m.replaceWith(b); save(); }
+      d.ghost.remove(); d.btn.classList.remove('nav-drag'); nav.querySelectorAll('.nav-over').forEach(b => b.classList.remove('nav-over')); hint(''); suppress = true; setTimeout(() => suppress = false, 50);
+    }
+    d = null;
+  };
+  nav.addEventListener('pointerdown', e => {
+    const b = e.target.closest('.nav-btn'); if (!b || e.button > 0) return;
+    d = { btn: b, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, touch: e.pointerType !== 'mouse', on: false };
+    if (d.touch) d.timer = setTimeout(start, 380);
+  });
+  window.addEventListener('pointermove', e => {
+    if (!d) return; d.x = e.clientX; d.y = e.clientY; const dist = Math.hypot(e.clientX - d.sx, e.clientY - d.sy);
+    if (!d.on) { if (d.touch) { if (dist > 10) { clearTimeout(d.timer); d = null; } } else if (dist > 6) start(); return; }
+    e.preventDefault(); move(e.clientX, e.clientY);
+  }, { passive: false });
+  window.addEventListener('touchmove', e => { if (d && d.on) e.preventDefault(); }, { passive: false });
+  window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  nav.addEventListener('contextmenu', e => { if (e.target.closest('.nav-btn')) e.preventDefault(); });
+  nav.addEventListener('click', e => { if (suppress) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  const rs = $('navReset'); if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem('rb-navorder'); } catch (e) {} renderNav(); });
+})();
 // ===== NYC records (Compliance & Violations) — NYC Open Data through the Parallel Search connector =====
 const NYC_DS = {
   bld:   { id: 'kj4p-ruqc', name: 'HPD Buildings' },
