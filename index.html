@@ -673,9 +673,16 @@ header {
 .pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
 .pj-open { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-waiting-on-resident, .pj-waiting-on-vendor { border-left-color: #c9932f; } .pj-resolved { border-left-color: #4f9e6b; }
 .pj-addr { display: grid; grid-template-columns: 1fr 110px; gap: 6px; }
+.pj-num { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .pj-top { display: grid; grid-template-columns: 1fr; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
 .pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
-.pj-card .cal-btns { margin: 0; } .pj-del { margin-left: auto; padding: 4px 10px !important; }
+.pj-card .cal-btns { margin: 0; }
+.nyc-btn.pj-roar { --o1: #e8c39e; --o2: #d9849b; --o3: #9c8bd9; color: #fff7ee; font-weight: 700; border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(120deg, var(--o1), var(--o2), var(--o3), var(--o1)) border-box; background-size: 100% 100%, 300% 300%; box-shadow: 0 0 12px rgba(217,132,155,0.3), 0 0 24px rgba(156,139,217,0.15); animation: oracle-flow 6s linear infinite; }
+.nyc-btn.pj-roar .pj-roar-l { background: linear-gradient(90deg, var(--o1), var(--o2), var(--o3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.nyc-btn.pj-roar .pj-roar-s { color: var(--o1); text-shadow: 0 0 6px rgba(232,195,158,0.8); }
+.nyc-btn.pj-roar:hover { box-shadow: 0 0 16px rgba(217,132,155,0.5), 0 0 30px rgba(156,139,217,0.28); }
+.nyc-btn.pj-roar:disabled { animation: none; opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .nyc-btn.pj-roar { animation: none; } } .pj-del { margin-left: auto; padding: 4px 10px !important; }
 .pj-add { border-style: dashed; align-items: center; justify-content: center; cursor: pointer; min-height: 120px; color: var(--ink); font: 13px var(--sans); }
 .pj-add b { font-size: 14px; } .pj-add span { color: var(--muted); font-size: 12.5px; } .pj-add:hover { border-color: var(--ask); }
 .cp-docs { display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
@@ -1390,7 +1397,7 @@ function buildContext(question, budget) {
   const extra = [];
   if (mode === 'forms' && typeof fm !== 'undefined' && fm.pages.length) extra.push({ name: 'Blank form: ' + fm.name, text: (fm.kind === 'fields' ? 'Fillable fields: ' + fm.fields.map(f => f.name).join(', ') + '\n' : '') + fm.pages.map(p => 'Page ' + p.n + ': ' + p.words.map(w => w.s).join(' ')).join('\n') + (fm.rows.length ? '\nValues filled so far: ' + fm.rows.map(r => (r.label || r.name) + ' = ' + r.value).join('; ') : ''), where: 'Fill a PDF Form' });
   if (mode === 'desk' && typeof pj !== 'undefined' && pj.list.some(x => x.name || x.timeline.length)) extra.push({ name: 'Resident matters', text: pj.list.filter(x => x.name || x.timeline.length).map(x => `Matter: ${x.name} | unit ${x.unit || ''} | building ${x.bld} | status ${x.state} | next: ${x.next}\n${x.summary}\n` + x.timeline.map(t => `${t.date}: ${t.event} (${[t.who, t.source].filter(Boolean).join(', ')})`).join('\n')).join('\n\n'), where: 'Resident matters tracker' });
-  if (mode === 'projects' && typeof cp !== 'undefined' && cp.list.some(x => x.name || x.timeline.length || x.docs.length)) extra.push({ name: 'Construction projects', text: cp.list.filter(x => x.name || x.timeline.length || x.docs.length).map(x => { const t = cpTotals(x); return `Project: ${x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\nProposed ${t.prop}, change orders ${t.co}, invoiced ${t.inv}, paid ${t.paid}\n${x.summary}\nFiles: ` + x.docs.map(d => `${d.type} ${d.vendor} ${d.number} ${d.date} ${d.amount ?? ''} ${d.scope}`).join('; ') + '\n' + x.timeline.map(e => `${e.date}: ${e.event}`).join('\n'); }).join('\n\n'), where: 'Project Management' });
+  if (mode === 'projects' && typeof cp !== 'undefined' && cp.list.some(x => x.name || x.timeline.length || x.docs.length)) extra.push({ name: 'Construction projects', text: cp.list.filter(x => x.name || x.timeline.length || x.docs.length).map(x => { const t = cpTotals(x); return `Project: ${x.keys || x.name} | building ${x.bld} | status ${x.state} | next: ${x.next}\nProposed ${t.prop}, change orders ${t.co}, invoiced ${t.inv}, paid ${t.paid}\n${x.summary}\nFiles: ` + x.docs.map(d => `${d.type} ${d.vendor} ${d.number} ${d.date} ${d.amount ?? ''} ${d.scope}`).join('; ') + '\n' + x.timeline.map(e => `${e.date}: ${e.event}`).join('\n'); }).join('\n\n'), where: 'Project Management' });
   if (mode === 'legal' && typeof rg !== 'undefined' && rg.rows.length) extra.push({ name: 'DHCR registration review' + (rg.address ? ' - ' + rg.address : ''), text: 'Flags:\n' + rg.flags.map(x => `[${x.level}] Apt ${x.apt} ${x.year}: ${x.issue}. ${x.detail}`).join('\n') + '\n\nAll registrations (apt | year | status | legal | actual | lease start-end | reason):\n' + rg.rows.slice().sort((a, b) => a.apt.localeCompare(b.apt, undefined, { numeric: true }) || a.year - b.year).map(x => `${x.apt} | ${x.year} | ${x.status} | ${x.legal} | ${x.actual ?? ''} | ${x.start}-${x.end} | ${x.reason}`).join('\n'), where: 'DHCR registration reports' });
   if (mode === 'inbox' && typeof inb !== 'undefined') { const all = inb.src.outlook.items.concat(inb.src.gmail.items); if (all.length) extra.push({ name: 'Last 10 emails (Outlook and Gmail)', text: all.map(m => `${m.date} | From: ${m.from} | Subject: ${m.subject}${m.hasAttachments ? ' | has attachments' : ''} | ${m.src === 'gmail' ? 'Gmail' : 'Outlook'} | ${m.preview}`).join('\n'), where: 'Email' }); }
   const all = extra.concat(mode === 'records' && nyc.summary ? [{ name: 'NYC Open Data records (live)', text: nyc.summary, where: 'NYC Open Data' }] : []).concat(mode === 'calendar' ? [{ name: 'Calendar (NYC deadlines, holidays, building dates)', text: calSummaryText(), where: 'Calendar' }] : [], tabDocs, libDocs);
@@ -3638,7 +3645,7 @@ function renderPj() {
       <div class="pj-addr"><input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit (optional)"></div>
       <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
-      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}>✦ ${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}><span class="pj-roar-s">✦</span> <span class="pj-roar-l">${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Roar: update timeline' : 'Roar: build timeline'}</span></button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
       ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
       ${pj.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
     </div>`).join('')}
@@ -3730,7 +3737,7 @@ async function cpUpload(p, files) {
     cp.status[p.id] = `Reading ${f.name}…`; renderCp();
     try {
       const r = await readFile(f); const text = String(r.text || '').slice(0, 30000);
-      const j = await sample.json(`Read this construction document for the project "${p.name || 'unnamed'}" and pull out the facts. Dollar amounts as plain numbers, dates as YYYY-MM-DD, null if not shown. Do not guess.
+      const j = await sample.json(`Read this construction document for the project "${p.keys || p.name || 'unnamed'}" and pull out the facts. Dollar amounts as plain numbers, dates as YYYY-MM-DD, null if not shown. Do not guess.
 Return only JSON: {"type": "proposal" or "invoice" or "change order" or "contract" or "payment" or "other", "vendor": "", "date": "", "number": "proposal or invoice number", "amount": number|null (total of this document), "scope": "what the work is, one short line", "paid": true|false|null}
 
 ${text || 'The document image is attached.'}`, { images: r.kind === 'image' ? [r.blob] : [], modelTier: 'default', cache: false });
@@ -3751,7 +3758,7 @@ function cpTotals(p) {
 }
 async function cpRoar(p) {
   if (!sample || !mcp) { cp.status[p.id] = 'Open this page on claude.ai and connect Microsoft 365 (and Gmail if you use it).'; renderCp(); return; }
-  if (!p.name.trim() && !p.keys.trim()) { cp.status[p.id] = 'Give the project a name or some keywords first.'; renderCp(); return; }
+  if (!p.name.trim() && !p.keys.trim()) { cp.status[p.id] = 'Type some keywords first, like the work and the contractor.'; renderCp(); return; }
   cp.busy[p.id] = true; cp.status[p.id] = 'Roar is searching your email…'; renderCp();
   const set = s => { cp.status[p.id] = s; renderCp(); };
   try {
@@ -3787,11 +3794,11 @@ function renderCp() {
     <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline and compares invoices with proposals.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="cpBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${cp.list.map((p, i) => `<div class="pj-card">
-      <div class="pj-top"><input class="pj-name" data-cp="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Project ${i + 1} name, e.g. Roof replacement"></div>
+      <div class="pj-num">Project ${i + 1}</div>
+      <input class="pj-name" data-cp="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: roof, ABC Roofing, PO 1234, unit 5B">
       <input data-cp="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="${esc(top || 'Building address')}">
-      <input data-cp="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: vendor, contractor, PO, unit, people">
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
-      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-cproar="${p.id}"${cp.busy[p.id] ? ' disabled' : ''}>✦ ${cp.busy[p.id] ? 'Working…' : p.timeline.length ? 'Update timeline' : 'Roar: build timeline'}</button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-cptl="${p.id}">${cp.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-cpdel="${p.id}" title="Remove project">✕</button></div>
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-cproar="${p.id}"${cp.busy[p.id] ? ' disabled' : ''}><span class="pj-roar-s">✦</span> <span class="pj-roar-l">${cp.busy[p.id] ? 'Working…' : p.timeline.length ? 'Roar: update timeline' : 'Roar: build timeline'}</span></button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-cptl="${p.id}">${cp.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-cpdel="${p.id}" title="Remove project">✕</button></div>
       <div class="cal-btns"><label class="nyc-btn ghost" style="display:inline-block">+ Upload invoices or proposals<input type="file" data-cpup="${p.id}" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,image/*" multiple hidden></label></div>
       ${p.docs.length ? (() => { const t = cpTotals(p); return `<div class="cp-docs">${p.docs.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(d => `<div class="cp-doc"><span class="cp-t cp-${esc(d.type.replace(/\s+/g, '-'))}">${esc(d.type)}</span><span class="cp-n" title="${esc(d.name)}">${esc(d.vendor || d.name)}${d.number ? ' #' + esc(d.number) : ''}<small>${esc(d.date || '')}${d.scope ? ' · ' + esc(d.scope) : ''}</small></span><span class="cp-a">${d.amount != null ? cpMoney(d.amount) : '—'}</span><button type="button" data-cpdoc="${p.id}|${d.id}" title="Remove file">✕</button></div>`).join('')}</div>
         <p class="cp-tot">Proposed/contract <b>${cpMoney(t.prop)}</b>${t.co ? ` · Change orders <b>${cpMoney(t.co)}</b>` : ''} · Invoiced <b class="${t.inv > t.prop + t.co && t.prop ? 'cp-over' : ''}">${cpMoney(t.inv)}</b>${t.paid ? ` · Paid <b>${cpMoney(t.paid)}</b>` : ''}${t.prop ? ` · Left on contract <b>${cpMoney(t.prop + t.co - t.inv)}</b>` : ''}</p>`; })() : ''}
