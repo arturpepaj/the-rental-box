@@ -1061,7 +1061,7 @@ header {
           <div class="disc" role="dialog" aria-modal="true" aria-labelledby="discTitle">
             <button class="disc-x" type="button" id="discClose" aria-label="Close">×</button>
             <h2 id="discTitle">Disclaimer</h2>
-            <p><b>Suggestions only. Not official rules.</b> Everything on this site (answers, guidelines, checklists, notices, letters, reports, work lists and templates) is a suggestion to help you. It is not the rules, policies, procedures or regulations of any company, employer, building, owner or union. Always check and follow your own company's handbook, policies and procedures, your union contract, the building's rules and the law. If anything here is different, those come first. Review every document with your supervisor, HR or attorney before you use it, post it or give it to anyone.</p>
+            <p><b>General guidance only. Not official rules.</b> Everything on this site (answers, guidelines, checklists, notices, letters, reports, work lists and templates) is general guidance to help you. It is not the rules, policies, procedures or regulations of any company, employer, building, owner or union. Always check and follow your own company's handbook, policies and procedures, your union contract, the building's rules and the law. If anything here is different, those come first. Review every document with your supervisor, HR or attorney before you use it, post it or give it to anyone.</p>
             <p><b>Information only.</b> ToolBox for Rentals gives general information to help with property management work. It is not legal, financial, tax, accounting, engineering, insurance or other professional advice. Always check with a qualified professional (for example, an attorney or accountant) before you act.</p>
             <p><b>AI can be wrong.</b> Answers are made by artificial intelligence (Claude). They can be incomplete, out of date or wrong. Always check the source document, the agency website or the original record. Notes marked "GUESS – not confirmed" are not facts.</p>
             <p><b>City and public data.</b> Building records, violations, charges, deadlines and market rents come from public sources such as NYC Open Data, ACRIS, DOF, Zillow and RentReboot. This data can be late, incomplete or wrong. Deadlines in the calendar are the usual yearly dates and may not apply to every building. Confirm with HPD, DOB, DOF, FDNY, DHCR and other agencies before you rely on them.</p>
@@ -1071,7 +1071,7 @@ header {
             <p class="disc-foot">© 2026 Artur Pepaj. All rights reserved.</p>
           </div>
         </div>
-        <div class="foot-note" id="footNote">Suggestions only, not official company rules. Answers can be wrong: check the source and your company policies.</div>
+        <div class="foot-note" id="footNote">General guidance only, not official company rules. Answers can be wrong: check the source and your company policies.</div>
       </div>
     </div>
   </div>
@@ -1139,7 +1139,7 @@ const SECTIONS = [
   { key:'systems', title:'MEP & Elevators', desc:'Mechanical, electrical, plumbing and elevators: heat pumps, boilers, cooling towers, fresh-air systems, the building management system, risers, booster pumps, hot water heaters, panels, submeters, generators, elevators and inspection dates. The NYC codes are connected: ask what the Plumbing, Mechanical, Electrical, Fuel Gas or Building Code says, or the elevator rules, and get the section with a link. Send and Roar here also find manufacturer manuals and spec sheets.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When is the cooling tower inspection and Legionella test due?','All leak reports for unit 1005','When is the elevator inspection due?','Build a heat pump filter and service schedule for every apartment','When was the generator last tested?'] },
   { key:'inspect', title:'Inspections', desc:'Upload photos from a building or apartment inspection. Claude finds the problems in each photo, rates how urgent they are, and assigns each one to maintenance staff or a contractor. Download a PDF report with the photos, an Excel work list, or send the items to Open Tasks.', samples:['Which inspection items are urgent?','Write a work order for the super from this report','Which items could be HPD violations?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
-  { key:'hr', guide: () => HR_GUIDE, title:'HR & Staff Guidelines', desc:'Suggested guidelines on what building employees should not do and what to avoid: residents and their homes, harassment and discrimination, money and gifts, keys and access, safety, alcohol and drugs, time and phones. Download the suggested guidelines for staff to read. Ask about a staff problem and Claude answers with suggestions. These are not your company\'s rules: check your handbook, policies and union contract.', samples:['Can the porter accept a tip from a contractor?','A resident complained the super was rude. What do I do?','What should staff never say to a resident?','Write a written warning for being late 3 times','Can the handyman do a paid side job for a resident?'] },
+  { key:'hr', guide: () => HR_GUIDE, title:'HR & Staff Guidelines', desc:'General guidelines on what building employees should not do and what to avoid: residents and their homes, harassment and discrimination, money and gifts, keys and access, safety, alcohol and drugs, time and phones. Download the guidelines for staff to read. Ask about a staff problem and Claude answers from these guidelines. These are not your company\'s rules: check your handbook, policies and union contract.', samples:['Can the porter accept a tip from a contractor?','A resident complained the super was rude. What do I do?','What should staff never say to a resident?','Write a written warning for being late 3 times','Can the handyman do a paid side job for a resident?'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'emergency', title:'Emergency Prep', desc:'Step-by-step plans for fire, flood, gas leak or shut-off, power outage, no heat, elevator entrapment and more. Save emergency contacts for each building and download printable checklists.',
     guide: () => emergencyGuide(),
@@ -1535,7 +1535,7 @@ How to answer:
 - Rental applications: only check if an application is complete against the listed requirements. If the application is not in the documents, say to export it from OnSite and upload it (until an OnSite API or AI connector is available). Never recommend approving or rejecting an applicant, and never judge applicants by protected traits.
 - Leases, payables (invoices, vendor payments) and receivables (rent charges, tenant payments, arrears) will be pulled from Yardi Virtuoso. Never ask the user to upload them. If you need them and they are not in the documents, say this data will come from Yardi Virtuoso. Exception: you may ask the user to upload an invoice to check it for duplicates.
 - Duplicate invoice check: compare the uploaded invoice with every other invoice and payment in the documents. Flag the same invoice number (also with small changes like extra zeros, dashes or letters), the same vendor with the same or very close amount (within about 1%), and close dates. List each possible duplicate with vendor, invoice number, amount and date, and say how sure you are.
-- Everything you write is a suggestion, not official company rules or policy. For HR, staff conduct, procedures, emergency plans, notices, letters and legal topics, frame advice as suggestions ("You may want to...", "A common practice is..."), never as the company's official rules, and remind briefly to check the company's own policies, union contract or counsel.
+- Everything you write is general guidance, not official company rules or policy. For HR, staff conduct, procedures, emergency plans, notices, letters and legal topics, give it as general guidance ("You may want to...", "A common practice is..."), never as the company's official rules, and remind briefly to check the company's own policies, union contract or counsel.
 - Never invent numbers, dates, names or document contents.${withEmail ? '' : `
 - Answer only from the uploaded documents below. If they do not answer the question, say so in one line and suggest asking again with Roar, which also searches Outlook, Teams, SharePoint, Slack and Zillow.`}${withEmail ? `
 - You can search the user's Outlook with search_email, Teams messages with search_teams and SharePoint files with search_sharepoint, and Slack with search_slack and read_slack_thread when they are offered. Open emails, Teams messages and SharePoint files with read_email. When the documents here do not have what you need (budgets, reports, contracts, board packages), look in SharePoint. Use them when the question says email, or when the answer may be in email (a unit, tenant, vendor, attorney, board, complaint or date). Only read email. Never say you sent, moved or changed any email.
@@ -1964,7 +1964,7 @@ function copyFor(code) {
     queue_overflow: 'Too many questions at once. Wait a moment, then ask again.'
   })[code] || 'Something went wrong talking to Claude. Ask again in a moment.';
 }
-function footDefault() { return 'Suggestions only, not official company rules. Answers can be wrong: check the source and your company policies.'; }
+function footDefault() { return 'General guidance only, not official company rules. Answers can be wrong: check the source and your company policies.'; }
 function showFootWarn(t) { const f = $('footNote'); f.textContent = t; f.classList.add('warn'); clearTimeout(showFootWarn.t); showFootWarn.t = setTimeout(() => { f.textContent = footDefault(); f.classList.remove('warn'); }, 5000); }
 
 /* ---------- Rendering answers ---------- */
@@ -2721,7 +2721,7 @@ const HR_MGR = [
   'Do not let staff work off the clock or skip breaks. Pay all overtime.',
   'Do not discuss an employee\'s medical, discipline or pay with other staff or residents.'
 ];
-const HR_GUIDE = 'SUGGESTED HR GUIDELINES for building staff (supers, porters, handypersons, doormen). These are suggestions only, NOT the company\'s official rules. Use them to answer HR questions in simple English, as suggestions, and say to check the company handbook, policies and union contract. Suggested: staff should NOT:\n' + HR_RULES.map(g => g.t + ':\n' + g.items.map(x => '- ' + x).join('\n')).join('\n') + '\nFor managers, avoid:\n' + HR_MGR.map(x => '- ' + x).join('\n') + '\nAlways say to follow the union contract (if the staff is union, e.g. 32BJ), the company handbook, and to call HR or an employment lawyer for discipline, firing, leave, accommodations, harassment complaints and injuries. This is general guidance, not legal advice.';
+const HR_GUIDE = 'GENERAL HR GUIDELINES for building staff (supers, porters, handypersons, doormen). These are general guidance only, NOT the company\'s official rules. Use them to answer HR questions in simple English, as general guidance, and say to check the company handbook, policies and union contract. Staff should NOT:\n' + HR_RULES.map(g => g.t + ':\n' + g.items.map(x => '- ' + x).join('\n')).join('\n') + '\nFor managers, avoid:\n' + HR_MGR.map(x => '- ' + x).join('\n') + '\nAlways say to follow the union contract (if the staff is union, e.g. 32BJ), the company handbook, and to call HR or an employment lawyer for discipline, firing, leave, accommodations, harassment complaints and injuries. This is general guidance, not legal advice.';
 const hr = { open: { 0: true } };
 async function hrPdf() {
   await loadScript(PDFLIB);
@@ -2732,9 +2732,9 @@ async function hrPdf() {
   const wrap = (t, w, sz, f) => { const out = []; let ln = ''; for (const wd of fmSafe(t).split(/\s+/)) { const tl = ln ? ln + ' ' + wd : wd; if ((f || font).widthOfTextAtSize(tl, sz) > w && ln) { out.push(ln); ln = wd; } else ln = tl; } out.push(ln); return out; };
   let page, y; const np = () => { page = doc.addPage([W, H]); y = H - M; };
   np(); const bld = $('propertyName').value.trim();
-  page.drawText('Suggested Staff Guidelines', { x: M, y: y - 22, size: 22, font: bold, color: ink }); y -= 32;
+  page.drawText('Staff Guidelines', { x: M, y: y - 22, size: 22, font: bold, color: ink }); y -= 32;
   page.drawText(fmSafe('What to avoid at work' + (bld ? '  -  ' + bld : '')), { x: M, y: y - 12, size: 12, font, color: mut }); y -= 22;
-  for (const l of wrap('SUGGESTIONS ONLY. These are not official company rules, policies or regulations. Your company handbook, policies, union contract and the law come first. Check with your manager or HR.', CW, 9.5, bold)) { page.drawText(l, { x: M, y: y - 10, size: 9.5, font: bold, color: ink }); y -= 13; } y -= 12;
+  for (const l of wrap('GENERAL GUIDANCE ONLY. These are not official company rules, policies or regulations. Your company handbook, policies, union contract and the law come first. Check with your manager or HR.', CW, 9.5, bold)) { page.drawText(l, { x: M, y: y - 10, size: 9.5, font: bold, color: ink }); y -= 13; } y -= 12;
   for (const g of HR_RULES) {
     if (y < M + 90) np();
     page.drawRectangle({ x: M, y: y - 20, width: 5, height: 20, color: hex(g.c) }); page.drawText(fmSafe(g.t), { x: M + 12, y: y - 15, size: 13, font: bold, color: ink }); y -= 28;
@@ -2742,19 +2742,19 @@ async function hrPdf() {
     y -= 8;
   }
   if (y < M + 85) np(); y -= 6;
-  page.drawText('I read these suggested guidelines.', { x: M, y: y - 12, size: 11, font: bold, color: ink }); y -= 34;
+  page.drawText('I read these guidelines.', { x: M, y: y - 12, size: 11, font: bold, color: ink }); y -= 34;
   page.drawText('Name: ______________________________   Signature: ______________________   Date: ____________', { x: M, y, size: 10, font, color: ink }); y -= 26;
-  for (const l of wrap('Suggestions only, not official company rules or legal advice. Follow your company handbook, policies and union contract. Questions: ask your manager or HR.', CW, 8.5)) { page.drawText(l, { x: M, y, size: 8.5, font, color: mut }); y -= 11; }
+  for (const l of wrap('General guidance only, not official company rules or legal advice. Follow your company handbook, policies and union contract. Questions: ask your manager or HR.', CW, 8.5)) { page.drawText(l, { x: M, y, size: 8.5, font, color: mut }); y -= 11; }
   const pages = doc.getPages(); pages.forEach((pg, i) => pg.drawText(`Page ${i + 1} of ${pages.length}`, { x: W - M - 60, y: 24, size: 8, font, color: mut }));
-  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), 'Suggested staff guidelines.pdf');
+  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), 'Staff guidelines.pdf');
 }
 function renderHr() {
   const el = $('hrPanel'); if (!el) return; el.hidden = mode !== 'hr'; if (el.hidden) return;
-  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Suggested staff guidelines</b><button type="button" class="nyc-btn" id="hrPdf">Download guidelines (PDF)</button></div>
-    <p class="nyc-msg" style="padding:0">Suggested guidelines for supers, porters, handypersons and doormen. <b>These are suggestions only, not official company rules.</b> Check them against your company handbook, policies and union contract, and have HR approve them before you share them with staff.</p>
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Staff guidelines</b><button type="button" class="nyc-btn" id="hrPdf">Download guidelines (PDF)</button></div>
+    <p class="nyc-msg" style="padding:0">General guidelines for supers, porters, handypersons and doormen. <b>General guidance only, not official company rules.</b> Check them against your company handbook, policies and union contract, and have HR approve them before you share them with staff.</p>
     <div class="hr-list">${HR_RULES.map((g, i) => `<div class="hr-g${hr.open[i] ? ' open' : ''}" style="--hc:${g.c}"><button type="button" class="hr-h" data-hr="${i}"><span>${esc(g.t)}</span><small>${g.items.length}</small><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>${hr.open[i] ? `<ul>${g.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>`).join('')}
       <div class="hr-g${hr.open.m ? ' open' : ''}" style="--hc:#c9b79c"><button type="button" class="hr-h" data-hr="m"><span>For managers: what to avoid</span><small>${HR_MGR.length}</small><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>${hr.open.m ? `<ul>${HR_MGR.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div></div>
-    <p class="fh-legal">Suggestions only. Not official company rules, policies or legal advice. Your company handbook, policies and union contract (for example 32BJ) come first. Call HR or an employment lawyer before any discipline or firing.</p></div>`;
+    <p class="fh-legal">General guidance only. Not official company rules, policies or legal advice. Your company handbook, policies and union contract (for example 32BJ) come first. Call HR or an employment lawyer before any discipline or firing.</p></div>`;
 }
 $('hrPanel').addEventListener('click', e => {
   const h = e.target.closest('[data-hr]'); if (h) { const k = h.dataset.hr; hr.open[k] = !hr.open[k]; renderHr(); return; }
@@ -2795,7 +2795,7 @@ ${part.map(v => `id ${v.violationid}: ${String(v.novdescription || '').slice(0, 
 }
 const nycSuperName = () => { return (nycSuperAddr().split(',')[0] || 'Building').replace(/[\\/:*?"<>|]/g, '-') + ' - HPD violations work list'; };
 const nycSuperAddr = () => { const top = $('propertyName').value.trim(); if (top) return top; const b = nyc.bld; return b ? fmtAddr(`${b.housenumber} ${b.streetname}, ${(NYC_BORO[b.boroid] || [''])[0]}`) : ''; };
-const NYC_SUPER_LEGEND = 'Class C = hazardous, fix within 24 hours (lead paint and window guards: 21 days). Class B = fix within 30 days. Class A = fix within 90 days. Simple descriptions are suggestions; the official HPD violation text is what counts.';
+const NYC_SUPER_LEGEND = 'Class C = hazardous, fix within 24 hours (lead paint and window guards: 21 days). Class B = fix within 30 days. Class A = fix within 90 days. Simple descriptions are for guidance only; the official HPD violation text is what counts.';
 async function nycSuperXlsx(rows) {
   await loadScript(LIBS.xlsx);
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -2951,7 +2951,7 @@ function setMode(key) {
   mode = key; const s = byKey[key];
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
   $('askTitle').textContent = s.title;
-  $('askSub').innerHTML = esc(s.desc) + '<span class="tab-disc">Suggestions only. Not official company rules or policies. Always follow your company\'s own rules, policies and procedures.</span>';
+  $('askSub').innerHTML = esc(s.desc) + '<span class="tab-disc">General guidance only. Not official company rules or policies. Always follow your company\'s own rules, policies and procedures.</span>';
   $('yardiNote').hidden = !s.yardi;
   $('budgetNote').hidden = key !== 'budgeting';
   $('mechLink').hidden = key !== 'systems';
@@ -3526,7 +3526,7 @@ function emgChecklistHtml(plan, addr) {
 <div class="box">Life safety first. In danger, call 911.</div>
 <h2>Steps</h2><ol>${plan.steps.map(s => `<li>${e(s)}</li>`).join('')}</ol>
 <h2>Emergency contacts</h2><table>${(rows.length ? rows : EMG_ROLES.map(r => [r, {}])).map(([k, v]) => `<tr><td>${e(k)}</td><td>${e([v.name, v.phone].filter(Boolean).join(' — ')) || '&nbsp;'}</td></tr>`).join('')}<tr><td>Emergency</td><td>911</td></tr><tr><td>Con Ed (electric, gas in Manhattan and the Bronx)</td><td>1-800-75-CONED (1-800-752-6633)</td></tr><tr><td>National Grid gas (Brooklyn, Queens, Staten Island)</td><td>718-643-4050</td></tr><tr><td>American Red Cross</td><td>1-800-RED-CROSS (1-800-733-2767)</td></tr><tr><td>NYC 311</td><td>311</td></tr></table>
-<p class="foot">Suggested steps only, not official company procedures. Follow your company's emergency procedures. Check phone numbers before you rely on them. ToolBox for Rentals.</p></body></html>`;
+<p class="foot">General guidance only, not official company procedures. Follow your company's emergency procedures. Check phone numbers before you rely on them. ToolBox for Rentals.</p></body></html>`;
 }
 async function emgDownload(key) {
   const plan = EMERGENCY_PLANS.find(p => p.key === key); if (!plan) return;
@@ -3637,7 +3637,7 @@ function renderEmg() {
   const rec = addr ? (emg.contacts[bldKey(addr)] || {}) : {};
   const c = rec.contacts || {};
   el.innerHTML = `<div class="emg-head"><b>Emergency plans</b><select class="cal-sel" id="emgBld" aria-label="Building">${list.length ? list.map(a => `<option value="${esc(a)}"${bldKey(a) === bldKey(addr) ? ' selected' : ''}>${esc(a)}</option>`).join('') : '<option value="">Type a building address at the top</option>'}</select></div>
-    <p class="fh-legal" style="margin:0 0 8px">Suggested steps and sample notices only, not official company procedures. Follow your company's emergency procedures. Check and edit every notice before you post it.</p>
+    <p class="fh-legal" style="margin:0 0 8px">General guidance and sample notices only, not official company procedures. Follow your company's emergency procedures. Check and edit every notice before you post it.</p>
     <div class="emg-ntc"><span>Planned water shut-off?</span><button type="button" class="nyc-btn" data-notice="water">Water shut-off notice (Word)</button></div>
     <div class="emg-plans">${EMERGENCY_PLANS.map(p => `<div class="emg-plan${emg.plan === p.key ? ' open' : ''}" data-plan="${p.key}"><button type="button" class="emg-ph" data-toggle="${p.key}"><span>${esc(p.title)}</span><small>${p.steps.length} steps</small></button>
       <div class="emg-pb"><ol>${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><div class="cal-btns"><button type="button" class="nyc-btn" data-notice="${p.key}">Notice for residents (Word)</button><button type="button" class="nyc-btn ghost" data-print="${p.key}">Download printable checklist</button></div></div></div>`).join('')}</div>
@@ -4438,7 +4438,7 @@ async function insDocx() {
     cell(W[3], par(run(x.assign, { sz: 9.5 }), { after: 0 })),
     cell(W[4], par(run(String(insPhotoNo(x.photo) || ''), { sz: 9.5 }), { after: 0, align: 'center' }))
   ]))));
-  body += par(run('Suggestions made with AI help from photos. Not an official inspection. Check each item on site before work starts.', { i: true, sz: 8.5, color: MUTED }), { before: 160 });
+  body += par(run('Made with AI help from photos, for general guidance. Not an official inspection. Check each item on site before work starts.', { i: true, sz: 8.5, color: MUTED }), { before: 160 });
   // Photo pages: 2 x 2 per letter page
   const CW = FULL / 2;
   for (let i = 0; i < ins.photos.length; i += 4) {
@@ -4499,7 +4499,7 @@ async function insPdf() {
     cells.forEach((c, ci) => { c.forEach((l, li) => page.drawText(l, { x: x + 4, y: y - 12 - li * 11, size: 8.5, font: ci === 2 && li < nIssue ? bold : font, color: hex('1F2937') })); x += cols[ci][0]; });
     page.drawLine({ start: { x: M, y: y - h }, end: { x: M + CW, y: y - h }, thickness: .5, color: hex('D9D9D9') }); y -= h;
   });
-  y -= 12; text('Suggestions made with AI help from photos. Not an official inspection. Check each item on site before work starts.', 8, font, M, CW, MUT);
+  y -= 12; text('Made with AI help from photos, for general guidance. Not an official inspection. Check each item on site before work starts.', 8, font, M, CW, MUT);
   // Photo pages: 2 x 2 per page
   const GW = (CW - 12) / 2, GH = (Ht - 2 * M - 30 - 12) / 2;
   for (let i = 0; i < ins.photos.length; i += 4) {
@@ -4543,7 +4543,7 @@ function renderInsp() {
     ${ins.items.length ? `      <div class="ins-items">${ins.items.map((x, i) => { const p = ins.photos.find(z => z.id === x.photo); return `<div class="ins-it${x.keep ? '' : ' ins-off'}"><input type="checkbox" data-inskeep="${x.id}"${x.keep ? ' checked' : ''} title="Include in report">${p ? `<img src="${p.thumb}" alt="">` : '<span></span>'}<div class="ins-ed"><div><input data-insf="location" data-insid="${x.id}" value="${esc(x.location)}" placeholder="Location" class="ins-loc"><input data-insf="issue" data-insid="${x.id}" value="${esc(x.issue)}" placeholder="Problem" class="ins-iss"></div><input data-insf="action" data-insid="${x.id}" value="${esc(x.action)}" placeholder="Action">${x.violation ? `<small class="ins-v">Possible violation: ${esc(x.violation)}</small>` : ''}</div><div class="ins-ctl"><input data-insas="${x.id}" value="${esc(x.assign)}"></div></div>`; }).join('')}</div>
       <p class="nyc-msg">You can edit any item above and the notes under each photo. The report has a cover page, a work list, then 4 photos per page.</p>
       <div class="cal-btns"><button class="nyc-btn" type="button" id="insDocx">Download report (Word)</button><button class="nyc-btn ghost" type="button" id="insPdf">Download report (PDF)</button><button class="nyc-btn ghost" type="button" id="insXlsx">Download work list (Excel)</button><button class="nyc-btn ghost" type="button" id="insTasks"${ins.added ? ' disabled' : ''}>${ins.added ? 'Added to Open Tasks ✓' : 'Send to Open Tasks'}</button></div>
-      <p class="fh-legal">Suggestions only, not an official inspection. Claude sees only what is in the photos. Check each item on site before work starts, and use licensed contractors where the law requires.</p>` : ''}</div>`;
+      <p class="fh-legal">General guidance only, not an official inspection. Claude sees only what is in the photos. Check each item on site before work starts, and use licensed contractors where the law requires.</p>` : ''}</div>`;
 }
 $('inspPanel').addEventListener('change', e => {
   const t = e.target;
@@ -5316,7 +5316,7 @@ function fhResultHtml(res) {
   const v = res.verdict === 'ok' ? ['ok', 'No fair housing problems found'] : res.verdict === 'problem' ? ['bad', 'Fair housing problem found'] : ['mid', 'Please review'];
   return `<div class="fh-res fh-${v[0]}"><b>${v[1]}</b>${res.summary ? `<p>${esc(res.summary)}</p>` : ''}
     ${res.flags.map(f => `<div class="fh-flag"><div>“${esc(f.quote || '')}”</div><p>${esc(f.issue || '')}${f.law ? ` <small>(${esc(f.law)})</small>` : ''}</p>${f.fix ? `<p><b>Say instead:</b> ${esc(f.fix)}</p>` : ''}${/^https?:\/\//.test(f.link || '') ? `<a href="${esc(f.link)}" target="_blank" rel="noopener">Source</a>` : ''}</div>`).join('')}
-    <p class="fh-legal">Suggestions only: a quick check to help you, not legal advice or company policy. For anything important, confirm with your attorney and your company's policies.</p></div>`;
+    <p class="fh-legal">General guidance only: a quick check to help you, not legal advice or company policy. For anything important, confirm with your attorney and your company's policies.</p></div>`;
 }
 function renderFh() {
   const el = $('fhPanel'); if (!el) return;
