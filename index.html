@@ -367,7 +367,7 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
+  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -464,13 +464,13 @@ header {
     padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
   .tasks.open { transform: translateX(0); }
-  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(7, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)); }
   .tasks-toggle { display: grid; }
   .tasks-close { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
-  .bottom-nav { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .nav-btn { font-size: 12px; padding: 6px 2px; overflow-wrap: anywhere; }
   .nav-btn svg { width: 24px; height: 24px; }
   .library {
@@ -1107,7 +1107,7 @@ const ICONS = {
   regs: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/><path d="M13 14l2 2 3-4"/>',
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
-const NAV_COLORS = { desk:'#e0c4a8', calendar:'#7fb3e6', inbox:'#c9a0dc', forms:'#b8c97a', projects:'#7cc4b0', arrears:'#e3b55b', legal:'#c9b79c', budgeting:'#e07a5f', vendors:'#8fa8d6', systems:'#6fb3d9', mechanical:'#5fb0c9', inspect:'#d9a0b8', it:'#a0a8e0', records:'#9fb3d1', emergency:'#e8837a' };
+const NAV_COLORS = { desk:'#e0c4a8', calendar:'#7fb3e6', inbox:'#c9a0dc', forms:'#b8c97a', projects:'#7cc4b0', arrears:'#e3b55b', legal:'#c9b79c', budgeting:'#e07a5f', vendors:'#8fa8d6', systems:'#6fb3d9', inspect:'#d9a0b8', it:'#a0a8e0', records:'#9fb3d1', emergency:'#e8837a' };
 const SECTIONS = [
   { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (plus Slack or other connectors, if connected), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it. Track resident matters below: Roar builds a timeline from your email and delegate mailboxes.', samples:['Where does the leak in 5B stand?','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
@@ -1118,8 +1118,7 @@ const SECTIONS = [
   { key:'legal', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST + '\n\n' + FH_RULES + '\nWhen a question touches ads, screening, applications, fees, accommodations or how to treat an applicant or tenant, check it against these fair housing rules and flag any problem. For rent-stabilized questions (rent increases, vacancy, preferential rent, MCI, IAI, overcharge, owner use, deposits, fees, notices) apply the HSTPA rules above.', title:'Leases, Regulations & Legal', desc:'Leases and riders, building regulations and resident policies, vendor contracts, tenant notices, Housing Court cases, fair housing and accommodation requests, and counsel correspondence. Leases will be pulled from Yardi Virtuoso. Includes the Rent Registration Review, the Lease Rider with IAI, and a Fair Housing check. Send and Roar here also search laws and court decisions (Legal Data Hunter) and LegalZoom attorney help, once connected.', samples:['Which apartments have the biggest overcharge risk?','Fill the lease rider from this contractor invoice','When must I send the renewal lease, and on which form?','Can I raise the rent on a vacant stabilized apartment?','Is this listing ad OK under fair housing laws?','How do we answer a reasonable accommodation request?','What are the steps for a nonpayment case?','Find the law that supports us in this vendor contract dispute','Cross-check unit 1005 between Yardi and BuildingLink'] },
   { key:'budgeting', yardi:true, title:'Budgets & Variances', desc:'Operating budgets, rent roll, vacancy and collection loss, capital projects and financial reports. Variance reports (monthly, quarterly or yearly) search Outlook, Teams and SharePoint (and Slack, once it is connected) to find the figures and the reasons, then draft the report. Run them only after accounting has closed the month.', action:{ label:'Variance report', periods:['Monthly','Quarterly','Yearly'], note:'Run only after accounting has closed the month. Notes come only from invoices, emails, Teams, SharePoint or notes. Guesses are marked. Download to Excel under the report.' }, samples:['List the capital projects','Estimate the yearly heat pump maintenance budget','What is the rent roll vacancy loss?','Compare our free-market rents with Zillow rentals nearby'] },
   { key:'vendors', yardi:true, title:'Vendors, Invoices & Insurance', desc:'Vendors, service contracts, insurance and other agreements. Invoices and payments (payables) will be pulled from Yardi Virtuoso. Upload an invoice here to check it for duplicates. Includes an Insurance (COI) check: set your requirements and see if a vendor’s certificate has enough coverage.', samples:['Which vendor insurance certificates expire soon?','Check this invoice against the contract','Check this invoice for duplicates','Which invoices were coded to an unusual GL account?','Find invoices paid above the contract price','Which vendor contracts expire soon?'] },
-  { key:'systems', title:'Plumbing & Electrical', desc:'Plumbing and electric: risers, booster pumps and pressure zones, hot water heaters, panels, apartment submeters, generators, violations and maintenance records. The NYC Plumbing Code is connected: ask what the code says and get the section with a link.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','All leak reports for unit 1005','Recent leak history?','How do the water booster pumps and pressure zones work?','Which apartments show unusual electric submeter use?','When was the generator last tested?'] },
-  { key:'mechanical', title:'Mechanical & Elevators', desc:'Apartment heat pumps, the condenser water loop, cooling towers, fresh-air systems (ERV or DOAS), the building management system, elevators and inspection dates. Preventive maintenance from your service contracts. Send and Roar here also look up the NYC code and find manufacturer manuals and spec sheets.', samples:['What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When was the last elevator outage reported?','Build a heat pump filter and service schedule for every apartment','When is the cooling tower inspection and Legionella test due?','What water treatment does the condenser loop need?','When is the elevator inspection due?'] },
+  { key:'systems', title:'MEP & Elevators', desc:'Mechanical, electrical, plumbing and elevators: heat pumps, boilers, cooling towers, fresh-air systems, the building management system, risers, booster pumps, hot water heaters, panels, submeters, generators, elevators and inspection dates. The NYC codes are connected: ask what the Plumbing, Mechanical, Electrical, Fuel Gas or Building Code says, or the elevator rules, and get the section with a link. Send and Roar here also find manufacturer manuals and spec sheets.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When is the cooling tower inspection and Legionella test due?','All leak reports for unit 1005','When is the elevator inspection due?','Build a heat pump filter and service schedule for every apartment','When was the generator last tested?'] },
   { key:'inspect', title:'Inspections', desc:'Upload photos from a building or apartment inspection. Claude finds the problems in each photo, rates how urgent they are, and assigns each one to maintenance staff or a contractor. Download a PDF report with the photos, an Excel work list, or send the items to Open Tasks.', samples:['Which inspection items are urgent?','Write a work order for the super from this report','Which items could be HPD violations?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
@@ -1778,14 +1777,16 @@ async function getMechTools() {
   return mechReady;
 }
 function mechSampleTools(bot, focus) {
-  const plumb = focus === 'plumbing';
+  const plumb = focus === 'plumbing', mep = focus === 'mep';
   if (!mechReady) return [];
   const str = d => ({ type: 'string', description: d });
   return [
-    { name: 'nyc_code_lookup', description: plumb ? 'Search the official NYC Plumbing Code (Chapter 6 of Title 28 of the Administrative Code), plus the Building Code, Fuel Gas Code, DOB rules and DEP rules (15 RCNY, water and sewer, backflow). Use for any question about plumbing, water supply, drainage, backflow preventers, water heaters, gas piping, roof drains, sewer, fixtures or what DOB or DEP requires. Returns sources with links and the matching text.' : 'Search the official NYC Building Code, Mechanical Code, Fuel Gas Code, Administrative Code (Title 28), DOB rules (1 RCNY) and DOB service notices. Use for any question about what the code or DOB requires (elevator CAT1/CAT5, boiler inspections, gas piping, sprinklers, facade, permits, filing deadlines). Returns sources with links and the matching text.',
+    { name: 'nyc_code_lookup', description: mep ? 'Search the official NYC codes: Plumbing Code, Mechanical Code, Fuel Gas Code, Electrical Code, Building Code and Administrative Code (Title 28), DOB rules (1 RCNY, including elevator rules), DEP rules (15 RCNY: water, sewer, backflow) and DOB service notices. Use for any question about plumbing, water, drainage, backflow, water heaters, gas piping, heating, ventilation, boilers, cooling towers, electrical work, generators, elevators (CAT1/CAT5), sprinklers, permits or filing deadlines. Returns sources with links and the matching text.' : plumb ? 'Search the official NYC Plumbing Code (Chapter 6 of Title 28 of the Administrative Code), plus the Building Code, Fuel Gas Code, DOB rules and DEP rules (15 RCNY, water and sewer, backflow). Use for any question about plumbing, water supply, drainage, backflow preventers, water heaters, gas piping, roof drains, sewer, fixtures or what DOB or DEP requires. Returns sources with links and the matching text.' : 'Search the official NYC Building Code, Mechanical Code, Fuel Gas Code, Administrative Code (Title 28), DOB rules (1 RCNY) and DOB service notices. Use for any question about what the code or DOB requires (elevator CAT1/CAT5, boiler inspections, gas piping, sprinklers, facade, permits, filing deadlines). Returns sources with links and the matching text.',
       inputSchema: { type: 'object', properties: { question: str('What to look up, in plain words, e.g. "elevator CAT5 test frequency and filing deadline"') }, required: ['question'] },
       async execute(input, ctx) { bot.status = 'Looking up the NYC code…'; renderLast(); const q = String(input.question || '').slice(0, 200);
-        return mechWeb('web_search', plumb
+        return mechWeb('web_search', mep
+          ? { objective: `Find the official NYC code section (Plumbing, Mechanical, Fuel Gas, Electrical or Building Code), DOB rule (including elevator rules) or DEP rule that answers: ${q}. Prefer codelibrary.amlegal.com, nyc.gov and rules.cityofnewyork.us.`, search_queries: [`${q} site:codelibrary.amlegal.com`, `${q} site:nyc.gov`, `${q} NYC code`] }
+          : plumb
           ? { objective: `Find the official NYC Plumbing Code section, DOB rule or DEP rule that answers: ${q}. Prefer codelibrary.amlegal.com (New York City Plumbing Code), nyc.gov and rules.cityofnewyork.us.`, search_queries: [`${q} NYC plumbing code site:codelibrary.amlegal.com`, `${q} plumbing site:nyc.gov`, `${q} New York City Plumbing Code`] }
           : { objective: `Find the official NYC code section, DOB rule or DOB guidance that answers: ${q}. Prefer nyc.gov, codelibrary.amlegal.com and rules.cityofnewyork.us.`, search_queries: [`${q} site:codelibrary.amlegal.com`, `${q} site:nyc.gov`, `${q} NYC building code`] }, ctx.signal); } },
     { name: 'find_manual', description: 'Find the official manufacturer manual, spec sheet, wiring diagram, error code list or maintenance schedule for a piece of building equipment (boiler, burner, heat pump, chiller, cooling tower, pump, elevator controller, generator, water heater, fire alarm panel). Returns sources with links and the matching text.',
@@ -1799,9 +1800,9 @@ function mechSampleTools(bot, focus) {
   ];
 }
 function mechNote(focus) {
-  const plumb = focus === 'plumbing';
+  const plumb = focus === 'plumbing', mep = focus === 'mep';
   if (!mechReady) return '\n\nThe NYC code lookup and manual search are not available (Parallel Search is not connected). Say so if the question needs them, and answer from general knowledge marked as such.';
-  return (plumb ? '\n\nThe NYC Plumbing Code is connected: for plumbing, water, drainage, backflow, water heater and gas piping questions, look up the Plumbing Code section first.' : '') + '\n\nYou can use nyc_code_lookup (official NYC codes, DOB rules and notices), find_manual (manufacturer manuals and spec sheets) and read_page (read one of those pages or PDFs). For code questions, look it up and quote the section number with its link; prefer nyc.gov, codelibrary.amlegal.com and rules.cityofnewyork.us over other websites. For equipment questions, find the official manual for the make and model and cite the page or section. If the make or model is not known, ask for a photo of the nameplate. Never invent a code section or a manual step. Work on boilers, gas, elevators and electrical must be done by licensed professionals: say so when it matters.';
+  return (mep ? '\n\nThe NYC codes are connected (Plumbing, Mechanical, Fuel Gas, Electrical and Building Code, DOB elevator rules, DEP rules): for any code question, look up the section first. Also check the Library and uploaded files for code documents the user uploaded.' : plumb ? '\n\nThe NYC Plumbing Code is connected: for plumbing, water, drainage, backflow, water heater and gas piping questions, look up the Plumbing Code section first.' : '') + '\n\nYou can use nyc_code_lookup (official NYC codes, DOB rules and notices), find_manual (manufacturer manuals and spec sheets) and read_page (read one of those pages or PDFs). For code questions, look it up and quote the section number with its link; prefer nyc.gov, codelibrary.amlegal.com and rules.cityofnewyork.us over other websites. For equipment questions, find the official manual for the make and model and cite the page or section. If the make or model is not known, ask for a photo of the nameplate. Never invent a code section or a manual step. Work on boilers, gas, elevators and electrical must be done by licensed professionals: say so when it matters.';
 }
 let zillowTools = null;
 async function getZillowTools() {
@@ -1892,9 +1893,9 @@ async function send(textOverride, extraTask, roar) {
       setRoarTip(true);
       await getSlackTools(); await getZillowTools();
       if (key === 'legal') { await getLegalTools(); messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', legalNote() + '\n\nQuestion: '); }
-      if (key === 'mechanical' || key === 'systems') { await getMechTools(); messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', mechNote(key === 'systems' ? 'plumbing' : '') + '\n\nQuestion: '); }
+      if (key === 'systems') { await getMechTools(); messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', mechNote('mep') + '\n\nQuestion: '); }
       const tools = key === 'legal' ? legalSampleTools(bot).concat(emailTools(bot), zillowSampleTools(bot), slackSampleTools(bot))
-        : (key === 'mechanical' || key === 'systems') ? mechSampleTools(bot, key === 'systems' ? 'plumbing' : '').concat(emailTools(bot), zillowSampleTools(bot), slackSampleTools(bot))
+        : key === 'systems' ? mechSampleTools(bot, 'mep').concat(emailTools(bot), zillowSampleTools(bot), slackSampleTools(bot))
         : emailTools(bot).concat(zillowSampleTools(bot), slackSampleTools(bot));
       opts.tools = tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length);
       if (!zillowTools.length) messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', '\n- Zillow is not connected, so market rents cannot be checked.\n\nQuestion: ');
@@ -1906,9 +1907,9 @@ async function send(textOverride, extraTask, roar) {
       const lt = legalSampleTools(bot);
       if (lt.length) opts.tools = lt.slice(0, (limits && limits.tools && limits.tools.maxCount) || lt.length);
     }
-    if (!useEmail && (key === 'mechanical' || key === 'systems') && mcp) {
+    if (!useEmail && key === 'systems' && mcp) {
       await getMechTools();
-      const focus = key === 'systems' ? 'plumbing' : '';
+      const focus = 'mep';
       messages[messages.length - 1].content = messages[messages.length - 1].content.replace('\n\nQuestion: ', mechNote(focus) + '\n\nQuestion: ');
       const mt = mechSampleTools(bot, focus);
       if (mt.length) opts.tools = mt;
@@ -2723,7 +2724,7 @@ function setMode(key) {
   $('askSub').textContent = s.desc;
   $('yardiNote').hidden = !s.yardi;
   $('budgetNote').hidden = key !== 'budgeting';
-  $('mechLink').hidden = key !== 'mechanical';
+  $('mechLink').hidden = key !== 'systems';
   $('hstpaLink').hidden = key !== 'legal';
   $('rohnQuote').hidden = key !== 'desk';
   $('tabDrop').hidden = key === 'forms' || key === 'inspect'; $('tabNote').hidden = key === 'forms' || key === 'inspect';
