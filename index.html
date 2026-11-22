@@ -163,6 +163,7 @@ header {
 .conn-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
 .conn-name { min-width: 0; }
 .conn-name small { display: block; font-size: 10.5px; color: var(--subtle); }
+.task-donenote { color: #2f6b2a; font-weight: 600; }
 .task-more { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0 4px; font-size: 12px; color: var(--muted); }
 .task-more button { font: 600 12.5px var(--sans); color: var(--on-ask); background: var(--ask); border: 0; border-radius: 14px; padding: 6px 14px; cursor: pointer; }
 .task-more button:hover { background: var(--ask-hover); }
@@ -3769,11 +3770,9 @@ function renderTasks() {
   const counts = { todo: open.filter(x => x.status === 'todo').length, doing: open.filter(x => x.status === 'doing').length, done: recentDone.length };
   const cap = n => n > 10 ? '10+' : (n || ''); $('fnTodo').textContent = cap(counts.todo); $('fnDoing').textContent = cap(counts.doing); $('fnDone').textContent = cap(counts.done);
   let list = taskFilter === 'done' ? recentDone : open.filter(x => x.status === taskFilter);
-  // most important first: due today or overdue in the last 2 weeks, then due this week, then urgent tabs, then the rest; very old overdue items go lower
-  const rank = t => { const today = todayStr(); if (!t.due) return 4 - (['emergency', 'legal', 'arrears'].includes(t.section) ? 1 : 0); const days = Math.round((new Date(t.due + 'T12:00:00') - new Date(today + 'T12:00:00')) / 86400000);
-    if (days <= 0 && days >= -14) return 0; if (days > 0 && days <= 7) return 1; if (days > 7 && days <= 30) return 2; if (days < -14) return 5; return 6; };
-  list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
-    : (rank(a) - rank(b)) || (rank(a) === 0 ? (b.due || '').localeCompare(a.due || '') : 0) || ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0)));
+  // most recent first: by the date of the email/event the task came from, else when it was added
+  const when = t => { const d = t.sourceDate && /^\d{4}-\d{2}-\d{2}/.test(t.sourceDate) ? Date.parse(t.sourceDate.slice(0, 10) + 'T12:00:00') : 0; return Math.max(d || 0, 0) || t.createdAt || 0; };
+  list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0) : (when(b) - when(a)) || ((b.createdAt || 0) - (a.createdAt || 0)));
   const totalN = list.length; list = list.slice(0, taskShow);
   $('taskList').innerHTML = list.map(t => {
     const due = fmtDue(t.due);
@@ -3788,11 +3787,11 @@ function renderTasks() {
     const st = [['todo', 'Not started'], ['doing', 'In progress'], ['done', 'Completed']].map(([k, l]) => `<button class="st-btn${t.status === k ? ' on' : ''}" data-s="${k}" aria-pressed="${t.status === k}">${l}</button>`).join('');
     return `<div class="task" data-id="${esc(t.id)}" data-status="${esc(t.status)}">
       <div class="task-body"><div class="task-title">${esc(t.title)}</div>
-        <div class="task-meta">${sec ? `<span class="task-sec">${esc(sec)}</span>` : ''}${t.unit ? `<span>Unit ${esc(t.unit)}</span>` : ''}${due ? `<span class="task-due ${due.cls}">${esc(due.text)}</span>` : ''}${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${src}</div></div>
+        <div class="task-meta">${sec ? `<span class="task-sec">${esc(sec)}</span>` : ''}${t.unit ? `<span>Unit ${esc(t.unit)}</span>` : ''}${due ? `<span class="task-due ${due.cls}">${esc(due.text)}</span>` : ''}${t.owner ? `<span>${esc(t.owner)}</span>` : ''}${t.doneNote ? `<span class="task-donenote" title="${esc(t.doneNote)}">✓ ${esc(t.doneNote.length > 70 ? t.doneNote.slice(0, 70) + '…' : t.doneNote)}</span>` : ''}${src}</div></div>
       ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
       <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : canFind ? `<button type="button" class="task-link task-find" ${finding.has(t.id) ? 'disabled' : ''}>${finding.has(t.id) ? 'Finding the link…' : findFailed.has(t.id) ? 'Link not found. Try again' : 'Link to Source ↗'}</button>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
     </div>`;
-  }).join('') + (totalN > list.length ? `<div class="task-more"><span>These are the ${list.length} most important. Want to see more?</span><button type="button" id="taskMore">Show ${Math.min(10, totalN - list.length)} more</button></div>` : '');
+  }).join('') + (totalN > list.length ? `<div class="task-more"><span>These are the ${list.length} most recent. Want to see more?</span><button type="button" id="taskMore">Show ${Math.min(10, totalN - list.length)} more</button></div>` : '');
   const st = $('taskStatus');
   if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No tasks completed in the last 30 days.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No tasks waiting to start. Press ✦ Scan now to look again.'); }
   else if (taskFilter === 'done' && !scanMsg) { st.classList.remove('warn'); st.textContent = 'Completed tasks stay here for 30 days.'; }
@@ -3925,6 +3924,25 @@ function fmtAgo(ms) {
   const m = Math.round((Date.now() - ms) / 60000);
   return 'Last scan: ' + (m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(ms).toLocaleDateString());
 }
+async function taskCheckDone(tools, say) {
+  const open = tasks.filter(t => t.status !== 'done' && t.title);
+  const when = t => (t.sourceDate && Date.parse(t.sourceDate.slice(0, 10))) || t.createdAt || 0;
+  const list = open.sort((a, b) => when(b) - when(a)).slice(0, 25); if (!list.length) return 0;
+  say('Checking email to see which tasks are already done…');
+  const prompt = `A building manager has these OPEN TASKS. Today is ${todayStr()}. For each task, search the email (inbox AND sent items, also delegate mailboxes if offered), Teams and calendar for clear proof that it is ALREADY DONE: for example a sent reply or confirmation, "done", "completed", "fixed", "paid", "approved", "sent", "scheduled and finished", an invoice marked paid, or the resident saying it is resolved. Search with the unit number, names and key words of each task. Use at most about 20 tool calls in total.
+Mark a task done ONLY with clear proof dated after the task started. If unsure, leave it out.
+Tasks:
+${list.map(t => `id ${t.id}: ${t.title}${t.unit ? ' (unit ' + t.unit + ')' : ''}${t.sourceLabel ? ' [from: ' + t.sourceLabel + (t.sourceDate ? ', ' + t.sourceDate : '') + ']' : ''}`).join('\n')}
+Reply with only a JSON array: [{"id": "task id", "proof": "short proof, e.g. Reply sent to Nash on 2026-11-14: plumber fixed leak"}]. Return [] if none are clearly done.`;
+  let out = []; try { out = await sample.json(prompt, { tools, modelTier: 'default', cache: false }); } catch (e) { return 0; }
+  let n = 0;
+  for (const o of (Array.isArray(out) ? out : [])) {
+    const t = o && tasks.find(x => x.id === String(o.id)); if (!t || t.status === 'done' || !o.proof) continue;
+    t.status = 'done'; t.done = true; t.doneAt = Date.now(); t.doneNote = 'Done per email: ' + String(o.proof).slice(0, 200); n++;
+    if (taskCol) try { await taskCol.doc(t.id).update({ status: 'done', done: true, doneAt: t.doneAt, doneNote: t.doneNote, statusBy: 'auto' }); } catch (e) {}
+  }
+  return n;
+}
 async function scanTasks(manual) {
   if (scanning) return;
   if (!sample || !emailReady()) { if (manual) { $('taskStatus').textContent = 'Scanning needs claude.ai with Microsoft 365 connected.'; $('taskStatus').classList.add('warn'); } return; }
@@ -3961,8 +3979,9 @@ ${ctx.text ? '\nUploaded documents:\n' + ctx.text : ''}`;
     const items = Array.isArray(out) ? out.slice(0, 25) : [];
     let added = 0;
     for (const it of items) if (it && it.title) { try { if (await addTask(it)) added++; } catch (e) {} }
-    scanMsg = added ? `Found ${added} new task${added > 1 ? 's' : ''}.` : 'No new tasks found.';
-    setTimeout(() => { scanMsg = ''; if (!scanning) renderTasks(); }, 5000);
+    const closed = await taskCheckDone(tools.slice(0, (limits.tools && limits.tools.maxCount) || tools.length), say);
+    scanMsg = (added ? `Found ${added} new task${added > 1 ? 's' : ''}.` : 'No new tasks found.') + (closed ? ` Marked ${closed} as Completed from email (see Completed).` : '');
+    setTimeout(() => { scanMsg = ''; if (!scanning) renderTasks(); }, 12000);
   } catch (e) {
     statusEl.classList.add('warn');
     statusEl.textContent = e && e.code === 'not_granted' ? 'Claude access was not allowed for this page.' : e && e.code === 'rate_limited' ? 'Usage limit reached. Try scanning later.' : 'The scan did not finish. Press Scan now to try again.';
