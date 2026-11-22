@@ -693,7 +693,7 @@ header {
 .pj-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .pj-card { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); text-align: left; }
 .pj-open { border-left-color: #7aa7d6; } .pj-in-progress { border-left-color: var(--ask); } .pj-waiting-on-resident, .pj-waiting-on-vendor { border-left-color: #c9932f; } .pj-resolved { border-left-color: #4f9e6b; }
-.pj-addr { display: grid; grid-template-columns: 1fr 110px; gap: 6px; }
+.pj-addr { display: grid; grid-template-columns: 1fr 110px; gap: 6px; } .pj-addr2 { grid-template-columns: 76px 1fr; }
 .pj-num { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .pj-top { display: grid; grid-template-columns: 1fr; gap: 6px; } .pj-card .pj-name { font-weight: 600; font-size: 14px; }
 .pj-sum { margin: 0; font-size: 12.5px; color: var(--ink); line-height: 1.45; }
@@ -2882,7 +2882,7 @@ let bldFixing = false;
 async function bldFixAll() {
   if (bldFixing) return; bldFixing = true;
   try {
-    { const f = $('propertyName'); const v = f.value.trim(); if (v && document.activeElement !== f) { let full = fmtAddr(v); if (mcp && !addrHasZip(full)) { const z = await addrZip(full); if (z) full = fmtAddr(full, z.zip, z.boro); } if (full !== v && f.value.trim() === v) { f.value = full; try { localStorage.setItem('rb-building', full); } catch (e) {} if (nyc.key === v.toUpperCase()) nyc.key = full.toUpperCase(); } } }
+    { const f = $('propertyName'); const v = f.value.trim(); if (v && document.activeElement !== f) { let full = fmtAddr(v); if (mcp && !addrHasZip(full)) { const z = await addrZip(full); if (z) full = fmtAddr(full, z.zip, z.boro); } if (full !== v && f.value.trim() === v) { f.value = full; try { localStorage.setItem('rb-building', full); } catch (e) {} setTimeout(() => { if (mode === 'desk' && typeof renderPj === 'function') renderPj(); if (mode === 'projects' && typeof renderCp === 'function') renderCp(); if (mode === 'inspect' && typeof renderInsp === 'function') renderInsp(); }, 0); if (nyc.key === v.toUpperCase()) nyc.key = full.toUpperCase(); } } }
     for (const b of buildings.slice()) { const f = fmtAddr(b.addr); if (f !== b.addr) await bldRename(b, f); }
     if (mcp) for (const b of buildings.slice(0, 60)) {
       if (addrHasZip(b.addr)) continue;
@@ -2961,7 +2961,7 @@ document.addEventListener('click', e => { if (!$('bldMenu').hidden && !e.target.
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bldMenu').hidden) openBldMenu(false); });
 $('propertyName').addEventListener('change', e => {
   const f = e.target, v = f.value.trim(), nice = fmtAddr(v); if (nice && nice !== v) f.value = nice;
-  if (!addrHasZip(f.value)) { const ask = f.value; addrZip(ask).then(z => { if (!z || f.value !== ask) return; const full = fmtAddr(ask, z.zip, z.boro); f.value = full; if (nyc.key === ask.toUpperCase()) nyc.key = full.toUpperCase(); try { localStorage.setItem('rb-building', full); } catch (err) {} const sb = buildings.find(b => bldKey(b.addr) === bldKey(full)); if (sb) bldRename(sb, full).then(renderBuildings); else renderBuildings(); }); }
+  if (!addrHasZip(f.value)) { const ask = f.value; addrZip(ask).then(z => { if (!z || f.value !== ask) return; const full = fmtAddr(ask, z.zip, z.boro); f.value = full; setTimeout(() => { if (mode === 'desk' && typeof renderPj === 'function') renderPj(); if (mode === 'projects' && typeof renderCp === 'function') renderCp(); if (mode === 'inspect' && typeof renderInsp === 'function') renderInsp(); }, 0); if (nyc.key === ask.toUpperCase()) nyc.key = full.toUpperCase(); try { localStorage.setItem('rb-building', full); } catch (err) {} const sb = buildings.find(b => bldKey(b.addr) === bldKey(full)); if (sb) bldRename(sb, full).then(renderBuildings); else renderBuildings(); }); }
 }, true);
 $('propertyName').addEventListener('input', renderBuildings);
 $('propertyName').addEventListener('change', () => setTimeout(() => { if (mode === 'desk' && typeof renderPj === 'function') renderPj(); if (mode === 'projects' && typeof renderCp === 'function') renderCp(); }, 50));
@@ -3707,7 +3707,13 @@ async function pjLoad() {
     } catch (e) {}
   }
   for (const p of pj.list) { if (!PJ_STATUS.includes(p.state)) p.state = 'Open'; if (p.unit == null) p.unit = ''; }
-  while (pj.list.length < 4) pj.list.push(pjNew(pj.list.length));
+  // keep only boxes in use; empty extra boxes are removed (start with one box)
+  const empty = p => !p.name && !p.keys && !p.unit && !(p.timeline || []).length && !p.summary;
+  const drop = pj.list.filter(empty); const used = pj.list.filter(p => !empty(p));
+  const keepOne = used.length ? [] : drop.slice(0, 1);
+  for (const p of drop) if (!keepOne.includes(p) && pj.store === 'db') { try { db.doc(`emc/${myId}/proj/${p.id}`).delete(); } catch (e) {} }
+  pj.list = used.concat(keepOne);
+  if (!pj.list.length) pj.list.push(pjNew(0));
   pj.loaded = true; pjLocal(); renderPj();
 }
 async function pjSave(p) {
@@ -3780,22 +3786,23 @@ function renderPj() {
   el.hidden = mode !== 'desk'; if (el.hidden) return;
   if (!pj.loaded) { pj.loaded = true; pjLoad(); return; }
   const top = $('propertyName').value.trim();
-  for (const p of pj.list) if (!p.bld && top) { p.bld = top; pjSave(p); }
+  for (const p of pj.list) { const nb = !p.bld ? top : (top && bldKey(p.bld) === bldKey(top)) ? top : fmtAddr(p.bld); if (nb && nb !== p.bld) { p.bld = nb; pjSave(p); } }
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Resident Matters</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
     <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
     <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card">
       <div class="pj-top"><input class="pj-name" data-pj="${p.id}" data-f="name" value="${esc(p.name)}" placeholder="Matter ${i + 1}, e.g. Leak in bathroom ceiling"></div>
-      <div class="pj-addr"><input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit (optional)"></div>
-      <input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #, other people">
+      <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address" title="${esc(p.bld)}">
+      <div class="pj-addr pj-addr2"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit"><input data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords: plumber, super, work order #"></div>
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
       <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}><span class="pj-roar-s">✦</span> <span class="pj-roar-l">${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Roar: update timeline' : 'Roar: build timeline'}</span></button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
       ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
       ${pj.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
     </div>`).join('')}
-    <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another resident matter</b><span>Want to keep track of more? Add a box.</span></button></div>
+    <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another matter</b><span>Add a box for each matter.</span></button></div>
     <p class="fh-legal">Roar only reads email. Check each event against the email before you rely on it.</p></div>`;
 }
+$('pjPanel').addEventListener('change', e => { if (e.target.dataset.pj && e.target.dataset.f === 'bld') { const p = pj.list.find(x => x.id === e.target.dataset.pj); const v = fmtAddr(e.target.value); if (p && v !== e.target.value) { e.target.value = v; p.bld = v; pjSave(p); } } });
 $('pjPanel').addEventListener('input', e => {
   const id = e.target.dataset.pj; if (id) { const p = pj.list.find(x => x.id === id); if (p) { p[e.target.dataset.f] = e.target.value.slice(0, 300); clearTimeout(pj.t); pj.t = setTimeout(() => pjSave(p), 600); } }
   if (e.target.id === 'pjBoxes') { pj.mailboxes = e.target.value.slice(0, 500); clearTimeout(pj.tb); pj.tb = setTimeout(pjSaveCfg, 600); }
@@ -3933,7 +3940,7 @@ function renderCp() {
   el.hidden = mode !== 'projects'; if (el.hidden) return;
   if (!cp.loaded) { cp.loaded = true; cpLoad(); return; }
   const top = $('propertyName').value.trim();
-  for (const p of cp.list) if (!p.bld && top) { p.bld = top; cpSave(p); }
+  for (const p of cp.list) { const nb = !p.bld ? top : (top && bldKey(p.bld) === bldKey(top)) ? top : fmtAddr(p.bld); if (nb && nb !== p.bld) { p.bld = nb; cpSave(p); } }
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Construction projects</b><span class="nyc-msg">${cp.list.length} tracked</span></div>
     <p>Track construction and capital projects. Upload each project's proposals and invoices in its box. Press <b>✦ Roar</b> and Claude reads them and searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline and compares invoices with proposals.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="cpBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
