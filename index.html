@@ -375,11 +375,12 @@ header {
 .nav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   padding: 8px 4px; border: none; background: var(--surface); color: var(--ink); cursor: pointer;
-  font-size: 11.5px; font-weight: 700; min-height: 56px; text-align: center; line-height: 1.2;
+  font-size: 14.5px; font-weight: 400; letter-spacing: 0.1px; min-height: 72px; text-align: center; line-height: 1.2;
 }
 .nav-btn:hover { background: var(--surface-2); }
 .nav-btn.active { background: var(--ask); color: var(--on-ask); }
-.nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.nav-btn.active svg { stroke: var(--on-ask); }
+.nav-btn svg { width: 28px; height: 28px; stroke: var(--ic, currentColor); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .nav-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rust); display: none; }
 .nav-btn.has-chat .dot { display: block; }
 .nav-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -470,7 +471,8 @@ header {
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
   .bottom-nav { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  .nav-btn { font-size: 10px; padding: 6px 2px; overflow-wrap: anywhere; }
+  .nav-btn { font-size: 12px; padding: 6px 2px; overflow-wrap: anywhere; }
+  .nav-btn svg { width: 24px; height: 24px; }
   .library {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(340px, 90vw); z-index: 160;
     border-right: 0; border-left: 1px solid var(--line);
@@ -485,8 +487,8 @@ header {
 @media (max-width: 640px) {
   .header-time { display: none; }
   .bottom-nav { grid-template-columns: repeat(4, 1fr); grid-template-rows: none; grid-auto-flow: row; }
-  .nav-btn { min-height: 52px; padding: 6px 2px; font-size: 9.5px; font-weight: 700; gap: 3px; overflow-wrap: anywhere; hyphens: auto; }
-  .nav-btn svg { width: 16px; height: 16px; }
+  .nav-btn { min-height: 58px; padding: 5px 2px; font-size: 11px; font-weight: 400; gap: 4px; overflow-wrap: anywhere; hyphens: auto; }
+  .nav-btn svg { width: 22px; height: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .side-menu, .library, .overlay { transition: none; }
@@ -1105,6 +1107,7 @@ const ICONS = {
   regs: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/><path d="M13 14l2 2 3-4"/>',
   forms: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12.5h7M8.5 16h4"/><path d="M15.5 15.5l1.2 1.2 2.3-2.4"/>'
 };
+const NAV_COLORS = { desk:'#e0c4a8', calendar:'#7fb3e6', inbox:'#c9a0dc', forms:'#b8c97a', projects:'#7cc4b0', arrears:'#e3b55b', legal:'#c9b79c', budgeting:'#e07a5f', vendors:'#8fa8d6', systems:'#6fb3d9', mechanical:'#5fb0c9', inspect:'#d9a0b8', it:'#a0a8e0', records:'#9fb3d1', emergency:'#e8837a' };
 const SECTIONS = [
   { key:'desk', guide: () => HSTPA_GUIDE + '\n\n' + DHCR_LEASES_GUIDE + '\n\n' + DHCR_MORE_GUIDE + '\n\n' + NYSBA_CHECKLIST, title:'Manager’s Desk', desc:'This desk is named for the person using the site, for example Artur’s Desk or Scott’s Desk. Ask what to do. Get step-by-step help from your building’s documents, email, Teams and SharePoint (plus Slack or other connectors, if connected), including staff schedules and contacts. Upload a blank form and the ToolBox will fill it. Track resident matters below: Roar builds a timeline from your email and delegate mailboxes.', samples:['Where does the leak in 5B stand?','When did unit 1005 first contact me about the dishwasher not working?','What are today’s priorities?','Who is on duty tonight?','Fill this blank form for me'] },
   { key:'calendar', title:'Calendar of Important Dates and Holidays', desc:'A calendar of important NYC dates, holidays and due dates for each of your buildings, linked to My Buildings. Upload a contract or schedule here and click Find dates to add its due dates.', samples:['What is due in the next 30 days for all my buildings?','When is the next property tax payment due?','Make a compliance checklist for next month'] },
@@ -2092,7 +2095,7 @@ function navOrder() {
   return out.map(k => SECTIONS.find(s => s.key === k));
 }
 function renderNav() {
-  $('nav').innerHTML = navOrder().map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
+  $('nav').innerHTML = navOrder().map(s => `<button class="nav-btn${s.key === mode ? ' active' : ''}" data-key="${s.key}" style="--ic:${NAV_COLORS[s.key] || 'currentColor'}"><svg viewBox="0 0 24 24">${ICONS[s.key]}</svg><span>${esc(s.title)}</span><span class="dot"></span></button>`).join('');
   $('nav').querySelectorAll('.nav-btn').forEach(b => b.title = 'Click to open. Hold and drag to move this tab.');
 }
 // Drag tabs to reorder (mouse: press and drag; touch: hold, then drag). Order is saved in this browser.
