@@ -509,6 +509,7 @@ header {
 .nyc-reg .nyc-none { color: var(--subtle); font-weight: 400; }
 .nyc-reg-foot { grid-column: 1 / -1; margin: 0; font-size: 11.5px; color: var(--subtle); } .nyc-reg-foot a { color: var(--ask); } .nyc-exp { color: #e08a6a; font-weight: 600; }
 .hr-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; } .hr-g { border: 1px solid var(--line); border-left: 4px solid var(--hc); border-radius: 10px; } .hr-h { width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--ink); font: 600 14px var(--sans); padding: 10px 12px; cursor: pointer; text-align: left; } .hr-h span { flex: 1; } .hr-h small { color: var(--muted); font-weight: 400; } .hr-g.open .hr-h svg { transform: rotate(180deg); } .hr-g ul { margin: 0; padding: 0 14px 12px 30px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--ink); } .hr-g li::marker { color: var(--hc); }
+.emg-ntc { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 0 0 10px; font-size: 13.5px; color: var(--ink); }
 .nyc-super .cal-btns { align-items: center; } .nyc-super { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding: 10px 14px; margin: 0; font-size: 13px; color: var(--ink); } .nyc-super span, .nyc-super small { color: var(--muted); font-size: 12px; } .nyc-super .cal-btns { margin: 0; }
 .nyc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
 .nyc-bld { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -3541,7 +3542,7 @@ const EMG_NOTICES = {
     'We will post updates in the lobby as repairs move forward.' ] },
   flood: { title: 'Water Leak: Water Shut Off', intro: 'Because of a water leak, the water will be shut off on [date] from [start time] to [end time] so we can make emergency repairs.', what: [
     'Please fill bottles and pots with water before the shut-off for drinking and flushing.',
-    'Keep all faucets closed during the shut-off.',
+    'Keep ALL faucets turned OFF during the shut-off, so sinks and tubs do not overflow when the water is turned back on.',
     'When the water comes back, it may look brown for a few minutes. Let it run until it is clear.',
     'If you see water coming from your ceiling, walls or floors, call the super right away.',
     'Move valuables off the floor in case of more leaks.' ] },
@@ -3575,6 +3576,11 @@ const EMG_NOTICES = {
     'If your CO alarm goes off: leave the apartment right away and call 911 from outside.',
     'Test your CO and smoke alarms today. Tell the super if one is missing or not working.',
     'Never use the stove, oven or a grill to heat your apartment.' ] },
+  water: { title: 'Water Shut Off', intro: 'The water will be shut off on [day, date] from [start time] to [end time] for [repair work / plumbing repairs].', what: [
+    'Please keep ALL faucets turned OFF while the water is off. If a faucet is left open, your sink or tub can overflow when the water is turned back on.',
+    'Fill bottles and pots with water before the shut-off for drinking, cooking and flushing.',
+    'When the water comes back, it may look brown for a few minutes. Run the cold water until it is clear.',
+    'If the work takes longer, we will post an update.' ] },
   frozen: { title: 'Cold Weather: Help Prevent Frozen Pipes', intro: 'Very cold weather is expected from [date] to [date]. Frozen pipes can burst and flood apartments. Please help us protect the building.', what: [
     'Keep your heat on, day and night, even if you go away.',
     'Keep windows closed, especially in kitchens and bathrooms.',
@@ -3588,8 +3594,8 @@ function docxFile(title, bodyXml) {
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
     { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
     { name: 'word/_rels/document.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
-    { name: 'word/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="111111"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>' },
-    { name: 'word/document.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${bodyXml}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="540" w:footer="540" w:gutter="0"/></w:sectPr></w:body></w:document>` }
+    { name: 'word/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial" w:cs="Arial"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="000000"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>' },
+    { name: 'word/document.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${bodyXml}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="540" w:footer="540" w:gutter="0"/><w:vAlign w:val="center"/></w:sectPr></w:body></w:document>` }
   ]);
 }
 async function emgNotice(key) {
@@ -3599,18 +3605,22 @@ async function emgNotice(key) {
   const X = t => String(t == null ? '' : t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   // [text in brackets] is highlighted yellow so staff see what to fill in
   const runs = (t, o = {}) => String(t).split(/(\[[^\]]+\])/).filter(Boolean).map(part => { const fill = /^\[.*\]$/.test(part);
-    return `<w:r><w:rPr>${o.b ? '<w:b/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz * 2}"/><w:szCs w:val="${o.sz * 2}"/>` : ''}${fill ? '<w:highlight w:val="yellow"/>' : ''}</w:rPr><w:t xml:space="preserve">${X(part)}</w:t></w:r>`; }).join('');
-  const p = (t, o = {}) => `<w:p><w:pPr>${o.bullet ? '<w:ind w:left="540" w:hanging="300"/>' : ''}${o.align ? `<w:jc w:val="${o.align}"/>` : ''}<w:spacing w:before="${o.before || 0}" w:after="${o.after == null ? 120 : o.after}"/>${o.border ? '<w:pBdr><w:bottom w:val="single" w:sz="18" w:space="6" w:color="111111"/></w:pBdr>' : ''}</w:pPr>${o.bullet ? runs('•  ', { b: true }) : ''}${runs(t, o)}</w:p>`;
-  const banner = `<w:tbl><w:tblPr><w:tblW w:w="10080" w:type="dxa"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tblBorders><w:tblCellMar><w:top w:w="140" w:type="dxa"/><w:bottom w:w="140" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="10080"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="10080" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="B3261E"/></w:tcPr>${p('NOTICE TO ALL RESIDENTS', { b: true, sz: 26, color: 'FFFFFF', align: 'center', after: 0 })}</w:tc></w:tr></w:tbl>`;
+    return `<w:r><w:rPr>${o.b || fill ? '<w:b/>' : ''}${o.caps ? '<w:caps/>' : ''}${o.sp ? `<w:spacing w:val="${o.sp}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz * 2}"/><w:szCs w:val="${o.sz * 2}"/>` : ''}</w:rPr><w:t xml:space="preserve">${X(part)}</w:t></w:r>`; }).join('');
+  const len = n.intro.length + n.what.join(' ').length; const k = Math.max(0.68, Math.min(1, 470 / len));
+  const p = (t, o0 = {}) => { const o = Object.assign({}, o0, { sz: o0.sz && o0.sz < 30 ? Math.round(o0.sz * k * 2) / 2 : o0.sz, after: o0.after == null ? null : Math.round(o0.after * k), before: Math.round((o0.before || 0) * k) }); return `<w:p><w:pPr>${o.box ? '<w:pBdr><w:top w:val="single" w:sz="24" w:space="8" w:color="000000"/><w:bottom w:val="single" w:sz="24" w:space="8" w:color="000000"/></w:pBdr>' : ''}<w:spacing w:before="${o.before || 0}" w:after="${o.after == null ? 120 : o.after}"/><w:ind w:left="${o.ind || 0}" w:right="${o.ind || 0}"/><w:jc w:val="center"/></w:pPr>${runs(t, o)}</w:p>`; };
   const supTxt = sup.name || sup.phone ? `Super: ${[sup.name, sup.phone].filter(Boolean).join(', ')}` : 'Super: [name and phone]';
-  const body = banner +
-    p(addr || '[Building address]', { b: true, sz: 16, align: 'center', before: 200, after: 40 }) +
-    p('Date: [date]', { align: 'center', after: 240, color: '444444' }) +
-    p(n.title, { b: true, sz: 22, align: 'center', after: 200, border: true }) +
-    p('Dear Residents,', { before: 120 }) + p(n.intro, { after: 200 }) +
-    p('What you should do:', { b: true, sz: 14, after: 80 }) + n.what.map(w => p(w, { bullet: true, after: 80 })).join('') +
-    p('Questions or problems? Please contact:', { b: true, before: 240, after: 60 }) + p(supTxt, { after: 40 }) + p('Management office: [phone and email]', { after: 40 }) + p('In an emergency, call 911.', { b: true, after: 240 }) +
-    p('Thank you for your patience and cooperation.', { after: 60 }) + p('Management', { b: true });
+  const body =
+    p('NOTICE', { b: true, sz: 48, sp: 60, box: true, after: 240 }) +
+    p(n.title, { b: true, sz: 32, after: 200 }) +
+    p(addr || '[Building address]', { sz: 17, after: 60 }) +
+    p('Date: [date]', { sz: 14, after: 420 }) +
+    p('Dear Residents,', { sz: 16, after: 160 }) +
+    p(n.intro, { sz: 16, after: 360, ind: 360 }) +
+    p('Please:', { b: true, sz: 17, after: 200 }) +
+    n.what.map(w => p(w, { sz: 15, after: 220, ind: 540 })).join('') +
+    p('Questions? ' + supTxt + '   ·   Management office: [phone]', { sz: 13, before: 300, after: 80 }) +
+    p('In an emergency, call 911.', { b: true, sz: 13, after: 360 }) +
+    p('Thank you for your cooperation.', { sz: 14, after: 60 }) + p('Management', { b: true, sz: 14 });
   const name = `${(addr || 'Building').replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 40)} - Notice - ${n.title.replace(/[\\/:*?"<>|]+/g, ' ')}.docx`;
   await crtSave(docxFile(n.title, body), name);
 }
@@ -3623,6 +3633,7 @@ function renderEmg() {
   const rec = addr ? (emg.contacts[bldKey(addr)] || {}) : {};
   const c = rec.contacts || {};
   el.innerHTML = `<div class="emg-head"><b>Emergency plans</b><select class="cal-sel" id="emgBld" aria-label="Building">${list.length ? list.map(a => `<option value="${esc(a)}"${bldKey(a) === bldKey(addr) ? ' selected' : ''}>${esc(a)}</option>`).join('') : '<option value="">Type a building address at the top</option>'}</select></div>
+    <div class="emg-ntc"><span>Planned water shut-off?</span><button type="button" class="nyc-btn" data-notice="water">Water shut-off notice (Word)</button></div>
     <div class="emg-plans">${EMERGENCY_PLANS.map(p => `<div class="emg-plan${emg.plan === p.key ? ' open' : ''}" data-plan="${p.key}"><button type="button" class="emg-ph" data-toggle="${p.key}"><span>${esc(p.title)}</span><small>${p.steps.length} steps</small></button>
       <div class="emg-pb"><ol>${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><div class="cal-btns"><button type="button" class="nyc-btn" data-notice="${p.key}">Notice for residents (Word)</button><button type="button" class="nyc-btn ghost" data-print="${p.key}">Download printable checklist</button></div></div></div>`).join('')}</div>
     <div class="cal-cols">
