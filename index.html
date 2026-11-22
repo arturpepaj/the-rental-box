@@ -508,6 +508,7 @@ header {
 .nyc-reg b { font-weight: 600; } .nyc-reg i { font-style: normal; font-weight: 400; color: var(--muted); } .nyc-reg b span { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
 .nyc-reg .nyc-none { color: var(--subtle); font-weight: 400; }
 .nyc-reg-foot { grid-column: 1 / -1; margin: 0; font-size: 11.5px; color: var(--subtle); } .nyc-reg-foot a { color: var(--ask); } .nyc-exp { color: #e08a6a; font-weight: 600; }
+.nyc-super .cal-btns { align-items: center; } .nyc-super { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding: 10px 14px; margin: 0; font-size: 13px; color: var(--ink); } .nyc-super span, .nyc-super small { color: var(--muted); font-size: 12px; } .nyc-super .cal-btns { margin: 0; }
 .nyc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
 .nyc-bld { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nyc-bld b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--ink); line-height: 1.1; }
@@ -2648,9 +2649,88 @@ function nycCard(k, o) {
   return `<div class="nyc-card nyc-${o.flag || 'grey'}${open ? ' open' : ''}${o.wide ? ' wide' : ''}" data-k="${k}">
     <div class="nyc-ch" role="button" tabindex="0" aria-expanded="${open}"><div class="nyc-ct"><h3>${esc(o.title)}</h3><p>${esc(o.sub || '')}</p></div><div class="nyc-n">${esc(String(o.n))}</div>
     <svg class="nyc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
-    ${tags ? `<div class="nyc-tags">${tags}</div>` : ''}
+    ${tags ? `<div class="nyc-tags">${tags}</div>` : ''}${o.top || ''}
     <div class="nyc-body">${o.err ? `<p class="nyc-msg warn">${esc(o.err)}</p>` : ''}${o.extra || ''}${nycTbl(NYC_COLS[k], o.list || [], o.cls)}${o.more ? `<p class="nyc-msg">${esc(o.more)}</p>` : ''}</div>
     <div class="nyc-foot">${src}<button type="button" data-xl="${k}">Download to Excel</button></div></div>`;
+}
+/* ---------- HPD violations: simple work list for the super (PDF / Excel) ---------- */
+const nycSimple = {}; // violationid -> plain description
+function nycPlainRule(d) {
+  let t = String(d || '').replace(/^§\s*[\w.-]+\s*(ADM CODE|HMC|MDL|RCNY)?\s*:?\s*/i, '').replace(/^[\dA-Z.-]+\s+(ADM CODE|HMC)\s*:?\s*/i, '').trim();
+  let where = ''; const m = t.match(/\s+located (?:at|in)\s+(.*)$/i); if (m) { where = m[1]; t = t.slice(0, m.index); }
+  t = t.replace(/\s+/g, ' ').toLowerCase().replace(/\bapt\b/g, 'Apt').replace(/(^|[.!?]\s+)([a-z])/g, (a, b, c) => b + c.toUpperCase());
+  where = where.replace(/apt\s*[\w-]+,?\s*/i, '').replace(/\s+/g, ' ').toLowerCase().replace(/,\s*$/, '');
+  return (t.length > 150 ? t.slice(0, 147).replace(/\s+\S*$/, '') + '...' : t) + (where ? ` (${where})` : '');
+}
+async function nycSuperRows(onStatus) {
+  const b = nyc.bld; if (!b || !b.buildingid) throw new Error('Look up the building first.');
+  let list = (nyc.res && nyc.res.cards.hpdv.list) || [];
+  if (nyc.res && nyc.res.cards.hpdv.open > list.length) {
+    onStatus('Getting all open HPD violations…');
+    const u = nycUrl('hpdv', { $select: 'violationid,apartment,story,class,novdescription,novissueddate', $where: `buildingid='${b.buildingid}' AND violationstatus='Open'`, $order: 'apartment', $limit: 2000 });
+    try { const r = await nycFetch([u]); if (Array.isArray(r[u]) && r[u].length) list = r[u]; } catch (e) {}
+  }
+  const need = list.filter(v => !nycSimple[v.violationid]);
+  if (need.length && sample) {
+    for (let i = 0; i < need.length; i += 60) {
+      const part = need.slice(i, i + 60); onStatus(`Writing simple descriptions (${Math.min(i + 60, need.length)} of ${need.length})…`);
+      try {
+        const out = await sample.json(`Rewrite each NYC HPD violation below as a short, plain-English work instruction for a building superintendent whose English is simple. Start with a verb (Fix, Repair, Replace, Paint, Install, Remove...). At most 14 words. Keep the room or place (for example "kitchen", "bathroom", "2nd room from north", "public hall 3rd floor"). No code sections, no legal words, no apartment number.
+Return only JSON: [{"id": "violation id", "text": "instruction"}]
+
+${part.map(v => `id ${v.violationid}: ${String(v.novdescription || '').slice(0, 500)}`).join('\n')}`, { modelTier: 'quick', cache: { gcTime: 86400000 } });
+        for (const o of (Array.isArray(out) ? out : [])) if (o && o.id && o.text) nycSimple[String(o.id)] = String(o.text).slice(0, 160);
+      } catch (e) { break; }
+    }
+  }
+  return list.map(v => ({ apt: (!v.apartment || /^bldg$/i.test(v.apartment)) ? 'Building' : String(v.apartment), cls: String(v.class || ''), text: nycSimple[v.violationid] || nycPlainRule(v.novdescription) }))
+    .sort((x, y) => ((x.apt === 'Building') - (y.apt === 'Building')) || x.apt.localeCompare(y.apt, 'en', { numeric: true }) || 'CBAI'.indexOf(x.cls) - 'CBAI'.indexOf(y.cls));
+}
+const nycSuperName = () => { return (nycSuperAddr().split(',')[0] || 'Building').replace(/[\\/:*?"<>|]/g, '-') + ' - HPD violations work list'; };
+const nycSuperAddr = () => { const top = $('propertyName').value.trim(); if (top) return top; const b = nyc.bld; return b ? fmtAddr(`${b.housenumber} ${b.streetname}, ${(NYC_BORO[b.boroid] || [''])[0]}`) : ''; };
+const NYC_SUPER_LEGEND = 'Class C = hazardous, fix within 24 hours (lead paint and window guards: 21 days). Class B = fix within 30 days. Class A = fix within 90 days.';
+async function nycSuperXlsx(rows) {
+  await loadScript(LIBS.xlsx);
+  const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const aoa = [['Open HPD violations: work list'], [nycSuperAddr() + '  ·  ' + date + '  ·  ' + rows.length + ' open'], [NYC_SUPER_LEGEND], [], ['Apt', 'Class', 'What to fix', 'Completed', 'Not completed']].concat(rows.map(r => [r.apt, r.cls, r.text, '☐', '☐']));
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 10 }, { wch: 7 }, { wch: 80 }, { wch: 11 }, { wch: 14 }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }];
+  ws['!autofilter'] = { ref: `A5:E${aoa.length}` };
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Violations');
+  await crtSave(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nycSuperName() + '.xlsx');
+}
+async function nycSuperPdf(rows) {
+  await loadScript(PDFLIB);
+  const { rgb } = PDFLib; const doc = await PDFLib.PDFDocument.create();
+  const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica), bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  const W = 612, H = 792, M = 40, CW = W - 2 * M; const cols = [[56, 'Apt'], [44, 'Class'], [300, 'What to fix'], [66, 'Completed'], [66, 'Not done']];
+  const CLS = { C: rgb(.76, .33, .25), B: rgb(.85, .55, .2), A: rgb(.31, .62, .42) }; const ink = rgb(.12, .12, .14), mut = rgb(.42, .44, .5), line = rgb(.85, .85, .85);
+  const wrap = (t, w, sz) => { const out = []; let ln = ''; for (const wd of fmSafe(t).split(/\s+/)) { const tl = ln ? ln + ' ' + wd : wd; if (font.widthOfTextAtSize(tl, sz) > w && ln) { out.push(ln); ln = wd; } else ln = tl; } out.push(ln); return out; };
+  let page, y; const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const head = () => { page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: rgb(.12, .23, .37) }); let x = M; for (const [w, h] of cols) { page.drawText(h, { x: x + 6, y: y - 15, size: 10, font: bold, color: rgb(1, 1, 1) }); x += w; } y -= 22; };
+  const newPage = first => { page = doc.addPage([W, H]); y = H - M;
+    if (first) { page.drawText('Open HPD violations: work list', { x: M, y: y - 18, size: 18, font: bold, color: ink }); y -= 26; page.drawText(fmSafe(nycSuperAddr() + '   ' + date + '   ' + rows.length + ' open'), { x: M, y: y - 11, size: 11, font, color: mut }); y -= 18;
+      for (const l of wrap(NYC_SUPER_LEGEND, CW, 9)) { page.drawText(l, { x: M, y: y - 9, size: 9, font, color: mut }); y -= 12; } y -= 8; }
+    head(); };
+  newPage(true); let last = null;
+  for (const r of rows) {
+    const lines = wrap(r.text, cols[2][0] - 12, 10.5); const h = Math.max(26, lines.length * 13 + 12);
+    if (y - h < M + 24) { newPage(false); last = null; }
+    if (last !== null && last !== r.apt) page.drawLine({ start: { x: M, y }, end: { x: M + CW, y }, thickness: 1.2, color: rgb(.6, .6, .6) });
+    let x = M; page.drawText(fmSafe(last === r.apt ? '' : r.apt), { x: x + 6, y: y - 16, size: 11, font: bold, color: ink }); x += cols[0][0];
+    page.drawText(r.cls, { x: x + 14, y: y - 16, size: 11, font: bold, color: CLS[r.cls] || ink }); x += cols[1][0];
+    lines.forEach((l, i) => page.drawText(l, { x: x + 6, y: y - 16 - i * 13, size: 10.5, font, color: ink })); x += cols[2][0];
+    for (const k of [3, 4]) { page.drawRectangle({ x: x + cols[k][0] / 2 - 7, y: y - 20, width: 14, height: 14, borderColor: ink, borderWidth: 1 }); x += cols[k][0]; }
+    page.drawLine({ start: { x: M, y: y - h }, end: { x: M + CW, y: y - h }, thickness: .5, color: line }); y -= h; last = r.apt;
+  }
+  const pages = doc.getPages(); pages.forEach((pg, i) => { const t = fmSafe(`${nycSuperAddr()}  -  HPD violations work list  -  Page ${i + 1} of ${pages.length}`); pg.drawText(t, { x: M, y: 22, size: 8, font, color: mut }); pg.drawText('Checked by: ____________________   Date: __________', { x: W - M - font.widthOfTextAtSize('Checked by: ____________________   Date: __________', 8), y: 22, size: 8, font, color: mut }); });
+  await crtSave(new Blob([await doc.save()], { type: 'application/pdf' }), nycSuperName() + '.pdf');
+}
+async function nycSuperExport(kind) {
+  if (nyc.superBusy) return; nyc.superBusy = true; const st = t => { nyc.superMsg = t; const el = $('nycSuperMsg'); if (el) el.textContent = t; };
+  try { const rows = await nycSuperRows(st); if (!rows.length) { st('No open HPD violations.'); return; } st('Making the file…'); await (kind === 'pdf' ? nycSuperPdf(rows) : nycSuperXlsx(rows)); st(`Done: ${rows.length} violations.`); }
+  catch (e) { st(e && e.message ? e.message : 'Could not make the file.'); }
+  finally { nyc.superBusy = false; }
 }
 function renderNyc() {
   const el = $('nycPanel'); if (!el) return;
@@ -2685,7 +2765,8 @@ function nycBody(r) {
   const cards = [
     nycCard('hpdv', { title: 'HPD violations (open)', n: v.open, flag: v.cls.C ? 'red' : v.open ? 'yellow' : 'green', sub: v.open ? `Goal: clear ${v.goal} of ${v.open} (75%).` : 'No open HPD violations.', err: v.err, asof: v.asof,
       tags: [[`A: ${v.cls.A || 0}`], [`B: ${v.cls.B || 0}`, v.cls.B ? 'yellow' : ''], [`C: ${v.cls.C || 0}`, v.cls.C ? 'red' : ''], v.noAccess ? [`No access: ${v.noAccess}`, 'yellow'] : null, v.notComplied ? [`Not complied: ${v.notComplied}`, 'red'] : null, v.ri ? [`Rent impairing: ${v.ri}`, 'red'] : null, v.lead ? [`Lead paint: ${v.lead}`, 'red'] : null],
-      extra: v.apts.length ? `<p class="nyc-msg"><b>Units with the most violations:</b> ${v.apts.map(a => esc(`${a.apartment} (${a.n})`)).join(', ')}</p>` : '', list: v.list, more: v.list.length >= 150 ? 'Showing the newest 150.' : '' }),
+      extra: (v.apts.length ? `<p class="nyc-msg"><b>Units with the most violations:</b> ${v.apts.map(a => esc(`${a.apartment} (${a.n})`)).join(', ')}</p>` : ''),
+      top: v.open ? `<div class="nyc-super"><div><b>Work list for the super</b><span> Apartment, class, simple description, and boxes for Completed or Not done.</span></div><div class="cal-btns"><button type="button" class="nyc-btn" data-supx="pdf">Download PDF</button><button type="button" class="nyc-btn ghost" data-supx="xlsx">Download Excel</button><small id="nycSuperMsg">${esc(nyc.superMsg || '')}</small></div></div>` : '', list: v.list, more: v.list.length >= 150 ? 'Showing the newest 150.' : '' }),
     nycCard('hpdc', { title: 'HPD complaints (last 12 months)', n: c.hpdc.total, flag: c.hpdc.heat + c.hpdc.hot ? 'yellow' : 'green', sub: Object.entries(c.hpdc.byCat).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => `${e[0].toLowerCase()} ${e[1]}`).join(', ') || 'No complaints in the last 12 months.', err: c.hpdc.err, asof: c.hpdc.asof,
       tags: [[`No heat: ${c.hpdc.heat}`, c.hpdc.heat ? 'yellow' : ''], [`No hot water: ${c.hpdc.hot}`, c.hpdc.hot ? 'yellow' : '']], list: c.hpdc.list, more: c.hpdc.list.length >= 150 ? 'Showing the newest 150.' : '' }),
     nycCard('lit', { title: 'Housing Court cases (open)', n: c.lit.list.length, flag: c.lit.list.length ? 'red' : 'green', sub: c.lit.list.length ? `Oldest open: ${nycD(c.lit.list[c.lit.list.length - 1].caseopendate)}` : 'No open HPD cases.', err: c.lit.err, asof: c.lit.asof, list: c.lit.list }),
@@ -2742,6 +2823,7 @@ async function nycExcel(k) {
 }
 $('nycPanel').addEventListener('click', e => {
   if (e.target.closest('#nycGo')) { nycLoad(true); return; }
+  const sx = e.target.closest('[data-supx]'); if (sx) { e.stopPropagation(); nycSuperExport(sx.dataset.supx); return; }
   if (e.target.closest('[data-acris]')) { nycLoadAcris(); return; }
   const ca = e.target.closest('[data-caladd]');
   if (ca) { let it; try { it = JSON.parse(ca.dataset.caladd); } catch (err) { return; }
