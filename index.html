@@ -693,6 +693,8 @@ header {
 .fh-flag > div { font-weight: 600; }
 .fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
+.coi-ver { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--ink); } .coi-ver p { margin: 0; color: var(--muted); }
+.coi-to { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; font-size: 12.5px; color: var(--muted); } .coi-to input { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 8px; }
 .lib-share { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--ink); margin: 8px 0 2px; cursor: pointer; } .lib-share input { margin-top: 3px; accent-color: var(--ask); } .lib-share small { display: block; color: var(--subtle); font-size: 11.5px; }
 .file-tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-right: 4px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); } .file-tag.shared { color: var(--ask); border-color: var(--ask); }
 .file-move { background: none; border: 0; color: var(--ask); font: 600 11.5px var(--sans); cursor: pointer; padding: 0 4px; }
@@ -4681,6 +4683,52 @@ function coiCheckRules(x, req) {
   if (req.pnc) add('Primary and non-contributory', 'Required', x.pnc === true ? 'Shown' : 'Not shown', x.pnc === true ? true : 'warn', '', 'Show the coverage as primary and non-contributory.');
   return out;
 }
+// Section 3: email the insurance agent (producer on the certificate) to verify coverage
+async function coiVerifyRead(file) {
+  if (!sample) { coi.vStatus = 'Claude is not available on this view.'; renderCoi(); return; }
+  coi.vFile = file.name; coi.vBusy = true; coi.vx = null; coi.vStatus = 'Reading the certificate…'; renderCoi();
+  try {
+    const inp = await coiFileInput(file);
+    coi.vx = await sample.json(`Read this certificate of insurance (usually an ACORD 25 form). Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null or "" when not shown. Do not guess.
+Return only JSON: {"insured": "", "producer": "agency name", "producer_contact": "contact person name", "producer_phone": "", "producer_email": "", "producer_address": "", "certificate_holder": "", "cert_date": "", "additional_insureds": "names shown as additional insured, comma separated", "waiver": true|false|null, "pnc": true|false|null,
+ "policies": [{"type": "GL" | "Auto" | "Umbrella" | "WC" | "DBL" | "Other", "carrier": "", "policy_no": "", "eff": "", "exp": "", "each_occurrence": number|null, "aggregate": number|null, "combined_single": number|null, "el_each_accident": number|null}]}
+
+${inp.text ? 'Certificate text:\n' + inp.text : 'The certificate image is attached.'}`, { images: inp.images, modelTier: 'default', cache: false });
+    coi.vTo = (coi.vx && coi.vx.producer_email) || ''; coi.vMail = coiVerifyEmail();
+    coi.vStatus = coi.vTo ? '' : 'No agent email on the certificate. Type it in the To box (call the agency for it).';
+  } catch (e) { coi.vStatus = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Could not read this certificate. Try a clearer PDF.'; }
+  coi.vBusy = false; renderCoi();
+}
+const COI_TYPES = { GL: 'General liability', Auto: 'Auto liability', Umbrella: 'Umbrella / excess', WC: "Workers' compensation and employer's liability", DBL: 'NY disability and paid family leave', Other: 'Other policy' };
+function coiVerifyEmail() {
+  const x = coi.vx; if (!x) return '';
+  const bld = $('propertyName').value.trim(); const req = coiReq();
+  const d = v => { if (!v) return '[date]'; const t = new Date(v + 'T12:00:00'); return isNaN(t) ? v : (t.getMonth() + 1) + '/' + t.getDate() + '/' + t.getFullYear(); };
+  const m = n => n ? '$' + Number(n).toLocaleString('en-US') : '';
+  const lines = (x.policies || []).map(p => { const lim = p.type === 'GL' ? [m(p.each_occurrence) && m(p.each_occurrence) + ' each occurrence', m(p.aggregate) && m(p.aggregate) + ' aggregate'] : p.type === 'Auto' ? [m(p.combined_single) && m(p.combined_single) + ' combined single limit'] : p.type === 'Umbrella' ? [m(p.each_occurrence || p.aggregate) && m(p.each_occurrence || p.aggregate) + ' limit'] : p.type === 'WC' ? [m(p.el_each_accident) && 'EL ' + m(p.el_each_accident) + ' each accident'] : [];
+    return `${COI_TYPES[p.type] || 'Policy'}: ${[p.carrier, p.policy_no ? 'policy ' + p.policy_no : ''].filter(Boolean).join(', ') || '[carrier, policy number]'}, from ${d(p.eff)} to ${d(p.exp)}${lim.filter(Boolean).length ? ', ' + lim.filter(Boolean).join(' / ') : ''}`; });
+  const extra = [];
+  const ai = String(req.ai || x.additional_insureds || '').trim();
+  if (ai) extra.push(`${ai} ${/,| and /.test(ai) ? 'are' : 'is'} additional insured on the general liability${(x.policies || []).some(p => p.type === 'Umbrella') ? ' and umbrella' : ''}`);
+  if (req.waiver || x.waiver) extra.push('Waiver of subrogation applies in favor of the additional insureds');
+  if (req.pnc || x.pnc) extra.push('The coverage is primary and non-contributory');
+  if (x.certificate_holder || req.holder) extra.push(`The certificate holder is ${x.certificate_holder || req.holder}`);
+  const all = lines.concat(extra);
+  const first = String(x.producer_contact || '').trim().split(/\s+/)[0];
+  return `Hi ${first || 'there'},
+
+We received a certificate of insurance${x.cert_date ? ' dated ' + d(x.cert_date) : ''} for ${x.insured || '[insured name]'}${bld ? ', for work at ' + bld : ''}. Your agency${x.producer ? ', ' + x.producer + ',' : ''} is listed as the producer.
+
+Before the work starts, can you please confirm that the coverage below is active and correct:
+
+${all.map((l, i) => `${i + 1}. ${l}`).join('\n')}
+
+Please also let us know if any of these policies is canceled, not paid, or will not renew, and send us notice if that changes.
+
+You can just reply to this email to confirm.
+
+Thank you,`;
+}
 async function coiCheck(file) {
   if (!sample) { coi.status = 'Claude is not available on this view.'; renderCoi(); return; }
   coi.file = file.name; coi.busy = true; coi.result = null; coi.email = ''; coi.status = 'Reading the certificate…'; renderCoi();
@@ -4690,7 +4738,7 @@ async function coiCheck(file) {
     const x = await sample.json(`Read this vendor certificate of insurance (usually an ACORD 25 form) and pull out the facts. Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null when not shown. Do not guess.
 Policy types: "GL" (commercial general liability), "Auto", "Umbrella" (umbrella or excess), "WC" (workers comp and employer's liability), "DBL" (NY disability benefits / paid family leave), "Other".
 Return only JSON:
-{"insured": "", "producer": "", "certificate_holder": "", "holder_match": true|false (does the certificate holder match: ${JSON.stringify(req.holder || '')}),
+{"insured": "", "producer": "agency name", "producer_contact": "contact person name or empty", "producer_phone": "", "producer_email": "", "producer_address": "", "certificate_holder": "", "holder_match": true|false (does the certificate holder match: ${JSON.stringify(req.holder || '')}),
  "policies": [{"type": "GL", "carrier": "", "policy_no": "", "eff": "", "exp": "", "each_occurrence": number|null, "aggregate": number|null, "combined_single": number|null, "el_each_accident": number|null}],
  "ai_matches": [${names.map(n => `{"name": ${JSON.stringify(n)}, "found": true|false}`).join(', ')}] (is each name shown as additional insured, in the description box or the ADDL INSD column with the name in the description),
  "waiver": true|false|null, "pnc": true|false|null, "description": "description of operations, short"}
@@ -4741,7 +4789,17 @@ function renderCoi() {
         <div class="coi-rows">${r.rows.map(x => `<div>${icon(x.ok)}</div><div><b>${esc(x.item)}</b>${x.note ? `<small>${esc(x.note)}</small>` : ''}</div><div>${esc(x.need)}</div><div>${esc(x.have)}</div>`).join('')}</div>
         ${(r.x.policies || []).length ? `<p class="fh-legal">Policies: ${(r.x.policies || []).map(p => `${esc(p.type)} ${esc(p.carrier || '')} ${esc(p.policy_no || '')} ${p.exp ? 'exp ' + esc(p.exp) : ''}`).join(' · ')}</p>` : ''}
         ${r.verdict !== 'ok' ? `<div class="cal-btns"><button class="nyc-btn ghost" type="button" id="coiMail">${coi.email ? 'Hide email' : 'Email to vendor'}</button></div>${coi.email ? `<textarea class="inb-draft" id="coiMailText" rows="${coi.email.split('\n').length + 1}">${esc(coi.email)}</textarea><div class="cal-btns"><button class="nyc-btn" type="button" id="coiCopy">Copy</button></div>` : ''}` : ''}
-        <p class="fh-legal">Check the certificate yourself before work starts. A certificate is proof only, not the policy. Ask your insurance broker if you are not sure.</p></div>` : ''}` : ''}</div>`;
+        <p class="fh-legal">Check the certificate yourself before work starts. A certificate is proof only, not the policy. Ask your insurance broker if you are not sure.</p></div>` : ''}
+      <div class="coi-ver"><b>3. Verify coverage with the insurance agent</b>
+        <p>A certificate can be old or wrong. Upload the COI and Claude writes an email to the insurance agent listed on it (the "Producer"), asking them to confirm each policy is active.</p>
+        <div class="cal-btns"><label class="nyc-btn" style="display:inline-block">${coi.vFile ? 'Upload another COI' : 'Upload COI to verify'}<input type="file" id="coiVFile" accept=".pdf,image/*" hidden></label>${r && r.x && r.x.producer && !coi.vx ? `<button class="nyc-btn ghost" type="button" id="coiVUse">Use the COI checked above</button>` : ''}${coi.vFile ? `<span class="nyc-msg" style="padding:0">${esc(coi.vFile)}</span>` : ''}</div>
+        ${coi.vBusy ? '<p class="nyc-msg">Reading the certificate…</p>' : coi.vStatus ? `<p class="nyc-msg">${esc(coi.vStatus)}</p>` : ''}
+        ${coi.vx ? `<p class="coi-sum"><b>Agent:</b> ${esc([coi.vx.producer, coi.vx.producer_contact, coi.vx.producer_phone].filter(Boolean).join(' · ') || 'not shown')}</p>
+          <div class="coi-to"><label>To</label><input id="coiVTo" value="${esc(coi.vTo || '')}" placeholder="agent@agency.com"><label>Subject</label><input id="coiVSub" value="${esc(coi.vSub || ('Please verify insurance coverage: ' + (coi.vx.insured || 'vendor') + (bld ? ' – ' + bld.split(',')[0] : '')))}"></div>
+          <textarea class="inb-draft" id="coiVText" rows="${coi.vMail.split('\n').length + 1}">${esc(coi.vMail)}</textarea>
+          <div class="cal-btns"><button class="nyc-btn" type="button" id="coiVCopy">Copy email</button><a class="nyc-btn ghost" id="coiVOpen" target="_blank" rel="noopener" href="#">Open in email app</a></div>
+          <p class="fh-legal">Check the email before you send it. The agent can confirm coverage, but only the policy itself shows the full terms.</p>` : ''}
+      </div>` : ''}</div>`;
 }
 $('coiPanel').addEventListener('click', e => {
   if (e.target.closest('#coiToggle')) { coi.open = !coi.open; renderCoi(); }
@@ -4749,13 +4807,18 @@ $('coiPanel').addEventListener('click', e => {
   if (e.target.closest('#coiSave')) { const req = coi.edit || coiReq(); coiSave(req).then(() => { coi.edit = null; coi.reqOpen = false; coi.status = 'Requirements saved.'; renderCoi(); }); }
   if (e.target.closest('#coiMail')) { coi.email = coi.email ? '' : coiEmail(); renderCoi(); }
   const c = e.target.closest('#coiCopy'); if (c) inbCopy($('coiMailText').value, c);
+  if (e.target.closest('#coiVUse')) { coi.vx = Object.assign({}, coi.result.x); coi.vFile = coi.file; coi.vTo = coi.vx.producer_email || ''; coi.vMail = coiVerifyEmail(); coi.vStatus = coi.vTo ? '' : 'No agent email on the certificate. Type it in the To box (call the agency for it).'; renderCoi(); }
+  const vc = e.target.closest('#coiVCopy'); if (vc) inbCopy(`To: ${$('coiVTo').value}\nSubject: ${$('coiVSub').value}\n\n${$('coiVText').value}`, vc);
+  const vo = e.target.closest('#coiVOpen'); if (vo) { vo.href = `mailto:${encodeURIComponent($('coiVTo').value.trim())}?subject=${encodeURIComponent($('coiVSub').value)}&body=${encodeURIComponent($('coiVText').value)}`; }
 });
 $('coiPanel').addEventListener('change', e => {
   if (e.target.id === 'coiFile' && e.target.files[0]) coiCheck(e.target.files[0]);
+  if (e.target.id === 'coiVFile' && e.target.files[0]) coiVerifyRead(e.target.files[0]);
   if (e.target.id === 'coiContract' && e.target.files[0]) coiFromContract(e.target.files[0]);
   if (e.target.dataset.coib) { coi.edit = coi.edit || coiReq(); coi.edit[e.target.dataset.coib] = e.target.checked; }
 });
 $('coiPanel').addEventListener('input', e => {
+  if (e.target.id === 'coiVTo') { coi.vTo = e.target.value; return; } if (e.target.id === 'coiVSub') { coi.vSub = e.target.value; return; } if (e.target.id === 'coiVText') { coi.vMail = e.target.value; return; }
   const k = e.target.dataset.coi; if (!k) return;
   coi.edit = coi.edit || coiReq();
   coi.edit[k] = typeof COI_DEFAULT[k] === 'number' ? (Number(e.target.value.replace(/[^0-9.]/g, '')) || 0) : e.target.value.slice(0, 400);
