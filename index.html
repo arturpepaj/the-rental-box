@@ -695,6 +695,9 @@ header {
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
 .coi-pub { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; } .coi-pub-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; } .coi-pub-row span { min-width: 250px; } .coi-pub-row a { color: var(--ask); } .coi-pub-row small { color: var(--subtle); flex-basis: 100%; padding-left: 0; }
 .coi-lic { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; } .coi-lic div { display: grid; grid-template-columns: 1.4fr 1fr 80px 100px; gap: 8px; border-bottom: 1px solid var(--line); padding: 4px 0; }
+.gl-step { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 8px 0; font-size: 13.5px; color: var(--ink); } .gl-off { opacity: .5; pointer-events: none; }
+.gl-codes { max-height: 200px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: 12.5px; color: var(--ink); columns: 2; }
+.gl-items { display: flex; flex-direction: column; gap: 8px; } .gl-it { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--ink); } .gl-it small { color: var(--muted); font-size: 12px; } .gl-err small { color: #e08a6a; } .gl-top { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; } .gl-top span { color: var(--muted); font-size: 12.5px; } .gl-pick { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .gl-pick select { max-width: 100%; min-width: 260px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 600 13px var(--sans); padding: 0 6px; } .gl-cap { color: #e0b56a !important; }
 .coi-ver { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--ink); } .coi-ver p { margin: 0; color: var(--muted); }
 .coi-to { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; align-items: center; font-size: 12.5px; color: var(--muted); } .coi-to input { height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 13px var(--sans); padding: 0 8px; }
 .lib-share { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--ink); margin: 8px 0 2px; cursor: pointer; } .lib-share input { margin-top: 3px; accent-color: var(--ask); } .lib-share small { display: block; color: var(--subtle); font-size: 11.5px; }
@@ -1017,6 +1020,7 @@ header {
         <div id="cpPanel" class="emg" hidden></div>
         <div id="inspPanel" class="emg" hidden></div>
         <div id="coiPanel" class="emg" hidden></div>
+        <div id="glPanel" class="emg" hidden></div>
         <div id="crtPanel" class="emg" hidden></div>
         <div id="regPanel" class="emg" hidden></div>
         <div id="riderPanel" class="emg" hidden></div>
@@ -3010,6 +3014,7 @@ function setMode(key) {
   if (typeof renderFh === 'function') { try { renderFh(); } catch (e) {} }
   if (typeof renderCrt === 'function') { try { renderCrt(); } catch (e) {} }
   if (typeof renderCoi === 'function') { try { renderCoi(); } catch (e) {} }
+  if (typeof renderGl === 'function') { try { renderGl(); } catch (e) {} }
   if (typeof renderRider === 'function') { try { renderRider(); } catch (e) {} }
   if (typeof renderReg === 'function') { try { renderReg(); } catch (e) {} }
   if (typeof renderPj === 'function') { try { renderPj(); } catch (e) {} }
@@ -4864,6 +4869,126 @@ $('coiPanel').addEventListener('input', e => {
   const k = e.target.dataset.coi; if (!k) return;
   coi.edit = coi.edit || coiReq();
   coi.edit[k] = typeof COI_DEFAULT[k] === 'number' ? (Number(e.target.value.replace(/[^0-9.]/g, '')) || 0) : e.target.value.slice(0, 400);
+});
+
+/* ---------- GL coding: suggest a GL expense code for each invoice ---------- */
+const gl = { open: true, codes: [], src: '', when: 0, busy: false, status: '', items: [], memo: {}, store: 'local', loaded: false };
+const glKey = () => { const a = $('propertyName').value.trim(); return a ? bldKey(a) : '_default'; };
+async function glLoad() {
+  let all = {}; try { all = JSON.parse(localStorage.getItem('rb-gl') || '{}') || {}; } catch (e) {}
+  if (db && myId) { try { (await db.collection(`emc/${myId}/gl`).get()).docs.forEach(d => { const v = d.data(); if (v && v.key) all[v.key] = v; }); gl.store = 'db'; } catch (e) {} }
+  gl.all = all; const v = all[glKey()] || all._default || {};
+  gl.codes = v.codes || []; gl.src = v.src || ''; gl.when = v.when || 0; gl.memo = v.memo || {};
+  renderGl();
+}
+async function glSave() {
+  const key = glKey(); const v = { key, codes: gl.codes, src: gl.src, when: gl.when, memo: gl.memo };
+  gl.all = gl.all || {}; gl.all[key] = v;
+  try { localStorage.setItem('rb-gl', JSON.stringify(gl.all)); } catch (e) {}
+  if (gl.store === 'db') { try { await db.doc(`emc/${myId}`).set({ uid: myId, at: Date.now() }); await db.doc(`emc/${myId}/gl/${key === '_default' ? '_default' : emgId($('propertyName').value.trim())}`).set(v); } catch (e) {} }
+}
+async function glReadList(file) {
+  if (!sample) { gl.status = 'Claude is not available on this view.'; renderGl(); return; }
+  gl.busy = true; gl.status = 'Reading the GL code list…'; renderGl();
+  try {
+    const inp = await coiFileInput(file);
+    // try a quick local read first: rows like "5100  Repairs - Plumbing"
+    let codes = [];
+    for (const line of String(inp.text || '').split('\n')) {
+      const m = line.replace(/"/g, '').match(/^\s*,*\s*(\d{3,6}(?:[-.]\d{1,4})?)\s*[,\t ]+\s*([A-Za-z][^,\t]{2,80})/);
+      if (m) codes.push({ code: m[1], name: m[2].trim() });
+    }
+    if (codes.length < 5) {
+      gl.status = 'Claude is reading the GL code list…'; renderGl();
+      const j = await sample.json(`This is a general ledger chart of accounts / expense code list for a residential building. List every account code with its name. Keep the codes exactly as written. Include expense accounts; you may skip balance sheet accounts (cash, receivables, payables, equity) if they are clearly marked.
+Return only JSON: [{"code": "5100", "name": "Repairs - Plumbing"}]
+
+${inp.text ? inp.text.slice(0, 60000) : 'The list is in the attached image.'}`, { images: inp.images, modelTier: 'default', cache: false });
+      codes = (Array.isArray(j) ? j : []).filter(c => c && c.code && c.name).map(c => ({ code: String(c.code).trim(), name: String(c.name).trim() }));
+    }
+    const seen = new Set(); codes = codes.filter(c => !seen.has(c.code) && seen.add(c.code)).slice(0, 1500);
+    if (!codes.length) throw new Error('none');
+    gl.codes = codes; gl.src = file.name; gl.when = Date.now(); await glSave();
+    gl.status = `Saved ${codes.length} GL codes${$('propertyName').value.trim() ? ' for this building' : ''}. Now upload an invoice.`;
+  } catch (e) { gl.status = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Could not find GL codes in this file. Try the Excel or CSV export of the chart of accounts.'; }
+  gl.busy = false; renderGl();
+}
+async function glCode(files) {
+  if (!sample) { gl.status = 'Claude is not available on this view.'; renderGl(); return; }
+  if (!gl.codes.length) { gl.status = 'Upload the GL Expense Code List first.'; renderGl(); return; }
+  gl.busy = true; renderGl();
+  const list = gl.codes.map(c => `${c.code} ${c.name}`).join('\n').slice(0, 60000);
+  const memo = Object.entries(gl.memo).slice(-80).map(([v, c]) => `${v} -> ${c}`).join('\n');
+  for (const file of files) {
+    gl.status = `Reading ${file.name}…`; renderGl();
+    try {
+      const inp = await coiFileInput(file);
+      const j = await sample.json(`You are a property management bookkeeper in New York. Read this vendor invoice and pick the best GL expense code from the list below. Use ONLY codes from the list. Think about what was bought or done (for example plumbing repair vs. plumbing supplies vs. contract service), and whether it looks like a capital improvement rather than a repair.
+${memo ? 'The manager coded these vendors before (use this unless the invoice is clearly different):\n' + memo + '\n' : ''}
+GL code list:
+${list}
+
+Return only JSON: {"vendor": "", "invoice_no": "", "date": "YYYY-MM-DD or empty", "amount": number|null, "unit": "apartment or area, or empty", "what": "short plain description of the work or items", "code": "best code from the list", "why": "one short sentence why", "alt": [{"code": "", "why": ""}] (up to 2 other possible codes), "split": [{"code": "", "amount": number, "what": ""}] (only if parts of the invoice clearly belong to different codes, else []), "capital": true|false (looks like a capital improvement, not a repair)}
+
+${inp.text ? 'Invoice text:\n' + inp.text.slice(0, 30000) : 'The invoice is attached as an image.'}`, { images: inp.images, modelTier: 'default', cache: false });
+      const ok = c => gl.codes.find(x => x.code === String(c || '').trim());
+      const it = Object.assign({ id: uid(), file: file.name }, j || {});
+      if (!ok(it.code)) it.code = (it.alt || []).map(a => a.code).find(ok) || '';
+      it.alt = (it.alt || []).filter(a => ok(a.code) && a.code !== it.code);
+      it.split = (it.split || []).filter(s => ok(s.code));
+      it.chosen = it.code; gl.items.unshift(it);
+    } catch (e) { gl.items.unshift({ id: uid(), file: file.name, err: e && e.code === 'rate_limited' ? 'Usage limit reached.' : 'Could not read this invoice.' }); }
+  }
+  gl.busy = false; gl.status = ''; renderGl();
+}
+async function glExcel() {
+  await loadScript(LIBS.xlsx);
+  const name = c => (gl.codes.find(x => x.code === c) || {}).name || '';
+  const rows = [['File', 'Vendor', 'Invoice #', 'Date', 'Amount', 'Unit / area', 'Description', 'GL code', 'GL name', 'Why', 'Possible capital item']];
+  for (const it of gl.items.filter(x => !x.err)) rows.push([it.file, it.vendor || '', it.invoice_no || '', it.date || '', it.amount == null ? '' : Number(it.amount), it.unit || '', it.what || '', it.chosen || '', name(it.chosen), it.why || '', it.capital ? 'Yes' : '']);
+  const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = [{ wch: 24 }, { wch: 24 }, { wch: 12 }, { wch: 11 }, { wch: 11 }, { wch: 12 }, { wch: 40 }, { wch: 10 }, { wch: 28 }, { wch: 40 }, { wch: 10 }];
+  for (let r = 1; r < rows.length; r++) { const c = ws[XLSX.utils.encode_cell({ r, c: 4 })]; if (c && typeof c.v === 'number') c.z = '$#,##0.00'; }
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'GL coding');
+  await crtSave(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Invoice GL coding.xlsx');
+}
+function renderGl() {
+  const el = $('glPanel'); if (!el) return;
+  el.hidden = mode !== 'vendors'; if (el.hidden) return;
+  if (!gl.loaded) { gl.loaded = true; glLoad(); }
+  const bld = $('propertyName').value.trim();
+  const nm = c => (gl.codes.find(x => x.code === c) || {}).name || '';
+  const money = n => n == null || n === '' ? '' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>GL coding for invoices</b><button class="nyc-btn ghost" type="button" id="glToggle">${gl.open ? 'Hide' : 'Open'}</button></div>
+    <p>Upload your GL Expense Code List once${bld ? ' for ' + esc(bld) : ''}. Then upload any invoice and Claude suggests which GL code to use.</p>
+    ${gl.open ? `<div class="gl-step"><b>1. GL Expense Code List</b> ${gl.codes.length ? `<span class="nyc-msg" style="padding:0">${gl.codes.length} codes saved${gl.src ? ' from ' + esc(gl.src) : ''}${gl.when ? ', ' + new Date(gl.when).toLocaleDateString() : ''}</span>` : '<span class="nyc-msg" style="padding:0">Excel, CSV or PDF of the chart of accounts</span>'}
+        <label class="nyc-btn ${gl.codes.length ? 'ghost' : ''}" style="display:inline-block">${gl.codes.length ? 'Replace list' : 'Upload GL code list'}<input type="file" id="glList" accept=".xlsx,.xls,.csv,.pdf,.txt,.docx,image/*" hidden></label>
+        ${gl.codes.length ? `<button class="nyc-btn ghost" type="button" id="glView">${gl.view ? 'Hide codes' : 'See codes'}</button>` : ''}</div>
+      ${gl.view && gl.codes.length ? `<div class="gl-codes">${gl.codes.map(c => `<div><b>${esc(c.code)}</b> ${esc(c.name)}</div>`).join('')}</div>` : ''}
+      <div class="gl-step"><b>2. Invoices</b><label class="nyc-btn${gl.codes.length ? '' : ' gl-off'}" style="display:inline-block">Upload invoices<input type="file" id="glInv" multiple accept=".pdf,.docx,.xlsx,.csv,.txt,image/*" hidden${gl.codes.length ? '' : ' disabled'}></label>${gl.items.some(x => !x.err) ? `<button class="nyc-btn ghost" type="button" id="glXlsx">Download Excel</button><button class="nyc-btn ghost" type="button" id="glClear">Clear list</button>` : ''}</div>
+      ${gl.busy || gl.status ? `<p class="nyc-msg">${esc(gl.status || 'Working…')}</p>` : ''}
+      ${gl.items.length ? `<div class="gl-items">${gl.items.map(it => it.err ? `<div class="gl-it gl-err"><b>${esc(it.file)}</b><small>${esc(it.err)}</small></div>` : `<div class="gl-it">
+          <div class="gl-top"><b>${esc(it.vendor || it.file)}</b><span>${[it.invoice_no ? '#' + esc(it.invoice_no) : '', esc(it.date || ''), money(it.amount), it.unit ? 'Unit ' + esc(it.unit) : ''].filter(Boolean).join(' · ')}</span></div>
+          <div class="gl-what">${esc(it.what || '')}</div>
+          <div class="gl-pick"><select data-glpick="${it.id}">${[it.code].concat((it.alt || []).map(a => a.code)).filter(Boolean).map(c => `<option value="${esc(c)}"${c === it.chosen ? ' selected' : ''}>${esc(c)} ${esc(nm(c))}${c === it.code ? ' (suggested)' : ''}</option>`).join('')}<option disabled>──────────</option>${gl.codes.map(c => `<option value="${esc(c.code)}"${c.code === it.chosen && ![it.code].concat((it.alt || []).map(a => a.code)).includes(c.code) ? ' selected' : ''}>${esc(c.code)} ${esc(c.name)}</option>`).join('')}</select>
+            <button class="nyc-btn ghost" type="button" data-glcopy="${it.id}">Copy code</button></div>
+          ${it.why ? `<small>${esc(it.why)}</small>` : ''}
+          ${(it.alt || []).length ? `<small>Also possible: ${it.alt.map(a => `<b>${esc(a.code)}</b> ${esc(nm(a.code))}${a.why ? ' (' + esc(a.why) + ')' : ''}`).join('; ')}</small>` : ''}
+          ${(it.split || []).length ? `<small><b>Split:</b> ${it.split.map(s => `${esc(s.code)} ${esc(nm(s.code))} ${money(s.amount)}${s.what ? ' (' + esc(s.what) + ')' : ''}`).join(' · ')}</small>` : ''}
+          ${it.capital ? '<small class="gl-cap">This may be a capital improvement, not a repair. Check with accounting.</small>' : ''}
+        </div>`).join('')}</div>` : ''}
+      <p class="fh-legal">General guidance only. Claude suggests a code; your accounting team decides. When you change a code, the site remembers it for that vendor next time.</p>` : ''}</div>`;
+}
+$('glPanel').addEventListener('click', e => {
+  if (e.target.closest('#glToggle')) { gl.open = !gl.open; renderGl(); }
+  if (e.target.closest('#glView')) { gl.view = !gl.view; renderGl(); }
+  if (e.target.closest('#glXlsx')) glExcel().catch(() => { gl.status = 'Could not make the Excel file.'; renderGl(); });
+  if (e.target.closest('#glClear')) { gl.items = []; renderGl(); }
+  const c = e.target.closest('[data-glcopy]'); if (c) { const it = gl.items.find(x => x.id === c.dataset.glcopy); if (it) inbCopy(it.chosen || '', c); }
+});
+$('glPanel').addEventListener('change', e => {
+  if (e.target.id === 'glList' && e.target.files[0]) glReadList(e.target.files[0]);
+  if (e.target.id === 'glInv' && e.target.files.length) glCode([...e.target.files]);
+  const p = e.target.dataset.glpick; if (p) { const it = gl.items.find(x => x.id === p); if (it) { it.chosen = e.target.value; if (it.vendor && it.chosen !== it.code) { gl.memo[String(it.vendor).toUpperCase().slice(0, 60)] = it.chosen + ' ' + ((gl.codes.find(x => x.code === it.chosen) || {}).name || ''); glSave(); } } }
 });
 
 /* ---------- Rent-only court ledger (NYC Housing Court) ---------- */
