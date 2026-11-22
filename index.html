@@ -1218,6 +1218,17 @@ async function readPdf(file) {
     const page = await pdf.getPage(i);
     const tc = await page.getTextContent();
     out += `\n--- Page ${i} ---\n` + tc.items.map(it => it.str + (it.hasEOL ? '\n' : ' ')).join('');
+    // Fillable PDFs (for example ACORD certificates) keep their typed values in form fields, not in the page text
+    try {
+      const ann = await page.getAnnotations(); const vals = [];
+      for (const a of ann) {
+        if (!a || !a.fieldName) continue; let v = a.fieldValue;
+        if (Array.isArray(v)) v = v.join(', ');
+        if (a.checkBox || a.radioButton) { if (v && !/^off$/i.test(String(v))) vals.push(`${a.fieldName}: checked`); continue; }
+        if (v != null && String(v).trim()) vals.push(`${a.fieldName}: ${String(v).trim()}`);
+      }
+      if (vals.length) out += `\n--- Page ${i}: filled form fields ---\n` + vals.join('\n') + '\n';
+    } catch (e) {}
   }
   const letters = out.replace(/--- Page \d+ ---/g, '').replace(/\s/g, '').length;
   if (letters >= 40 * pdf.numPages) return { text: out.trim() };
@@ -4689,11 +4700,12 @@ async function coiVerifyRead(file) {
   coi.vFile = file.name; coi.vBusy = true; coi.vx = null; coi.vStatus = 'Reading the certificate…'; renderCoi();
   try {
     const inp = await coiFileInput(file);
-    coi.vx = await sample.json(`Read this certificate of insurance (usually an ACORD 25 form). Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null or "" when not shown. Do not guess.
+    coi.vx = await sample.json(`Read this certificate of insurance (usually an ACORD 25 form). If the text has a "filled form fields" section, those are the typed values: use them. For each policy, the carrier is the insurer name for its INSR LTR letter (Insurer A, B, C...). Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null or "" when not shown. Do not guess.
 Return only JSON: {"insured": "", "producer": "agency name", "producer_contact": "contact person name", "producer_phone": "", "producer_email": "", "producer_address": "", "certificate_holder": "", "cert_date": "", "additional_insureds": "names shown as additional insured, comma separated", "waiver": true|false|null, "pnc": true|false|null,
  "policies": [{"type": "GL" | "Auto" | "Umbrella" | "WC" | "DBL" | "Other", "carrier": "", "policy_no": "", "eff": "", "exp": "", "each_occurrence": number|null, "aggregate": number|null, "combined_single": number|null, "el_each_accident": number|null}]}
 
 ${inp.text ? 'Certificate text:\n' + inp.text : 'The certificate image is attached.'}`, { images: inp.images, modelTier: 'default', cache: false });
+    if (!coi.vx || (!(coi.vx.policies || []).length && !coi.vx.producer)) { coi.vx = null; coi.vStatus = 'Could not find the agent or the policies on this certificate. Try a clearer PDF or a photo of it.'; coi.vBusy = false; renderCoi(); return; }
     coi.vTo = (coi.vx && coi.vx.producer_email) || ''; coi.vMail = coiVerifyEmail();
     coi.vStatus = coi.vTo ? '' : 'No agent email on the certificate. Type it in the To box (call the agency for it).';
   } catch (e) { coi.vStatus = e && e.code === 'rate_limited' ? 'Usage limit reached. Try again later.' : 'Could not read this certificate. Try a clearer PDF.'; }
@@ -4735,7 +4747,7 @@ async function coiCheck(file) {
   try {
     const req = coiReq(); const inp = await coiFileInput(file);
     const names = String(req.ai || '').split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
-    const x = await sample.json(`Read this vendor certificate of insurance (usually an ACORD 25 form) and pull out the facts. Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null when not shown. Do not guess.
+    const x = await sample.json(`Read this vendor certificate of insurance (usually an ACORD 25 form) and pull out the facts. If the text has a "filled form fields" section, those are the typed values: use them. For each policy, the carrier is the insurer name for its INSR LTR letter. Dates as YYYY-MM-DD. Dollar amounts as plain numbers. Use null when not shown. Do not guess.
 Policy types: "GL" (commercial general liability), "Auto", "Umbrella" (umbrella or excess), "WC" (workers comp and employer's liability), "DBL" (NY disability benefits / paid family leave), "Other".
 Return only JSON:
 {"insured": "", "producer": "agency name", "producer_contact": "contact person name or empty", "producer_phone": "", "producer_email": "", "producer_address": "", "certificate_holder": "", "holder_match": true|false (does the certificate holder match: ${JSON.stringify(req.holder || '')}),
