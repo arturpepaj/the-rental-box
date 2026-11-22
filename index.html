@@ -693,6 +693,9 @@ header {
 .fh-flag > div { font-weight: 600; }
 .fh-flag a { color: var(--accent, #d9a77c); font-size: 12.5px; }
 .fh-legal { font-size: 11.5px; color: var(--subtle); }
+.lib-share { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--ink); margin: 8px 0 2px; cursor: pointer; } .lib-share input { margin-top: 3px; accent-color: var(--ask); } .lib-share small { display: block; color: var(--subtle); font-size: 11.5px; }
+.file-tag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-right: 4px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); } .file-tag.shared { color: var(--ask); border-color: var(--ask); }
+.file-move { background: none; border: 0; color: var(--ask); font: 600 11.5px var(--sans); cursor: pointer; padding: 0 4px; }
 .tab-disc { display: block; margin-top: 6px; font-size: 11.5px; color: var(--subtle); font-style: italic; }
 .rohn { margin: 4px auto 14px; max-width: 560px; text-align: center; }
 .rohn blockquote { margin: 0; font: italic 400 18px/1.45 var(--serif); color: var(--ink); }
@@ -959,7 +962,7 @@ header {
         <button class="lib-close" id="libClose" aria-label="Close library">✕</button>
       </div>
       <div class="packet-title">Building Documents</div>
-      <p class="packet-desc">Contracts, compliance records, plans, reports, budgets and more. Leases, payables and receivables will be pulled from Yardi Virtuoso. Export reports from BuildingLink, OnSite or other sites (work orders, maintenance requests, package logs, front desk log, rental applications) as Excel or PDF and add them here, until an API or AI connector is available. Claude reads these for every question, in every section. Shared with your team. Only admins can remove documents. Others can ask to remove one, with a reason.</p>
+      <p class="packet-desc">Contracts, compliance records, plans, reports, budgets and more. Leases, payables and receivables will be pulled from Yardi Virtuoso. Export reports from BuildingLink, OnSite or other sites (work orders, maintenance requests, package logs, front desk log, rental applications) as Excel or PDF and add them here, until an API or AI connector is available. Claude reads these for every question, in every section. Files stay only on your account unless you check “Share with my team”. Shared files: only admins can remove them; others can ask to remove one, with a reason.</p>
     </div>
     <button class="drop" id="libDrop" type="button">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6.5 9.5L12 4l5.5 5.5M4 16v2.5A1.5 1.5 0 005.5 20h13a1.5 1.5 0 001.5-1.5V16"/></svg>
@@ -967,6 +970,7 @@ header {
       <span class="drop-sub">Drop files anywhere on this panel, or click. PDF, Word, Excel, CSV, text, photos.</span>
     </button>
     <input type="file" id="libInput" multiple hidden accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,.html,.htm,.eml,.rtf,image/*">
+    <label class="lib-share"><input type="checkbox" id="libShare"> <span><b>Share new files with my team</b><small>Leave unchecked to keep files only on your account.</small></span></label>
     <div class="lib-status" id="libStatus">Loading your library…</div>
     <input class="lib-search" id="libSearch" type="search" placeholder="Filter documents…" aria-label="Filter documents" hidden>
     <div class="file-list" id="libList"></div>
@@ -1278,17 +1282,24 @@ async function clearRemovalRequest(fid) {
   delete removalReqs[fid];
   try { await db.doc(`delreq/${r.by}/items/${fid}`).delete(); } catch (e) {}
 }
+const privCol = () => `data/users/${myId}`;
 async function saveLibDoc(d) {
   if (!libCol || !myId) return;
   d.owner = myId;
   const parts = [];
   for (let i = 0; i < d.text.length; i += CHUNK) parts.push(d.text.slice(i, i + CHUNK));
+  if (d.priv) {
+    for (let i = 0; i < parts.length; i++) await db.doc(`${privCol()}/c_${d.id}_${i}`).set({ fid: d.id, n: i, text: parts[i] });
+    await db.doc(`${privCol()}/f_${d.id}`).set({ fid: d.id, name: d.name, size: d.size, added: d.added, chunks: parts.length, note: d.note || '', kind: 'libfile' });
+    return;
+  }
   await db.doc(`lib/${myId}`).set({ uid: myId, at: Date.now() });
   for (let i = 0; i < parts.length; i++) await db.doc(`lib/${myId}/chunks/${d.id}_${i}`).set({ fid: d.id, n: i, text: parts[i] });
   await db.doc(`lib/${myId}/files/${d.id}`).set({ fid: d.id, name: d.name, size: d.size, added: d.added, chunks: parts.length, note: d.note || '' });
 }
 async function deleteLibDoc(d) {
   if (!libCol || !d.owner) return;
+  if (d.priv) { await db.doc(`${privCol()}/f_${d.id}`).delete(); for (let i = 0; i < (d.chunks || Math.ceil(d.text.length / CHUNK) || 1); i++) { try { await db.doc(`${privCol()}/c_${d.id}_${i}`).delete(); } catch (e) {} } return; }
   await db.doc(`lib/${d.owner}/files/${d.id}`).delete();
   for (let i = 0; i < (d.chunks || Math.ceil(d.text.length / CHUNK) || 1); i++) {
     try { await db.doc(`lib/${d.owner}/chunks/${d.id}_${i}`).delete(); } catch (e) {}
@@ -1298,14 +1309,20 @@ async function loadLibrary() {
   if (!libCol) return;
   const timer = setTimeout(() => setLibStatus('The library is taking a long time to load. Check your connection.', true), 10000);
   try {
-    const owners = (await db.collection('lib').get()).docs.map(x => x.id);
-    const metas = [];
-    await Promise.all(owners.map(async o => {
-      const fs = await db.collection(`lib/${o}/files`).get();
-      fs.docs.forEach(x => { const m = x.data(); if (m) metas.push(Object.assign({ owner: o }, m)); });
-    }));
+    const metas = []; let sharedErr = null;
+    // private files: only this person can read them
+    try { const mine = await db.collection(privCol()).get(); const byId = {}; mine.docs.forEach(x => { byId[x.id] = x.data() || {}; });
+      Object.keys(byId).filter(k => k.startsWith('f_')).forEach(k => metas.push(Object.assign({ owner: myId, priv: true }, byId[k], { _text: Array.from({ length: byId[k].chunks || 0 }, (_, i) => (byId[`c_${byId[k].fid}_${i}`] || {}).text || '').join('') }))); } catch (e) {}
+    try {
+      const owners = (await db.collection('lib').get()).docs.map(x => x.id);
+      await Promise.all(owners.map(async o => {
+        const fs = await db.collection(`lib/${o}/files`).get();
+        fs.docs.forEach(x => { const m = x.data(); if (m) metas.push(Object.assign({ owner: o }, m)); });
+      }));
+    } catch (e) { sharedErr = e; }
     metas.sort((a, b) => (b.added || 0) - (a.added || 0));
     const docs = await Promise.all(metas.map(async m => {
+      if (m.priv) return { id: m.fid, owner: m.owner, priv: true, name: m.name, size: m.size, added: m.added, chunks: m.chunks, note: m.note, text: m._text, status: 'ok' };
       const chunks = await Promise.all(Array.from({ length: m.chunks || 0 }, (_, i) => db.doc(`lib/${m.owner}/chunks/${m.fid}_${i}`).get()));
       const text = chunks.map(c => (c.data() || {}).text || '').join('');
       return { id: m.fid, owner: m.owner, name: m.name, size: m.size, added: m.added, chunks: m.chunks, note: m.note, text, status: 'ok' };
@@ -1314,6 +1331,7 @@ async function loadLibrary() {
     await loadRemovalRequests();
     clearTimeout(timer);
     renderLibrary();
+    if (sharedErr && !docs.length) setLibStatus('Your own files are saved. To see files shared by your team, you need Contributor access to this page.', false);
   } catch (e) {
     clearTimeout(timer);
     setLibStatus('Could not load the library. You may need Contributor access to this page. Reload to try again.', true);
@@ -1326,7 +1344,7 @@ function renderLibrary() {
   const ok = library.filter(d => d.status === 'ok');
   const total = ok.reduce((n, d) => n + d.text.length, 0);
   if (!library.length) setLibStatus(libCol ? 'No documents yet. Add contracts, plans, reports and budgets.' : 'No documents yet. Documents you add stay for this visit only. Sign in to claude.ai to save them.', !libCol);
-  else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · ${total < 1000 ? 'under 1k' : 'about ' + Math.round(total / 1000) + 'k'} characters` + (libCol ? ' · shared' + (canDelete ? '' : ' · only admins can remove') : ' · this visit only'));
+  else setLibStatus(`${ok.length} document${ok.length === 1 ? '' : 's'} · ${total < 1000 ? 'under 1k' : 'about ' + Math.round(total / 1000) + 'k'} characters` + (libCol ? ` · ${ok.filter(d => d.priv).length} only me, ${ok.filter(d => !d.priv).length} shared` : ' · this visit only'));
   const pending = Object.keys(removalReqs).filter(id => library.some(d => d.id === id)).length;
   if (canDelete && pending) setLibStatus($('libStatus').textContent + ` · ${pending} removal request${pending > 1 ? 's' : ''} to review below`, true);
   $('libSearch').hidden = library.length < 6;
@@ -1334,12 +1352,13 @@ function renderLibrary() {
   $('libList').innerHTML = library.filter(d => !f || d.name.toLowerCase().includes(f)).map(d => {
     const meta = d.status === 'busy' ? `<div class="file-meta busy">${esc(d.note || 'Reading…')}</div>`
       : d.status === 'err' ? `<div class="file-meta err">${esc(d.note)}</div>`
-      : `<div class="file-meta">${fmtSize(d.size || 0)} · ${new Date(d.added).toLocaleDateString()}${d.note ? ' · ' + esc(d.note) : ''}</div>`;
+      : `<div class="file-meta">${libCol ? (d.priv ? '<span class="file-tag">Only me</span>' : '<span class="file-tag shared">Shared</span>') : ''}${fmtSize(d.size || 0)} · ${new Date(d.added).toLocaleDateString()}${d.note ? ' · ' + esc(d.note) : ''}</div>`;
     const req = removalReqs[d.id];
     const reqLine = req ? `<div class="req-line"><b>Removal requested:</b> ${esc(req.reason)}${req.comment ? ' · ' + esc(req.comment) : ''}</div>` : '';
     let btn = '';
     if (d.status === 'busy') btn = '';
-    else if (d.status !== 'ok' || !libCol || canDelete) btn = `<button class="file-del" data-id="${d.id}">Remove</button>`;
+    else if (d.status !== 'ok' || !libCol || canDelete || d.priv) btn = `<button class="file-del" data-id="${d.id}">Remove</button>`;
+    if (d.status === 'ok' && libCol && d.owner === myId) btn = `<button class="file-move" data-id="${d.id}">${d.priv ? 'Share' : 'Make private'}</button>` + btn;
     else if (req) btn = `<span class="req-pending">Requested</span>`;
     else btn = `<button class="file-ask" data-id="${d.id}">Ask to remove</button>`;
     const keep = canDelete && req ? `<button class="file-keep" data-id="${d.id}">Keep</button>` : '';
@@ -1356,11 +1375,16 @@ $('libList').addEventListener('click', async e => {
   const ask = e.target.closest('.file-ask');
   if (ask) { askingFor = ask.dataset.id; renderLibrary(); const sel = $('reqReason'); if (sel) sel.focus(); return; }
   if (e.target.closest('.req-cancel')) { askingFor = null; renderLibrary(); return; }
+  const mv = e.target.closest('.file-move');
+  if (mv) { const d = library.find(x => x.id === mv.dataset.id); if (!d || d.owner !== myId) return; const old = Object.assign({}, d); mv.disabled = true; mv.textContent = 'Moving…';
+    try { d.priv = !d.priv; await saveLibDoc(d); await deleteLibDoc(old); d.chunks = Math.ceil(d.text.length / CHUNK); setLibStatus(d.priv ? `"${d.name}" is now only on your account.` : `"${d.name}" is now shared with your team.`); }
+    catch (err) { d.priv = old.priv; setLibStatus('Could not change sharing. Reload and try again.', true); }
+    renderLibrary(); return; }
   const kp = e.target.closest('.file-keep');
   if (kp) { await clearRemovalRequest(kp.dataset.id); renderLibrary(); return; }
   const b = e.target.closest('.file-del'); if (!b) return;
   const d = library.find(x => x.id === b.dataset.id); if (!d) return;
-  if (d.status === 'ok' && libCol && !canDelete) return;
+  if (d.status === 'ok' && libCol && !canDelete && !d.priv) return;
   if (d.status === 'err') { library = library.filter(x => x !== d); renderLibrary(); return; }
   if (!b.classList.contains('confirm')) {
     b.classList.add('confirm'); b.textContent = 'Remove?';
@@ -1385,7 +1409,7 @@ $('libSearch').addEventListener('input', e => { libFilter = e.target.value; rend
 
 async function addToLibrary(files) {
   for (const file of files) {
-    const d = { id: uid(), name: file.name, size: file.size, added: Date.now(), text: '', status: 'busy', note: 'Reading…' };
+    const d = { id: uid(), name: file.name, size: file.size, added: Date.now(), text: '', status: 'busy', note: 'Reading…', priv: !($('libShare') && $('libShare').checked) };
     library.unshift(d); renderLibrary();
     try {
       if (file.size > 40 * 1048576) throw new Error('File is over 40 MB.');
@@ -3710,6 +3734,8 @@ function wireClick(el, input, handler) {
   input.addEventListener('change', () => { if (input.files.length) handler([...input.files]); input.value = ''; });
 }
 wireClick($('libDrop'), $('libInput'), addToLibrary);
+try { $('libShare').checked = localStorage.getItem('rb-libshare') === '1'; } catch (e) {}
+$('libShare').addEventListener('change', e => { try { localStorage.setItem('rb-libshare', e.target.checked ? '1' : '0'); } catch (err) {} });
 wireClick($('tabDrop'), $('tabInput'), addToTab);
 $('attachBtn').addEventListener('click', () => $('tabInput').click());
 const hasFiles = e => !!(e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files'));
