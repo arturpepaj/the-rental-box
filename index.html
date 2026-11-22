@@ -3531,6 +3531,89 @@ async function emgDownload(key) {
   const blob = new Blob([html], { type: 'text/html' });
   if (downloads) await downloads.save({ filename: name, data: blob }); else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
 }
+/* ---------- Emergency notices for residents (Word, editable) ---------- */
+const EMG_NOTICES = {
+  fire: { title: 'Fire in the Building', intro: 'On [date] at about [time], there was a fire in [apartment / area]. The Fire Department (FDNY) put out the fire. Thank you for your patience and cooperation.', what: [
+    'Do not enter areas that are closed off or taped. They may not be safe yet.',
+    'If you smell smoke or see water coming in, call the super right away.',
+    'If your apartment was damaged, please contact your renters insurance company.',
+    'If you need a place to stay, the American Red Cross can help: 1-877-733-2767.',
+    'We will post updates in the lobby as repairs move forward.' ] },
+  flood: { title: 'Water Leak: Water Shut Off', intro: 'Because of a water leak, the water will be shut off on [date] from [start time] to [end time] so we can make emergency repairs.', what: [
+    'Please fill bottles and pots with water before the shut-off for drinking and flushing.',
+    'Keep all faucets closed during the shut-off.',
+    'When the water comes back, it may look brown for a few minutes. Let it run until it is clear.',
+    'If you see water coming from your ceiling, walls or floors, call the super right away.',
+    'Move valuables off the floor in case of more leaks.' ] },
+  gas: { title: 'Gas Service Shut Off', intro: 'On [date], the gas service to [the building / line serving apartments ___] was shut off for safety. The gas will stay off until the repairs are done and the gas company and the City inspect and approve the work. This can take [several days / weeks]. We will update you.', what: [
+    'Do not turn on the stove knobs and do not try to relight the stove.',
+    'We will give each apartment with a gas stove a hot plate. [Pick-up place and time.]',
+    'Do not use the oven or stove to heat your apartment.',
+    'If you smell gas anywhere, leave the area and call 911, then Con Edison at 1-800-752-6633 (National Grid in Brooklyn, Queens and Staten Island: 718-643-4050).',
+    'Do not use matches, lighters or light switches if you smell gas.' ] },
+  power: { title: 'Power Outage', intro: 'The building has lost power since [time] on [date]. Con Edison is working on the problem. We expect power back by [time / date, if known].', what: [
+    'The elevators are out of service. Please use the stairs carefully and bring a flashlight.',
+    'Do not use candles. Use flashlights or battery lights.',
+    'Keep the refrigerator and freezer closed to keep food cold.',
+    'Turn off and unplug electronics to protect them when the power comes back.',
+    'Please check on elderly neighbors and neighbors who need help.',
+    'To report or check the outage: Con Edison 1-800-752-6633 or coned.com.' ] },
+  heat: { title: 'No Heat / No Hot Water: Repair in Progress', intro: 'There is no [heat / hot water] in the building because of [a boiler problem / a repair]. Our heating company is working on it now. We expect service back by [time / date].', what: [
+    'Do not use the stove or oven to heat your apartment. It can cause fire and carbon monoxide poisoning.',
+    'If you use a space heater, keep it 3 feet away from beds, curtains and furniture, and plug it straight into the wall.',
+    'Keep windows closed to hold in the heat.',
+    'Residents who are elderly, sick or have small children: please tell the super if you need help.',
+    'We will post an update when service is back.' ] },
+  elevator: { title: 'Elevator Out of Service', intro: 'The [passenger / service] elevator is out of service starting [date] because of [a repair / an inspection]. The elevator company expects it back in service by [date].', what: [
+    'Please use the [other elevator / stairs].',
+    'If you have trouble with stairs or need help with groceries or deliveries, tell the super and we will help.',
+    'Please plan extra time for moves and deliveries. Moves are [allowed / not allowed] while the elevator is out.',
+    'If someone is stuck in an elevator, press the alarm button and call 911.' ] },
+  co: { title: 'Carbon Monoxide (CO) Safety Notice', intro: 'On [date], a carbon monoxide alarm went off in [apartment / area]. The Fire Department checked the building. [The cause was found and fixed. / We are still checking the cause.]', what: [
+    'Carbon monoxide has no color and no smell. It can make you sick or kill you.',
+    'Signs of CO poisoning: headache, dizziness, upset stomach, feeling tired or confused.',
+    'If your CO alarm goes off: leave the apartment right away and call 911 from outside.',
+    'Test your CO and smoke alarms today. Tell the super if one is missing or not working.',
+    'Never use the stove, oven or a grill to heat your apartment.' ] },
+  frozen: { title: 'Cold Weather: Help Prevent Frozen Pipes', intro: 'Very cold weather is expected from [date] to [date]. Frozen pipes can burst and flood apartments. Please help us protect the building.', what: [
+    'Keep your heat on, day and night, even if you go away.',
+    'Keep windows closed, especially in kitchens and bathrooms.',
+    'Open the cabinet doors under sinks on outside walls so warm air can reach the pipes.',
+    'If you have no water, or see a leak or ice on a pipe, call the super right away.',
+    'Do not use an open flame to thaw a pipe.' ] }
+};
+function docxFile(title, bodyXml) {
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  return zipStore([
+    { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
+    { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { name: 'word/_rels/document.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: 'word/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="111111"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>' },
+    { name: 'word/document.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${bodyXml}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="540" w:footer="540" w:gutter="0"/></w:sectPr></w:body></w:document>` }
+  ]);
+}
+async function emgNotice(key) {
+  const n = EMG_NOTICES[key]; if (!n) return;
+  const addr = emgCur(); const rec = addr ? emg.contacts[bldKey(addr)] : null; const c = (rec && rec.contacts) || {};
+  const sup = c['Super / resident manager'] || {};
+  const X = t => String(t == null ? '' : t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // [text in brackets] is highlighted yellow so staff see what to fill in
+  const runs = (t, o = {}) => String(t).split(/(\[[^\]]+\])/).filter(Boolean).map(part => { const fill = /^\[.*\]$/.test(part);
+    return `<w:r><w:rPr>${o.b ? '<w:b/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}${o.sz ? `<w:sz w:val="${o.sz * 2}"/><w:szCs w:val="${o.sz * 2}"/>` : ''}${fill ? '<w:highlight w:val="yellow"/>' : ''}</w:rPr><w:t xml:space="preserve">${X(part)}</w:t></w:r>`; }).join('');
+  const p = (t, o = {}) => `<w:p><w:pPr>${o.bullet ? '<w:ind w:left="540" w:hanging="300"/>' : ''}${o.align ? `<w:jc w:val="${o.align}"/>` : ''}<w:spacing w:before="${o.before || 0}" w:after="${o.after == null ? 120 : o.after}"/>${o.border ? '<w:pBdr><w:bottom w:val="single" w:sz="18" w:space="6" w:color="111111"/></w:pBdr>' : ''}</w:pPr>${o.bullet ? runs('•  ', { b: true }) : ''}${runs(t, o)}</w:p>`;
+  const banner = `<w:tbl><w:tblPr><w:tblW w:w="10080" w:type="dxa"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tblBorders><w:tblCellMar><w:top w:w="140" w:type="dxa"/><w:bottom w:w="140" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="10080"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="10080" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="B3261E"/></w:tcPr>${p('NOTICE TO ALL RESIDENTS', { b: true, sz: 26, color: 'FFFFFF', align: 'center', after: 0 })}</w:tc></w:tr></w:tbl>`;
+  const supTxt = sup.name || sup.phone ? `Super: ${[sup.name, sup.phone].filter(Boolean).join(', ')}` : 'Super: [name and phone]';
+  const body = banner +
+    p(addr || '[Building address]', { b: true, sz: 16, align: 'center', before: 200, after: 40 }) +
+    p('Date: [date]', { align: 'center', after: 240, color: '444444' }) +
+    p(n.title, { b: true, sz: 22, align: 'center', after: 200, border: true }) +
+    p('Dear Residents,', { before: 120 }) + p(n.intro, { after: 200 }) +
+    p('What you should do:', { b: true, sz: 14, after: 80 }) + n.what.map(w => p(w, { bullet: true, after: 80 })).join('') +
+    p('Questions or problems? Please contact:', { b: true, before: 240, after: 60 }) + p(supTxt, { after: 40 }) + p('Management office: [phone and email]', { after: 40 }) + p('In an emergency, call 911.', { b: true, after: 240 }) +
+    p('Thank you for your patience and cooperation.', { after: 60 }) + p('Management', { b: true });
+  const name = `${(addr || 'Building').replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 40)} - Notice - ${n.title.replace(/[\\/:*?"<>|]+/g, ' ')}.docx`;
+  await crtSave(docxFile(n.title, body), name);
+}
 function renderEmg() {
   const el = $('emgPanel'); if (!el) return;
   el.hidden = mode !== 'emergency'; if (el.hidden) return;
@@ -3541,7 +3624,7 @@ function renderEmg() {
   const c = rec.contacts || {};
   el.innerHTML = `<div class="emg-head"><b>Emergency plans</b><select class="cal-sel" id="emgBld" aria-label="Building">${list.length ? list.map(a => `<option value="${esc(a)}"${bldKey(a) === bldKey(addr) ? ' selected' : ''}>${esc(a)}</option>`).join('') : '<option value="">Type a building address at the top</option>'}</select></div>
     <div class="emg-plans">${EMERGENCY_PLANS.map(p => `<div class="emg-plan${emg.plan === p.key ? ' open' : ''}" data-plan="${p.key}"><button type="button" class="emg-ph" data-toggle="${p.key}"><span>${esc(p.title)}</span><small>${p.steps.length} steps</small></button>
-      <div class="emg-pb"><ol>${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><button type="button" class="nyc-btn ghost" data-print="${p.key}">Download printable checklist</button></div></div>`).join('')}</div>
+      <div class="emg-pb"><ol>${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><div class="cal-btns"><button type="button" class="nyc-btn" data-notice="${p.key}">Notice for residents (Word)</button><button type="button" class="nyc-btn ghost" data-print="${p.key}">Download printable checklist</button></div></div></div>`).join('')}</div>
     <div class="cal-cols">
       <div class="cal-box"><h3>Emergency contacts${addr ? ' — ' + esc(addr) : ''}</h3><p>Saved for each building. Claude puts these names and numbers into every emergency answer and checklist.</p>
         <div class="emg-form">${EMG_ROLES.map((r, i) => `<label>${esc(r)}</label><input data-c="${i}" data-f="name" placeholder="Name / company" value="${esc((c[r] || {}).name || '')}"><input data-c="${i}" data-f="phone" placeholder="Phone" value="${esc((c[r] || {}).phone || '')}">`).join('')}</div>
@@ -3553,6 +3636,7 @@ function renderEmg() {
 }
 $('emgPanel').addEventListener('click', e => {
   const t = e.target.closest('[data-toggle]'); if (t) { emg.plan = emg.plan === t.dataset.toggle ? '' : t.dataset.toggle; renderEmg(); return; }
+  const nt = e.target.closest('[data-notice]'); if (nt) { emgNotice(nt.dataset.notice).catch(() => showFootWarn('Could not make the notice.')); return; }
   const pr = e.target.closest('[data-print]'); if (pr) { emgDownload(pr.dataset.print).catch(() => showFootWarn('Could not make the checklist.')); return; }
   if (e.target.closest('#emgSave')) {
     const addr = emgCur(); if (!addr) return;
