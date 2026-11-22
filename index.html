@@ -148,6 +148,13 @@ header {
 .lib-toggle:hover { background: var(--ask-hover); }
 .lib-status { font-size: 12px; color: var(--subtle); line-height: 1.5; }
 .lib-status.warn { color: var(--rust); }
+.rec { padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.rec-list { display: flex; flex-direction: column; gap: 1px; max-height: 260px; overflow-y: auto; }
+.rec-it { display: flex; align-items: center; gap: 8px; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: var(--ink); font-size: 13px; background: none; border: 0; text-align: left; font-family: inherit; width: 100%; }
+.rec-it:hover, .rec-it.on { background: var(--surface-2); }
+.rec-it svg { width: 15px; height: 15px; flex-shrink: 0; stroke: var(--ic, currentColor); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rec-it .rec-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-it .rec-x { opacity: 0; color: var(--subtle); font-size: 12px; padding: 0 2px; } .rec-it:hover .rec-x { opacity: 1; } .rec-it .rec-x:hover { color: var(--ink); }
 .conn { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .conn-head { display: flex; justify-content: space-between; align-items: center; }
 .conn-refresh { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 12px; padding: 3px 9px; font: inherit; font-size: 11px; cursor: pointer; }
@@ -958,6 +965,10 @@ header {
     <div class="lib-status" id="libStatus">Loading your library…</div>
     <input class="lib-search" id="libSearch" type="search" placeholder="Filter documents…" aria-label="Filter documents" hidden>
     <div class="file-list" id="libList"></div>
+    <section class="rec" aria-label="Recent chats" id="recBox" hidden>
+      <div class="conn-head"><div class="eyebrow">Recents</div></div>
+      <div class="rec-list" id="recList"></div>
+    </section>
     <section class="conn" aria-label="Connections">
       <div class="conn-head"><div class="eyebrow">Connections</div><button type="button" class="conn-refresh" id="connRefresh">Refresh</button></div>
       <div class="conn-list" id="connList">
@@ -1984,7 +1995,37 @@ function msgHtml(m, idx) {
   }
   return `<div class="msg bot"><div class="who">The ToolBox</div><div class="bubble">${body}</div>${foot}</div>`;
 }
+// ---- Recents: past chats in this browser, like the claude.ai sidebar ----
+let recents = []; const recCur = {};
+try { recents = JSON.parse(localStorage.getItem('rb-recents') || '[]') || []; } catch (e) { recents = []; }
+function recStore() { try { localStorage.setItem('rb-recents', JSON.stringify(recents)); } catch (e) { recents = recents.slice(0, 15); try { localStorage.setItem('rb-recents', JSON.stringify(recents)); } catch (e2) {} } }
+function recSync() {
+  let changed = false;
+  for (const key of Object.keys(threads)) {
+    const msgs = (threads[key] || []).filter(m => !m.pending && m.content).map(m => ({ role: m.role, content: String(m.content).slice(0, 8000), used: m.used, files: m.files }));
+    if (!msgs.some(m => m.role === 'user') || !msgs.some(m => m.role !== 'user')) continue;
+    let e = recCur[key] && recents.find(r => r.id === recCur[key]);
+    if (e && e.msgs.length === msgs.length) continue;
+    if (!e) { e = { id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), key, title: '' }; recCur[key] = e.id; recents.unshift(e); }
+    e.msgs = msgs; e.at = Date.now(); e.title = String(msgs.find(m => m.role === 'user').content).replace(/\s+/g, ' ').slice(0, 80);
+    recents = [e].concat(recents.filter(r => r !== e)); changed = true;
+  }
+  if (changed) { recents = recents.slice(0, 30); recStore(); }
+  renderRecents();
+}
+function renderRecents() {
+  const box = $('recBox'); if (!box) return; box.hidden = !recents.length; if (!recents.length) return;
+  $('recList').innerHTML = recents.map(r => `<button type="button" class="rec-it${recCur[r.key] === r.id && r.key === mode ? ' on' : ''}" data-rec="${r.id}" style="--ic:${NAV_COLORS[r.key] || 'currentColor'}" title="${esc((byKey[r.key] ? byKey[r.key].title + ' · ' : '') + new Date(r.at).toLocaleString('en-US'))}"><svg viewBox="0 0 24 24">${ICONS[r.key] || ''}</svg><span class="rec-t">${esc(r.title)}</span><span class="rec-x" data-recdel="${r.id}" title="Remove">✕</span></button>`).join('');
+}
+$('recList').addEventListener('click', e => {
+  const del = e.target.closest('[data-recdel]'); if (del) { e.stopPropagation(); const id = del.dataset.recdel; recents = recents.filter(r => r.id !== id); for (const k in recCur) if (recCur[k] === id) delete recCur[k]; recStore(); renderRecents(); return; }
+  const b = e.target.closest('[data-rec]'); if (!b) return; const r = recents.find(x => x.id === b.dataset.rec); if (!r || !byKey[r.key]) return;
+  threads[r.key] = r.msgs.map(m => Object.assign({}, m)); recCur[r.key] = r.id;
+  if (mode !== r.key) setMode(r.key); else render();
+  if (window.innerWidth <= 900 && typeof closeAll === 'function') closeAll();
+});
 function render() {
+  setTimeout(recSync, 0);
   const t = threads[mode] || [];
   $('messages').innerHTML = t.map(msgHtml).join('');
   $('hero').classList.toggle('compact', t.length > 0);
@@ -2749,7 +2790,7 @@ function setMode(key) {
 $('nav').addEventListener('click', e => { const b = e.target.closest('.nav-btn'); if (b) setMode(b.dataset.key); });
 $('samples').addEventListener('click', e => { const b = e.target.closest('.sample-q'); if (!b) return;
   if (b.dataset.period) { const per = b.dataset.period.toLowerCase(); const unit = { monthly: 'month', quarterly: 'quarter', yearly: 'year' }[per] || 'month'; send(`Create a ${per} budget variance report.`, VARIANCE_TASK.replace('{PERIOD}', per).replace('{UNIT}', unit), true); return; } $('chatInput').value = b.textContent; autosize(); $('chatInput').focus(); });
-$('newChat').addEventListener('click', () => { threads[mode] = []; render(); });
+$('newChat').addEventListener('click', () => { threads[mode] = []; delete recCur[mode]; render(); });
 
 /* ---------- Connections status ---------- */
 const CONN = [
@@ -3437,14 +3478,17 @@ function fmtDue(due) {
 function renderTasks() {
   tasks.forEach(t => { if (!t.status) t.status = t.done ? 'done' : 'todo'; });
   const open = tasks.filter(x => x.status !== 'done');
-  $('taskCount').textContent = open.length;
-  const badge = $('tasksBadge'); badge.textContent = open.length; badge.hidden = !open.length;
+  $('taskCount').textContent = Math.min(10, open.length);
+  const badge = $('tasksBadge'); badge.textContent = Math.min(10, open.length); badge.hidden = !open.length;
   const recentDone = tasks.filter(x => x.status === 'done' && Date.now() - (x.doneAt || x.createdAt || 0) < DONE_KEEP_MS);
   const counts = { todo: open.filter(x => x.status === 'todo').length, doing: open.filter(x => x.status === 'doing').length, done: recentDone.length };
-  $('fnTodo').textContent = counts.todo || ''; $('fnDoing').textContent = counts.doing || ''; $('fnDone').textContent = counts.done || '';
+  const cap = n => n > 10 ? '10+' : (n || ''); $('fnTodo').textContent = cap(counts.todo); $('fnDoing').textContent = cap(counts.doing); $('fnDone').textContent = cap(counts.done);
   let list = taskFilter === 'done' ? recentDone : open.filter(x => x.status === taskFilter);
+  // most important first: due today or overdue in the last 2 weeks, then due this week, then urgent tabs, then the rest; very old overdue items go lower
+  const rank = t => { const today = todayStr(); if (!t.due) return 4 - (['emergency', 'legal', 'arrears'].includes(t.section) ? 1 : 0); const days = Math.round((new Date(t.due + 'T12:00:00') - new Date(today + 'T12:00:00')) / 86400000);
+    if (days <= 0 && days >= -14) return 0; if (days > 0 && days <= 7) return 1; if (days > 7 && days <= 30) return 2; if (days < -14) return 5; return 6; };
   list = list.slice().sort((a, b) => taskFilter === 'done' ? (b.doneAt || 0) - (a.doneAt || 0)
-    : ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0)));
+    : (rank(a) - rank(b)) || (rank(a) === 0 ? (b.due || '').localeCompare(a.due || '') : 0) || ((a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : (b.createdAt || 0) - (a.createdAt || 0)));
   const totalN = list.length; list = list.slice(0, taskShow);
   $('taskList').innerHTML = list.map(t => {
     const due = fmtDue(t.due);
@@ -3463,7 +3507,7 @@ function renderTasks() {
       ${canDel ? `<button class="task-del" aria-label="Delete task" title="Delete">✕</button>` : '<span></span>'}
       <div class="task-status-row" role="group" aria-label="Status">${st}</div>${t.sourceUrl ? `<a class="task-link" href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Link to Source ↗</a>` : canFind ? `<button type="button" class="task-link task-find" ${finding.has(t.id) ? 'disabled' : ''}>${finding.has(t.id) ? 'Finding the link…' : findFailed.has(t.id) ? 'Link not found. Try again' : 'Link to Source ↗'}</button>` : t.source === 'document' ? `<span class="task-link off" title="In the Library">Source: Library</span>` : ''}
     </div>`;
-  }).join('') + (totalN > list.length ? `<div class="task-more"><span>Showing the ${list.length} most important of ${totalN}.</span><button type="button" id="taskMore">Show ${Math.min(10, totalN - list.length)} more</button></div>` : '');
+  }).join('') + (totalN > list.length ? `<div class="task-more"><span>These are the ${list.length} most important. Want to see more?</span><button type="button" id="taskMore">Show ${Math.min(10, totalN - list.length)} more</button></div>` : '');
   const st = $('taskStatus');
   if (!list.length) { st.classList.remove('warn'); st.textContent = taskFilter === 'done' ? 'No tasks completed in the last 30 days.' : taskFilter === 'doing' ? 'No tasks in progress.' : (scanning ? 'Scanning for tasks…' : 'No tasks waiting to start. Press ✦ Scan now to look again.'); }
   else if (taskFilter === 'done' && !scanMsg) { st.classList.remove('warn'); st.textContent = 'Completed tasks stay here for 30 days.'; }
