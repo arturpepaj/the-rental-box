@@ -375,7 +375,7 @@ header {
 
 /* Sections */
 .bottom-nav {
-  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
+  display: grid; grid-template-columns: calc(var(--libw) - 1px) repeat(5, minmax(0, 1fr)) var(--taskw); grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px;
   background: var(--line); border-top: 1px solid var(--line); flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -472,13 +472,13 @@ header {
     padding-right: max(20px, env(safe-area-inset-right, 0px));
   }
   .tasks.open { transform: translateX(0); }
-  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(7, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: calc(var(--libw) - 1px) repeat(6, minmax(0, 1fr)); }
   .tasks-toggle { display: grid; }
   .tasks-close { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .tasks { transition: none; } }
 @media (max-width: 900px) {
-  .bottom-nav { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .bottom-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .nav-btn { font-size: 12px; padding: 6px 2px; overflow-wrap: anywhere; }
   .nav-btn svg { width: 24px; height: 24px; }
   .library {
@@ -1140,7 +1140,7 @@ const SECTIONS = [
   { key:'systems', title:'MEP & Elevators', desc:'Mechanical, electrical, plumbing and elevators: heat pumps, boilers, cooling towers, fresh-air systems, the building management system, risers, booster pumps, hot water heaters, panels, submeters, generators, elevators and inspection dates. The NYC codes are connected: ask what the Plumbing, Mechanical, Electrical, Fuel Gas or Building Code says, or the elevator rules, and get the section with a link. Send and Roar here also find manufacturer manuals and spec sheets.', samples:['What does the NYC Plumbing Code say about backflow preventer testing?','What does the NYC code say about elevator CAT5 tests?','Find the manual for our Weil-McLain 88 boiler and list the yearly maintenance','When is the cooling tower inspection and Legionella test due?','All leak reports for unit 1005','When is the elevator inspection due?','Build a heat pump filter and service schedule for every apartment','When was the generator last tested?'] },
   { key:'inspect', title:'Inspections', desc:'Upload photos from a building or apartment inspection. Claude finds the problems in each photo, rates how urgent they are, and assigns each one to maintenance staff or a contractor. Download a PDF report with the photos, an Excel work list, or send the items to Open Tasks.', samples:['Which inspection items are urgent?','Write a work order for the super from this report','Which items could be HPD violations?'] },
   { key:'it', title:'IT Help', desc:'Paste or upload a screenshot of the problem and ask for help with software, portals or building systems.', samples:['How do I fix this error?','Portal won’t load, screenshot attached','Help with a Yardi login issue'] },
-  { key:'hr', guide: () => HR_GUIDE, title:'HR & Staff Guidelines', desc:'General guidelines on what building employees should not do and what to avoid: residents and their homes, harassment and discrimination, money and gifts, keys and access, safety, alcohol and drugs, time and phones. Download the guidelines for staff to read. Ask about a staff problem and Claude answers from these guidelines. These are not your company\'s rules: check your handbook, policies and union contract.', samples:['Can the porter accept a tip from a contractor?','A resident complained the super was rude. What do I do?','What should staff never say to a resident?','Write a written warning for being late 3 times','Can the handyman do a paid side job for a resident?'] },
+  { key:'hr', hidden: true, guide: () => HR_GUIDE, title:'HR & Staff Guidelines', desc:'General guidelines on what building employees should not do and what to avoid: residents and their homes, harassment and discrimination, money and gifts, keys and access, safety, alcohol and drugs, time and phones. Download the guidelines for staff to read. Ask about a staff problem and Claude answers from these guidelines. These are not your company\'s rules: check your handbook, policies and union contract.', samples:['Can the porter accept a tip from a contractor?','A resident complained the super was rude. What do I do?','What should staff never say to a resident?','Write a written warning for being late 3 times','Can the handyman do a paid side job for a resident?'] },
   { key:'records', title:'Compliance & Violations', desc:'Live NYC records for your building: HPD, DOB, FDNY and DOF. Local Law deadlines. Ask about any record below.', samples:['Any new violation notices this month?','Make an annual NYC compliance calendar','Are we on track for Local Law 97 limits?','When is our LL97 emissions report due?','Which open violations should we fix first?'] },
   { key:'emergency', title:'Emergency Prep', desc:'Step-by-step plans for fire, flood, gas leak or shut-off, power outage, no heat, elevator entrapment and more. Save emergency contacts for each building and download printable checklists.',
     guide: () => emergencyGuide(),
@@ -2142,7 +2142,7 @@ $('messages').addEventListener('click', async e => {
 /* ---------- Sections UI ---------- */
 function navOrder() {
   let saved = []; try { saved = JSON.parse(localStorage.getItem('rb-navorder') || '[]') || []; } catch (e) {}
-  const keys = SECTIONS.map(s => s.key); const out = saved.filter(k => keys.includes(k));
+  const keys = SECTIONS.filter(s => !s.hidden).map(s => s.key); const out = saved.filter(k => keys.includes(k));
   keys.forEach((k, i) => { if (!out.includes(k)) out.splice(Math.min(i, out.length), 0, k); });
   return out.map(k => SECTIONS.find(s => s.key === k));
 }
@@ -3958,7 +3958,7 @@ async function scanTasks(manual) {
     const tools = emailTools(proxyBot).concat([calendarTool(say)], slackSampleTools(proxyBot));
     const ctx = buildContext('deadline due date expiration renewal inspection follow up action required task', 40000);
     const existing = tasks.filter(t => t.title).slice(0, 80).map(t => '- ' + t.title + (t.unit ? ' (unit ' + t.unit + ')' : '')).join('\n');
-    const keys = SECTIONS.map(x => x.key + ' = ' + x.title).join('; ');
+    const keys = SECTIONS.filter(x => !x.hidden).map(x => x.key + ' = ' + x.title).join('; ');
     const today = todayStr();
     const prompt = `You pull OPEN TASKS for a residential building manager in New York. Today is ${today}. Building: ${$('propertyName').value.trim() || 'not given'}.
 Look in all of these, using the tools:
@@ -3971,7 +3971,7 @@ Look in all of these, using the tools:
 Make only real tasks that still need someone to act. One task per action. Do not repeat these existing tasks:
 ${existing || '(none yet)'}
 Reply with only a JSON array (at most 25) of objects:
-{"title": short action starting with a verb, "section": one of [${SECTIONS.map(x => x.key).join(', ')}] (${keys}), "unit": apartment or unit or "", "due": "YYYY-MM-DD" or "", "owner": person or vendor who should act or "", "source": "email" | "calendar" | "teams" | "sharepoint" | "slack" | "document", "sourceLabel": email subject, event name or file name, "sourceDate": "YYYY-MM-DD" or "", "sourceUrl": the item's "link" copied exactly from the tool result, or "" for uploaded documents}
+{"title": short action starting with a verb, "section": one of [${SECTIONS.filter(x => !x.hidden).map(x => x.key).join(', ')}] (${keys}), "unit": apartment or unit or "", "due": "YYYY-MM-DD" or "", "owner": person or vendor who should act or "", "source": "email" | "calendar" | "teams" | "sharepoint" | "slack" | "document", "sourceLabel": email subject, event name or file name, "sourceDate": "YYYY-MM-DD" or "", "sourceUrl": the item's "link" copied exactly from the tool result, or "" for uploaded documents}
 Example: [{"title":"Approve Liberty Elevator repair quote","section":"vendors","unit":"","due":"2026-11-14","owner":"","source":"email","sourceLabel":"Elevator repair proposal","sourceDate":"2026-11-07","sourceUrl":"https://outlook.office365.com/owa/?ItemID=..."}]
 ${ctx.text ? '\nUploaded documents:\n' + ctx.text : ''}`;
     say('Scanning email, calendar, Teams, SharePoint and documents…');
