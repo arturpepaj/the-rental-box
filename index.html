@@ -3766,7 +3766,7 @@ Building: ${p.bld || $('propertyName').value.trim() || 'not given'}
 Keywords, people, vendors: ${p.keys || 'none'}
 Mailboxes to search: the user's own Outlook${boxes.length ? ', and these delegate (surrogate) mailboxes: ' + boxes.join(', ') : ''}${', plus Gmail if it is connected'}.
 ${p.timeline && p.timeline.length ? 'Timeline found before (keep these events, add new ones): ' + JSON.stringify(p.timeline.slice(0, 40).map(t => ({ date: t.date, event: t.event }))) : ''}
-Steps: search every mailbox with 2-4 different searches (apartment number with the building, the issue words like leak, noise, heat, repair, complaint, payment, lease, renewal, notice, violation, accommodation). Read the important emails: the resident's complaints and requests, our replies, work orders and repairs, access and appointments, notices, payments, attorney or court steps. Use at most about 15 tool calls.
+Steps: search EVERY mailbox listed above (your own and EACH delegate mailbox, using the mailbox field) with 2-4 different searches (apartment number with the building, the issue words like leak, noise, heat, repair, complaint, payment, lease, renewal, notice, violation, accommodation). Read the important emails: the resident's complaints and requests, our replies, work orders and repairs, access and appointments, notices, payments, attorney or court steps. Use at most about 15 tool calls.
 Then reply with only JSON, no other text:
 {"title": "short title for this matter, 3-6 words, e.g. Leak in 4B bathroom ceiling", "summary": "2-3 short sentences: where the matter stands now and what the resident is waiting for", "state": one of ${JSON.stringify(PJ_STATUS)}, "next": "the next step and who owes it, short", "timeline": [{"date": "YYYY-MM-DD", "event": "what happened, short, simple English", "who": "person or company", "source": "Outlook or the delegate mailbox address or Gmail", "subject": "email subject", "uri": "mail:/// uri or Gmail thread id if you have it"}]}
 Sort the timeline oldest first. Only include events you saw in an email. Never guess dates.`;
@@ -3789,20 +3789,21 @@ function renderPj() {
   const top = $('propertyName').value.trim();
   for (const p of pj.list) { const nb = !p.bld ? top : (top && bldKey(p.bld) === bldKey(top)) ? top : fmtAddr(p.bld); if (nb && nb !== p.bld) { p.bld = nb; pjSave(p); } }
   el.innerHTML = `<div class="cal-box fh-box"><div class="emg-head" style="margin:0"><b>Resident Matters</b><span class="nyc-msg">${pj.list.length} tracked</span></div>
-    <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Roar</b> on a matter and Claude searches your email${pjBoxes().length ? ', your delegate mailboxes' : ''} and Gmail, then builds a timeline of what happened.</p>
+    <p>Keep track of resident issues: leaks, noise, repairs, complaints, payment plans, lease questions. Press <b>✦ Build Timeline of Emails</b> and Claude searches your email, your delegate (surrogate) mailboxes and Gmail, then builds a timeline of what happened.</p>
     <div class="pj-mb"><label>Delegate (surrogate) mailboxes to search too</label><input id="pjBoxes" value="${esc(pj.mailboxes)}" placeholder="e.g. jsmith@company.com, building@company.com"></div>
+    ${pjBoxes().length ? '' : '<p class="nyc-msg" style="padding:0;color:#e0b56a">Add the delegate (surrogate) mailboxes you can open, separated by commas, so the timeline includes their emails too.</p>'}
     <div class="pj-grid">${pj.list.map((p, i) => `<div class="pj-card">
       ${p.name ? `<div class="pj-title">${esc(p.name)}</div>` : ''}
       <input class="pj-name" data-pj="${p.id}" data-f="keys" value="${esc(p.keys)}" placeholder="Keywords, e.g. leak bathroom ceiling, plumber, work order #">
       <input data-pj="${p.id}" data-f="bld" value="${esc(p.bld)}" placeholder="Building address" title="${esc(p.bld)}">
       <div class="pj-addr pj-addr2"><input data-pj="${p.id}" data-f="unit" value="${esc(p.unit || '')}" placeholder="Unit (optional)"></div>
       ${p.summary ? `<p class="pj-sum">${esc(p.summary)}</p>` : ''}
-      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}><span class="pj-roar-s">✦</span> <span class="pj-roar-l">${pj.busy[p.id] ? 'Working…' : p.timeline.length ? 'Roar: update timeline' : 'Roar: build timeline'}</span></button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
+      <div class="cal-btns"><button class="nyc-btn pj-roar" type="button" data-pjroar="${p.id}"${pj.busy[p.id] ? ' disabled' : ''}><span class="pj-roar-s">✦</span> <span class="pj-roar-l">${pj.busy[p.id] ? 'Working…' : 'Build Timeline of Emails'}</span></button>${p.timeline.length ? `<button class="nyc-btn ghost" type="button" data-pjtl="${p.id}">${pj.open[p.id] ? 'Hide' : 'Show'} timeline (${p.timeline.length})</button>` : ''}<button class="nyc-btn ghost pj-del" type="button" data-pjdel="${p.id}" title="Remove this matter">✕</button></div>
       ${pj.status[p.id] ? `<p class="nyc-msg" style="padding:0">${esc(pj.status[p.id])}</p>` : ''}
       ${pj.open[p.id] && p.timeline.length ? `<ol class="pj-tl">${p.timeline.map(t => `<li><span class="pj-d">${esc(t.date)}</span><div><b>${esc(t.event)}</b><small>${[t.who, t.source, t.subject ? '“' + t.subject + '”' : ''].filter(Boolean).map(esc).join(' · ')}</small></div></li>`).join('')}</ol>` : ''}
     </div>`).join('')}
     <button class="pj-card pj-add" type="button" id="pjAdd"><b>+ Add another matter</b><span>Add a box for each matter.</span></button></div>
-    <p class="fh-legal">Roar only reads email. Check each event against the email before you rely on it.</p></div>`;
+    <p class="fh-legal">The timeline only reads email. Check each event against the email before you rely on it.</p></div>`;
 }
 $('pjPanel').addEventListener('change', e => { if (e.target.dataset.pj && e.target.dataset.f === 'bld') { const p = pj.list.find(x => x.id === e.target.dataset.pj); const v = fmtAddr(e.target.value); if (p && v !== e.target.value) { e.target.value = v; p.bld = v; pjSave(p); } } });
 $('pjPanel').addEventListener('input', e => {
