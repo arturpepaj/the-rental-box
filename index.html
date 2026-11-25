@@ -511,6 +511,7 @@ header {
 .nyc-reg-foot { grid-column: 1 / -1; margin: 0; font-size: 11.5px; color: var(--subtle); } .nyc-reg-foot a { color: var(--ask); } .nyc-exp { color: #e08a6a; font-weight: 600; }
 .hr-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; } .hr-g { border: 1px solid var(--line); border-left: 4px solid var(--hc); border-radius: 10px; } .hr-h { width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: 0; color: var(--ink); font: 600 14px var(--sans); padding: 10px 12px; cursor: pointer; text-align: left; } .hr-h span { flex: 1; } .hr-h small { color: var(--muted); font-weight: 400; } .hr-g.open .hr-h svg { transform: rotate(180deg); } .hr-g ul { margin: 0; padding: 0 14px 12px 30px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--ink); } .hr-g li::marker { color: var(--hc); }
 .emg-ntc { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 0 0 10px; font-size: 13.5px; color: var(--ink); }
+.sup-unit { width: 120px; height: 34px; border-radius: 17px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font: 600 13px var(--sans); padding: 0 12px; }
 .sup-lang { height: 34px; border-radius: 17px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font: 600 13px var(--sans); padding: 0 12px; }
 .nyc-super .cal-btns { align-items: center; } .nyc-super { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding: 10px 14px; margin: 0; font-size: 13px; color: var(--ink); } .nyc-super span, .nyc-super small { color: var(--muted); font-size: 12px; } .nyc-super .cal-btns { margin: 0; }
 .nyc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
@@ -2833,6 +2834,9 @@ async function nycSuperRows(onStatus, lang = 'en') {
     const u = nycUrl('hpdv', { $select: 'violationid,apartment,story,class,novdescription,novissueddate', $where: `buildingid='${b.buildingid}' AND violationstatus='Open'`, $order: 'apartment', $limit: 2000 });
     try { const r = await nycFetch([u]); if (Array.isArray(r[u]) && r[u].length) list = r[u]; } catch (e) {}
   }
+  const uNorm = x => String(x || '').toUpperCase().replace(/\b(APT|APARTMENT|UNIT)\b\.?/g, '').replace(/[#\s.-]/g, '').replace(/^0+(?=\w)/, '');
+  const want = uNorm(nyc.supUnit);
+  if (want) { list = list.filter(v => uNorm(v.apartment) === want); if (!list.length) throw new Error(`No open HPD violations found for unit ${supU()}.`); }
   const need = list.filter(v => !cache[v.violationid]);
   if (need.length && sample) {
     for (let i = 0; i < need.length; i += 60) {
@@ -2850,13 +2854,15 @@ ${part.map(v => `id ${v.violationid}: ${String(v.novdescription || '').slice(0, 
   rows.missing = rows.filter(r => r.miss).length;
   return rows.sort((x, y) => (x.b - y.b) || x.apt.localeCompare(y.apt, 'en', { numeric: true }) || 'CBAI'.indexOf(x.cls) - 'CBAI'.indexOf(y.cls));
 }
-const nycSuperName = (lang = 'en') => { return (nycSuperAddr().split(',')[0] || 'Building').replace(/[\\/:*?"<>|]/g, '-') + ' - HPD violations work list' + ((SUP_T[lang] || SUP_T.en).file); };
+const supU = () => String(nyc.supUnit || '').replace(/\b(apt|apartment|unit)\b\.?/gi, '').replace(/#/g, '').trim().toUpperCase();
+const supTitle = T => T.title + (supU() ? ` - ${T.apt} ${supU()}` : '');
+const nycSuperName = (lang = 'en') => { return (nycSuperAddr().split(',')[0] + (supU() ? ' Apt ' + supU() : '') || 'Building').replace(/[\\/:*?"<>|]/g, '-') + ' - HPD violations work list' + ((SUP_T[lang] || SUP_T.en).file); };
 const nycSuperAddr = () => { const top = $('propertyName').value.trim(); if (top) return top; const b = nyc.bld; return b ? fmtAddr(`${b.housenumber} ${b.streetname}, ${(NYC_BORO[b.boroid] || [''])[0]}`) : ''; };
 const NYC_SUPER_LEGEND = 'Class C = hazardous, fix within 24 hours (lead paint and window guards: 21 days). Class B = fix within 30 days. Class A = fix within 90 days. Simple descriptions are for guidance only; the official HPD violation text is what counts.';
 async function nycSuperXlsx(rows, lang = 'en') {
   await loadScript(LIBS.xlsx); const T = SUP_T[lang] || SUP_T.en;
   const date = supDate(lang);
-  const aoa = [[T.title], [nycSuperAddr() + '  ·  ' + date + '  ·  ' + T.open(rows.length)], [T.legend], [], [T.apt, T.cls, T.what, T.done, T.nd]].concat(rows.map(r => [r.apt, r.cls, r.text, '☐', '☐']));
+  const aoa = [[supTitle(T)], [nycSuperAddr() + '  ·  ' + date + '  ·  ' + T.open(rows.length)], [T.legend], [], [T.apt, T.cls, T.what, T.done, T.nd]].concat(rows.map(r => [r.apt, r.cls, r.text, '☐', '☐']));
   const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 10 }, { wch: 7 }, { wch: 80 }, { wch: 11 }, { wch: 14 }];
   ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } }];
   ws['!autofilter'] = { ref: `A5:E${aoa.length}` };
@@ -2873,7 +2879,7 @@ async function nycSuperPdf(rows, lang = 'en') {
   let page, y; const date = supDate(lang);
   const head = () => { page.drawRectangle({ x: M, y: y - 22, width: CW, height: 22, color: rgb(.12, .23, .37) }); let x = M; for (const [w, h] of cols) { page.drawText(h, { x: x + 6, y: y - 15, size: 10, font: bold, color: rgb(1, 1, 1) }); x += w; } y -= 22; };
   const newPage = first => { page = doc.addPage([W, H]); y = H - M;
-    if (first) { page.drawText(fmSafe(T.title), { x: M, y: y - 18, size: 18, font: bold, color: ink }); y -= 26; page.drawText(fmSafe(nycSuperAddr() + '   ' + date + '   ' + T.open(rows.length)), { x: M, y: y - 11, size: 11, font, color: mut }); y -= 18;
+    if (first) { page.drawText(fmSafe(supTitle(T)), { x: M, y: y - 18, size: 18, font: bold, color: ink }); y -= 26; page.drawText(fmSafe(nycSuperAddr() + '   ' + date + '   ' + T.open(rows.length)), { x: M, y: y - 11, size: 11, font, color: mut }); y -= 18;
       for (const l of wrap(T.legend, CW, 9)) { page.drawText(l, { x: M, y: y - 9, size: 9, font, color: mut }); y -= 12; } y -= 8; }
     head(); };
   newPage(true); let last = null;
@@ -2893,7 +2899,7 @@ async function nycSuperPdf(rows, lang = 'en') {
 async function nycSuperExport(kind) {
   if (nyc.superBusy) return; nyc.superBusy = true; const st = t => { nyc.superMsg = t; const el = $('nycSuperMsg'); if (el) el.textContent = t; };
   const lang = nyc.supLang || 'en';
-  try { const rows = await nycSuperRows(st, lang); if (!rows.length) { st('No open HPD violations.'); return; } st('Making the file…'); await (kind === 'pdf' ? nycSuperPdf(rows, lang) : nycSuperXlsx(rows, lang)); st(`Done: ${rows.length} violations (${SUP_T[lang].lang}).` + (rows.missing ? ` ${rows.missing} could not be translated and are in English.` : '')); }
+  try { const rows = await nycSuperRows(st, lang); if (!rows.length) { st('No open HPD violations.'); return; } st('Making the file…'); await (kind === 'pdf' ? nycSuperPdf(rows, lang) : nycSuperXlsx(rows, lang)); st(`Done: ${rows.length} violations${supU() ? ' for unit ' + supU() : ''} (${SUP_T[lang].lang}).` + (rows.missing ? ` ${rows.missing} could not be translated and are in English.` : '')); }
   catch (e) { st(e && e.message ? e.message : 'Could not make the file.'); }
   finally { nyc.superBusy = false; }
 }
@@ -2931,7 +2937,7 @@ function nycBody(r) {
     nycCard('hpdv', { title: 'HPD violations (open)', n: v.open, flag: v.cls.C ? 'red' : v.open ? 'yellow' : 'green', sub: v.open ? `Goal: clear ${v.goal} of ${v.open} (75%).` : 'No open HPD violations.', err: v.err, asof: v.asof,
       tags: [[`A: ${v.cls.A || 0}`], [`B: ${v.cls.B || 0}`, v.cls.B ? 'yellow' : ''], [`C: ${v.cls.C || 0}`, v.cls.C ? 'red' : ''], v.noAccess ? [`No access: ${v.noAccess}`, 'yellow'] : null, v.notComplied ? [`Not complied: ${v.notComplied}`, 'red'] : null, v.ri ? [`Rent impairing: ${v.ri}`, 'red'] : null, v.lead ? [`Lead paint: ${v.lead}`, 'red'] : null],
       extra: (v.apts.length ? `<p class="nyc-msg"><b>Units with the most violations:</b> ${v.apts.map(a => esc(`${a.apartment} (${a.n})`)).join(', ')}</p>` : ''),
-      top: v.open ? `<div class="nyc-super"><div><b>Work list for the super</b><span> Apartment, class, simple description, and boxes for Completed or Not done.</span></div><div class="cal-btns"><select id="nycSupLang" class="sup-lang" aria-label="Language">${[['en', 'English'], ['es', 'Español (Spanish)'], ['sq', 'Shqip (Albanian)']].map(([k, v]) => `<option value="${k}"${(nyc.supLang || 'en') === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button type="button" class="nyc-btn" data-supx="pdf">Download PDF</button><button type="button" class="nyc-btn ghost" data-supx="xlsx">Download Excel</button><small id="nycSuperMsg">${esc(nyc.superMsg || '')}</small></div></div>` : '', list: v.list, more: v.list.length >= 150 ? 'Showing the newest 150.' : '' }),
+      top: v.open ? `<div class="nyc-super"><div><b>Work list for the super</b><span> Apartment, class, simple description, and boxes for Completed or Not done. Add a unit number to list only that apartment.</span></div><div class="cal-btns"><input id="nycSupUnit" class="sup-unit" placeholder="Unit (optional)" value="${esc(nyc.supUnit || '')}" aria-label="Unit (optional)"><select id="nycSupLang" class="sup-lang" aria-label="Language">${[['en', 'English'], ['es', 'Español (Spanish)'], ['sq', 'Shqip (Albanian)']].map(([k, v]) => `<option value="${k}"${(nyc.supLang || 'en') === k ? ' selected' : ''}>${v}</option>`).join('')}</select><button type="button" class="nyc-btn" data-supx="pdf">Download PDF</button><button type="button" class="nyc-btn ghost" data-supx="xlsx">Download Excel</button><small id="nycSuperMsg">${esc(nyc.superMsg || '')}</small></div></div>` : '', list: v.list, more: v.list.length >= 150 ? 'Showing the newest 150.' : '' }),
     nycCard('hpdc', { title: 'HPD complaints (last 12 months)', n: c.hpdc.total, flag: c.hpdc.heat + c.hpdc.hot ? 'yellow' : 'green', sub: Object.entries(c.hpdc.byCat).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => `${e[0].toLowerCase()} ${e[1]}`).join(', ') || 'No complaints in the last 12 months.', err: c.hpdc.err, asof: c.hpdc.asof,
       tags: [[`No heat: ${c.hpdc.heat}`, c.hpdc.heat ? 'yellow' : ''], [`No hot water: ${c.hpdc.hot}`, c.hpdc.hot ? 'yellow' : '']], list: c.hpdc.list, more: c.hpdc.list.length >= 150 ? 'Showing the newest 150.' : '' }),
     nycCard('lit', { title: 'Housing Court cases (open)', n: c.lit.list.length, flag: c.lit.list.length ? 'red' : 'green', sub: c.lit.list.length ? `Oldest open: ${nycD(c.lit.list[c.lit.list.length - 1].caseopendate)}` : 'No open HPD cases.', err: c.lit.err, asof: c.lit.asof, list: c.lit.list }),
@@ -2986,10 +2992,11 @@ async function nycExcel(k) {
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data])); a.download = name; a.click(); }
   } catch (e) { showFootWarn('Could not make the Excel file: ' + ((e && e.message) || 'error')); }
 }
+$('nycPanel').addEventListener('input', e => { if (e.target.id === 'nycSupUnit') { nyc.supUnit = e.target.value.slice(0, 12); } });
 $('nycPanel').addEventListener('change', e => { if (e.target.id === 'nycSupLang') { nyc.supLang = e.target.value; nyc.superMsg = ''; const m = $('nycSuperMsg'); if (m) m.textContent = ''; } });
 $('nycPanel').addEventListener('click', e => {
   if (e.target.closest('#nycGo')) { nycLoad(true); return; }
-  if (e.target.closest('#nycSupLang')) { e.stopPropagation(); return; }
+  if (e.target.closest('#nycSupLang') || e.target.closest('#nycSupUnit')) { e.stopPropagation(); return; }
   const sx = e.target.closest('[data-supx]'); if (sx) { e.stopPropagation(); nycSuperExport(sx.dataset.supx); return; }
   if (e.target.closest('[data-acris]')) { nycLoadAcris(); return; }
   const ca = e.target.closest('[data-caladd]');
